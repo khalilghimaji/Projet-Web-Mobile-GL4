@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome to KickStream!</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .header {
+      text-align: center;
+      padding: 20px 0;
+      border-bottom: 2px solid #f0f0f0;
+    }
+
+    .logo {
+      max-width: 150px;
+      height: auto;
+      border-radius: 8px; /* Added border radius to the logo */
+    }
+
+    .welcome-message {
+      background-color: #f9f9f9;
+      border-left: 4px solid #0066cc;
+      padding: 15px;
+      margin: 20px 0;
+    }
+
+    .button {
+      display: inline-block;
+      background-color: #0066cc;
+      color: white;
+      padding: 12px 24px;
+      text-decoration: none;
+      border-radius: 4px;
+      margin: 20px 0;
+    }
+
+    .footer {
+      margin-top: 30px;
+      font-size: 12px;
+      text-align: center;
+      color: #777;
+      border-top: 1px solid #eee;
+      padding-top: 20px;
+    }
+
+    .social-links {
+      margin: 15px 0;
+    }
+
+    .social-links a {
+      margin: 0 10px;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+<div class="header">
+  <img src="{{logoUrl}}" alt="KickStream Logo" class="logo">
+  <h1>Welcome to KickStream!</h1>
+</div>
+
+<div class="welcome-message">
+  <h2>Hello {{userName}}!</h2>
+  <p>Thank you for joining KickStream, the ultimate football prediction platform! We're excited to have you on board!</p>
+  <p>Your account has been successfully created with the email:
+    <strong>{{userEmail}}</strong></p>
+</div>
+
+<h3>What you can do now:</h3>
+<ul>
+  <li>Watch live football matches with real-time updates</li>
+  <li>Make predictions on upcoming matches and earn points</li>
+  <li>Compete on global and league-specific leaderboards</li>
+  <li>View detailed statistics, standings, and player performances</li>
+  <li>Track your prediction accuracy and climb the rankings</li>
+</ul>
+
+<p>To get started with your football prediction journey, click the button below:</p>
+<center><a href="{{exploreUrl}}" class="button">Start Predicting</a></center>
+
+<p>If you have any questions or need assistance, feel free to contact our support team at
+  <a href="mailto:{{supportEmail}}">{{supportEmail}}</a>.</p>
+
+<div class="personal-touch">
+  <p>Get started with today's featured matches:</p>
+  <ul>
+    {{#each featuredMatches}}
+      <li><strong>{{this.homeTeam}}</strong> vs <strong>{{this.awayTeam}}</strong> - {{this.league}}</li>
+    {{/each}}
+  </ul>
+</div>
+
+<div class="social-links">
+  <p>Follow us to stay updated:</p>
+  <a href="{{facebookUrl}}">Facebook</a>
+  <a href="{{twitterUrl}}">Twitter</a>
+  <a href="{{instagramUrl}}">Instagram</a>
+</div>
+
+<div class="footer">
+  <p>&copy; {{currentYear}} KickStream. All rights reserved.</p>
+  <p>
+    <small>
+      You received this email because you signed up for KickStream.
+      <br>
+      To unsubscribe, <a href="{{unsubscribeUrl}}">click here</a>
+    </small>
+  </p>
+</div>
+</body>
+</html>
