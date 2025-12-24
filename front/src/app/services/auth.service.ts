@@ -17,12 +17,6 @@ import { AuthenticationService, UserDto } from './Api';
   providedIn: 'root',
 })
 export class AuthService {
-  // Track user state
-  private mfaEnabled: boolean = false;
-  private mfaSecret: string | null = null;
-  private userEmail: string | null = null;
-  private emailVerified: boolean = false;
-
   // Track authentication state
   private authState = new BehaviorSubject<boolean>(false);
   public authState$ = this.authState.asObservable();
@@ -50,12 +44,6 @@ export class AuthService {
 
   private loadUserState(): void {
     if (!this.isBrowser()) return;
-
-    this.mfaEnabled = localStorage.getItem('mfa_enabled') === 'true';
-    this.mfaSecret = localStorage.getItem('mfa_secret');
-    this.userEmail = localStorage.getItem('user_email');
-    this.emailVerified = localStorage.getItem('email_verified') === 'true';
-
     const userData = localStorage.getItem('user_data');
     if (userData) {
       try {
@@ -64,30 +52,19 @@ export class AuthService {
     }
   }
 
-  private saveUserState(): void {
-    if (!this.isBrowser()) return;
-
-    localStorage.setItem('mfa_enabled', String(this.mfaEnabled));
-    localStorage.setItem('email_verified', String(this.emailVerified));
-    if (this.mfaSecret) localStorage.setItem('mfa_secret', this.mfaSecret);
-    if (this.userEmail) localStorage.setItem('user_email', this.userEmail);
-  }
-
   // Check if a user has MFA enabled
-  hasOtpEnabled(email: string): boolean {
-    return this.mfaEnabled;
+  hasOtpEnabled(): boolean {
+    return this.currentUser.value?.isMFAEnabled || false;
   }
 
   generateMfaSecret(): Observable<{ secret: string; qrCode: string }> {
-    return this.apiAuthService.authControllerGenerateMfaSecret().pipe(
-      tap((response) => {
-        this.mfaSecret = response.secret;
-        this.saveUserState();
-      }),
-      catchError((error) =>
-        this.handleError('Failed to generate MFA secret', error)
-      )
-    );
+    return this.apiAuthService
+      .authControllerGenerateMfaSecret()
+      .pipe(
+        catchError((error) =>
+          this.handleError('Failed to generate MFA secret', error)
+        )
+      );
   }
 
   private handleError(message: string, error: any): Observable<never> {
@@ -102,8 +79,6 @@ export class AuthService {
   }> {
     return this.apiAuthService.authControllerEnableMfa({ code: otpCode }).pipe(
       map((response) => {
-        this.mfaEnabled = true;
-        this.saveUserState();
         return {
           success: true,
           message: 'MFA enabled successfully',
@@ -128,8 +103,6 @@ export class AuthService {
   ): Observable<{ success: boolean; message: string }> {
     return this.apiAuthService.authControllerDisableMfa({ password }).pipe(
       map(() => {
-        this.mfaEnabled = false;
-        this.saveUserState();
         return { success: true, message: 'MFA disabled successfully' };
       }),
       catchError((error) => {
@@ -153,7 +126,6 @@ export class AuthService {
       .authControllerLogin({ email, password, rememberMe: rememberMe })
       .pipe(
         map((response) => {
-          this.userEmail = email;
           if ('isMfaRequired' in response) {
             return {
               requiresOtp: true,
@@ -161,8 +133,8 @@ export class AuthService {
               success: false,
             };
           }
+          console.log('Login response:', response);
           this.setAuthData(response.user);
-          this.completeLogin();
           return {
             requiresOtp: false,
             message: 'Login successful',
@@ -225,9 +197,6 @@ export class AuthService {
       )
       .pipe(
         map(() => {
-          this.userEmail = userData.email;
-          this.emailVerified = false;
-          this.saveUserState();
           const message =
             'Registration successful! Please check your email to verify your account.';
           this.notificationService.showSuccess(message);
@@ -250,8 +219,6 @@ export class AuthService {
   ): Observable<{ success: boolean; message: string }> {
     return this.apiAuthService.authControllerVerifyEmail({ token }).pipe(
       map(() => {
-        this.emailVerified = true;
-        this.saveUserState();
         this.notificationService.showSuccess('Email verified successfully');
         return { success: true, message: 'Email verified successfully' };
       }),
@@ -296,12 +263,6 @@ export class AuthService {
       })
     );
   }
-
-  // Check if user's email is verified
-  isEmailVerified(): boolean {
-    return this.emailVerified;
-  }
-
   completeLogin(): void {
     this.authState.next(true);
     this.notificationService.showSuccess('Login successful');
@@ -312,48 +273,22 @@ export class AuthService {
     return this.isBrowser() && !!localStorage.getItem('user_email');
   }
 
-  // Get current user info
-  getCurrentUserInfo(): {
-    email: string | null;
-    mfaEnabled: boolean;
-    emailVerified: boolean;
-  } {
-    return {
-      email: this.userEmail,
-      mfaEnabled: this.mfaEnabled,
-      emailVerified: this.emailVerified,
-    };
-  }
-
-  setAuthData(userData: any): void {
+  setAuthData(userData: UserDto): void {
     if (!this.isBrowser() || !userData) return;
-
-    this.userEmail = userData.email;
-    this.emailVerified = userData.emailVerified ?? true;
-    this.mfaEnabled = userData.isMfaEnabled || false;
 
     localStorage.setItem('user_email', userData.email || '');
     localStorage.setItem('user_data', JSON.stringify(userData));
-    this.saveUserState();
-
+    console.log('Setting auth data:', userData);
     this.currentUser.next(userData);
     this.authState.next(true);
   }
 
   public clearAuthData(): void {
     if (this.isBrowser()) {
-      [
-        'user_data',
-        'user_email',
-        'mfa_enabled',
-        'mfa_secret',
-        'email_verified',
-      ].forEach((key) => localStorage.removeItem(key));
+      ['user_data', 'user_email'].forEach((key) =>
+        localStorage.removeItem(key)
+      );
     }
-    this.userEmail = null;
-    this.mfaEnabled = false;
-    this.mfaSecret = null;
-    this.emailVerified = false;
     this.currentUser.next(null);
   }
 

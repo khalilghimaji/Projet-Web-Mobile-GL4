@@ -326,6 +326,8 @@ export class AuthService extends GenericService<User> {
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
+        isMFAEnabled: user.isMFAEnabled,
+        imgUrl: user.imageUrl,
       },
     };
   }

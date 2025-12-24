@@ -44,7 +44,7 @@ export class User extends CommonEntity {
   @Column({ default: 0 })
   diamonds: number;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, type: 'text' })
   refreshToken?: string;
 
   @OneToMany(() => Prediction, (prediction) => prediction.user)

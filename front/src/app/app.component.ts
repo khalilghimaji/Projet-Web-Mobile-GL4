@@ -13,7 +13,6 @@ import { LoadingComponent } from './components/loading/loading.component';
   selector: 'app-root',
   standalone: true,
   imports: [
-    CommonModule,
     RouterOutlet,
     MenubarModule,
     ButtonModule,
@@ -53,13 +52,5 @@ export class AppComponent implements OnInit {
         icon: 'pi pi-info-circle',
       },
     ];
-  }
-
-  navigateTo(route: string) {
-    this.router.navigate([route]);
-  }
-
-  logout() {
-    this.authService.logout();
   }
 }

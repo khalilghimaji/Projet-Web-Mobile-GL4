@@ -65,19 +65,15 @@
       </div>
 
       <!-- Auth menu items for non-authenticated users -->
-      @if (!(isAuthenticated|async)) {
-      <div
-        *ngFor="let item of authMenuItems"
-        class="nav-item"
-        [routerLink]="item.route"
-        routerLinkActive="active"
-      >
+      @if (!(isAuthenticated|async)) { @for (item of authMenuItems; track
+      $index) {
+      <div class="nav-item" [routerLink]="item.route" routerLinkActive="active">
         <div class="content">
           <i [class]="item.icon"></i>
           <span class="label">{{ item.label }}</span>
         </div>
       </div>
-      } @else {
+      } } @else {
       <!-- Logout option for authenticated users -->
       <div class="nav-item" (click)="onLogout()">
         <div class="content">
@@ -92,18 +88,17 @@
   @if (isAuthenticated|async) {
   <div class="bottom-section">
     <div class="bottom-items">
-      <div
-        *ngFor="let item of bottomMenuItems"
-        class="nav-item"
-        [routerLink]="item.route"
-        routerLinkActive="active"
-      >
+      @for (item of bottomMenuItems; track $index) {
+      <div class="nav-item" [routerLink]="item.route" routerLinkActive="active">
         <div class="content">
           <i [class]="item.icon"></i>
           <span class="label">{{ item.label }}</span>
-          <div *ngIf="item.badge" class="badge">{{ item.badge }}</div>
+          @if (item.badge) {
+          <div class="badge">{{ item.badge }}</div>
+          }
         </div>
       </div>
+      }
     </div>
     @let userProfile = authService.currentUser$ | async;
     <!-- Profile section only for authenticated users -->
@@ -114,7 +109,7 @@
           class="profile-picture"
           width="40"
           height="40"
-          [ngSrc]="getImageUrl(userProfile.imgUrl)"
+          [ngSrc]="userProfile.imgUrl | imageDefault"
           alt="Profile Picture"
         />
         <div class="profile-details">

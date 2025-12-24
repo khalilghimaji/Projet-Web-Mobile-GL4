@@ -4,8 +4,8 @@ import { RouterModule } from '@angular/router';
 import { DrawerModule } from 'primeng/drawer';
 import { AuthService } from '../../services/auth.service';
 import { NotificationsApiService } from '../../services/notifications-api.service';
-import { Notification } from '../../services/Api/model/notification';
 import { Subscription } from 'rxjs';
+import { ImageDefaultPipe } from '../../shared/pipes/image-default.pipe';
 
 interface MenuItem {
   icon: string;
@@ -26,6 +26,7 @@ interface MenuItem {
     NgOptimizedImage,
     DrawerModule,
     AsyncPipe,
+    ImageDefaultPipe,
   ],
   templateUrl: './side-menu.component.html',
   styleUrls: ['./side-menu.component.css'],
@@ -74,6 +75,7 @@ export class SideMenuComponent implements OnInit, OnDestroy {
     private notificationsApi: NotificationsApiService
   ) {
     this.authService.currentUser$.subscribe((user) => {
+      console.log('User updated in SideMenuComponent:', user);
       if (user && 'diamonds' in user) {
         this.diamonds.set(user.diamonds ?? 0);
       }
@@ -107,13 +109,6 @@ export class SideMenuComponent implements OnInit, OnDestroy {
       this.sseSubscription.unsubscribe();
     }
     this.notificationsApi.disconnectSSE();
-  }
-
-  // Helper function to generate URL with cache-busting parameter
-  getImageUrl(url: string): string {
-    if (!url) return '/images/person.png';
-    // Check if the URL is already absolute
-    return url;
   }
 
   toggleMenu() {

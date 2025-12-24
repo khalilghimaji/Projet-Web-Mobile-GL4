@@ -16,7 +16,6 @@ import {
     <button
       class="back-arrow"
       (click)="goBack()"
-      [@backButton]="buttonState"
       (mouseenter)="onHover(true)"
       (mouseleave)="onHover(false)"
     >
@@ -89,23 +88,6 @@ import {
         }
       }
     `,
-  ],
-  animations: [
-    trigger('backButton', [
-      state(
-        'normal',
-        style({
-          transform: 'scale(1) rotate(0deg)',
-        })
-      ),
-      state(
-        'hovered',
-        style({
-          transform: 'scale(1.1) rotate(-10deg)',
-        })
-      ),
-      transition('normal <=> hovered', animate('200ms ease-in-out')),
-    ]),
   ],
 })
 export class BackArrowComponent {
