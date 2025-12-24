@@ -1,12 +1,22 @@
-<div class="notification-container" [ngStyle]="{'backgroundColor': isRealTime? 'lightgrey':'white' }">
-  <button class="close-button bg-red-600" (click)="closeNotification()">
+<div
+  class="notification-container"
+  [ngStyle]="{ backgroundColor: isRealTime() ? 'lightgrey' : 'white' }"
+>
+  <button class="close-button bg-red-600" (click)="onDelete()">
     <i class="pi pi-times text-white"></i>
   </button>
   <div class="notification-header">
-    <span class="notification-title">{{ notification.title }}</span>
-    <span class="notification-time">{{ notification.time }}</span>
+    <span class="notification-title">{{ notification().type }}</span>
+    <span class="notification-time">{{
+      notification().createdAt | date : "short"
+    }}</span>
   </div>
   <div class="notification-body">
-    {{ notification.message }}
+    {{ notification().message }}
+  </div>
+  <div class="notification-actions" *ngIf="!notification().read">
+    <button class="btn btn-primary" (click)="onMarkAsRead()">
+      Mark as Read
+    </button>
   </div>
 </div>

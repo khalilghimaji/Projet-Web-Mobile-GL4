@@ -29,15 +29,18 @@ export class NotificationsService {
   }
 
   async notify(payload: NotificationPayload): Promise<void> {
+    const notification = await this.storeNotification(payload);
     const client = this.clients.get(payload.userId);
+    console.log('Client is : '+client);
     if (client) {
-      const messageEvent = new MessageEvent('message', { data: payload });
+      const messageEvent = new MessageEvent('message', {
+        data: JSON.stringify(notification),
+      });
       client.next(messageEvent);
       console.log(
         `Notification sent to user ${payload.userId}: ${payload.message}`,
       );
     }
-    await this.storeNotification(payload);
   }
 
   async storeNotification(payload: NotificationPayload): Promise<Notification> {

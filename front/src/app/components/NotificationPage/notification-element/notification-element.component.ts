@@ -1,24 +1,30 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { MessagesModule } from 'primeng/messages';
-import {NgStyle} from '@angular/common';
+import { DatePipe, NgStyle, NgIf } from '@angular/common';
+import { Notification } from '../../../services/Api/model/notification';
 
 @Component({
   selector: 'app-notification-element',
-  imports: [MessagesModule, NgStyle],
+  imports: [MessagesModule, NgStyle, DatePipe, NgIf],
   templateUrl: './notification-element.component.html',
   styleUrls: ['./notification-element.component.css'],
-  standalone: true
+  standalone: true,
 })
 export class NotificationElementComponent {
-  @Input() notification!: { title: string; time: string; message: string };
-  @Output() close = new EventEmitter<void>();
-  @Input() isRealTime: boolean=true;
+  notification = input.required<Notification>();
+  markAsRead = output<Notification>();
+  delete = output<Notification>();
+  isRealTime = input.required<boolean>();
+
   ngOnInit() {
-    console.log(this.isRealTime);
+    console.log(this.isRealTime());
   }
 
+  onMarkAsRead() {
+    this.markAsRead.emit(this.notification());
+  }
 
-  closeNotification() {
-    this.close.emit();
+  onDelete() {
+    this.delete.emit(this.notification());
   }
 }
