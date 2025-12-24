@@ -7,18 +7,16 @@ import { GlobalModule } from './Common/global.module';
 import { AuthModule } from './auth/auth.module';
 import { User } from './auth/entities/user.entity';
 import { ConfigModule, ConfigService } from '@nestjs/config'; // Ajout de ConfigService
-import { UserRatingModule } from './user-rating/user-rating.module';
 
 import { join } from 'path';
 import { NotificationsModule } from './notifications/notifications.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { JwtService } from '@nestjs/jwt';
-import { JwtModule } from '@nestjs/jwt'; 
+import { JwtModule } from '@nestjs/jwt';
 import { ScheduleModule } from '@nestjs/schedule';
 import { NotificationSchedulerModule } from './notification-scheduler/notification-scheduler.module';
-
-
+import { MatchesModule } from './matches/matches.module';
 
 config({ path: `${process.cwd()}/Config/.env.dev` });
 
@@ -62,15 +60,11 @@ config({ path: `${process.cwd()}/Config/.env.dev` });
       rootPath: join(__dirname, '..', 'public', 'uploads'),
       serveRoot: '/public/uploads',
     }),
-    UserRatingModule,
     NotificationsModule,
     NotificationSchedulerModule,
+    MatchesModule,
   ],
   controllers: [AppController],
-  providers: [
-    AppService,
-    JwtService,
-  ],
+  providers: [AppService, JwtService],
 })
-
 export class AppModule {}

@@ -1,7 +1,7 @@
 import { CommonEntity } from '../../Common/Common.entity';
 import { Column, Entity, OneToMany } from 'typeorm';
 import { Notification } from 'src/notifications/entities/notification.entity';
-import { UserRating } from 'src/user-rating/entities/user-rating.entity';
+import { Prediction } from 'src/matches/entities/prediction.entity';
 
 @Entity('_user')
 export class User extends CommonEntity {
@@ -41,17 +41,18 @@ export class User extends CommonEntity {
   @Column({ nullable: true })
   githubId: string;
 
+  @Column({ default: 0 })
+  diamonds: number;
 
   @Column({ nullable: true })
   refreshToken?: string;
 
-
-  @OneToMany(() => UserRating, (rating) => rating.user)
-  ratings: UserRating[];
-
+  @OneToMany(() => Prediction, (prediction) => prediction.user)
+  predictions: Prediction[];
 
   // Relation inverse : un utilisateur peut recevoir plusieurs notifications
-  @OneToMany(() => Notification, (notification) => notification.userId, { cascade: true })
+  @OneToMany(() => Notification, (notification) => notification.userId, {
+    cascade: true,
+  })
   notifications: Notification[];
-
 }

@@ -11,10 +11,7 @@ import {
   throwError,
   timeout,
 } from 'rxjs';
-import {
-  AuthenticationService,
-  UserDto,
-} from './Api';
+import { AuthenticationService, UserDto } from './Api';
 
 @Injectable({
   providedIn: 'root',
@@ -295,7 +292,6 @@ export class AuthService {
         this.isRefreshing = false;
         this.clearAuthData();
         this.authState.next(false);
-        this.router.navigate(['/login']);
         return throwError(() => error);
       })
     );

@@ -1,4 +1,5 @@
 export enum MatchStatus {
-    ONGOING = 'ONGOING',
-    COMPLETED = 'COMPLETED',
+  ONGOING = 'ONGOING',
+  COMPLETED = 'COMPLETED',
+  INACTIVE = 'INACTIVE',
 }

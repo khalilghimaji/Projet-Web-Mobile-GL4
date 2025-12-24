@@ -1,10 +1,21 @@
-import { Controller, Sse, Param, UseGuards, Req, Get, Patch, Delete, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import {
+  Controller,
+  Sse,
+  Param,
+  UseGuards,
+  Req,
+  Get,
+  Patch,
+  Delete,
+  OnModuleInit,
+  OnModuleDestroy,
+} from '@nestjs/common';
 import { Observable, interval, map, takeUntil, Subject } from 'rxjs';
 import { NotificationsService } from './notifications.service';
 import { User } from 'src/Decorator/user.decorator';
 import { Request } from 'express';
-import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
-import { JwtService } from "@nestjs/jwt";
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { JwtService } from '@nestjs/jwt';
 
 @Controller('notifications')
 @UseGuards(JwtAuthGuard)
@@ -13,16 +24,24 @@ export class NotificationsController implements OnModuleInit, OnModuleDestroy {
   private heartbeat$: Observable<MessageEvent>;
   private destroy$ = new Subject<void>();
 
-  constructor(private readonly notificationsService: NotificationsService, private jwtService: JwtService) {
+  constructor(
+    private readonly notificationsService: NotificationsService,
+    private jwtService: JwtService,
+  ) {
     this.heartbeat$ = interval(this.heartbeatInterval).pipe(
-        map(() => new MessageEvent('heartbeat', { data: 'ping' })),
-        takeUntil(this.destroy$)
+      map(() => new MessageEvent('heartbeat', { data: 'ping' })),
+      takeUntil(this.destroy$),
     );
   }
 
   @Sse('sse')
-  async sse(@User('id') userId: number, @Req() req: Request): Promise<Observable<MessageEvent>> {
-    return this.notificationsService.subscribe(userId).pipe(
+  async sse(
+    @User('id') userId: string,
+    @Req() req: Request,
+  ): Promise<Observable<MessageEvent>> {
+    return this.notificationsService
+      .subscribe(userId)
+      .pipe(
         takeUntil(this.destroy$),
         (notificationStream: Observable<MessageEvent>) => {
           return new Observable<MessageEvent>((subscriber) => {
@@ -46,29 +65,30 @@ export class NotificationsController implements OnModuleInit, OnModuleDestroy {
               heartbeatSubscription.unsubscribe();
             };
           });
-        }
-    );
+        },
+      );
   }
 
   @Get('user')
-  async getUserNotifications(@User('id') userId: number) {
+  async getUserNotifications(@User('id') userId: string) {
     return this.notificationsService.getUserNotifications(userId);
   }
 
   @Patch(':notificationId/read')
-  async markNotificationAsRead(@Param('notificationId') notificationId: string) {
-    await this.notificationsService.markNotificationAsRead(parseInt(notificationId, 10));
+  async markNotificationAsRead(
+    @Param('notificationId') notificationId: string,
+  ) {
+    await this.notificationsService.markNotificationAsRead(notificationId);
     return { message: 'Notification marked as read' };
   }
 
   @Delete(':id')
   async deleteNotification(@Param('id') id: string) {
-    await this.notificationsService.deleteNotification(parseInt(id, 10));
+    await this.notificationsService.deleteNotification(id);
     return { message: `Notification ${id} deleted successfully` };
   }
 
-  onModuleInit() {
-  }
+  onModuleInit() {}
 
   onModuleDestroy() {
     this.destroy$.next();

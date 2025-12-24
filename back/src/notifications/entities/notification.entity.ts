@@ -1,14 +1,16 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from 'typeorm';
-import {NotificationType} from "../../Enums/notification-type.enum";
-
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+} from 'typeorm';
+import { NotificationType } from '../../Enums/notification-type.enum';
+import { CommonEntity } from 'src/Common/Common.entity';
 
 @Entity()
-export class Notification {
-  @PrimaryGeneratedColumn()
-  id: number;
-
+export class Notification extends CommonEntity {
   @Column()
-  userId: number;
+  userId: string;
 
   @Column({
     type: 'enum',
@@ -24,7 +26,4 @@ export class Notification {
 
   @Column({ default: false })
   read: boolean;
-
-  @CreateDateColumn()
-  createdAt: Date;
 }

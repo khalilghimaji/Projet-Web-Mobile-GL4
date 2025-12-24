@@ -70,35 +70,4 @@ export class EmailVerificationComponent implements OnInit {
   goToLogin(): void {
     this.router.navigate(['/login']);
   }
-
-  resendVerification(): void {
-    const email = this.authService.getCurrentUserInfo().email;
-    if (!email) {
-      this.errorMessage.set(
-        'Unable to resend verification email. Please sign up again.'
-      );
-      return;
-    }
-
-    this.isLoading.set(true);
-    this.authService.resendVerificationEmail(email).subscribe({
-      next: (response) => {
-        this.isLoading.set(false);
-        if (response.success) {
-          this.errorMessage.set('');
-          alert('Verification email has been sent. Please check your inbox.');
-        } else {
-          this.errorMessage.set(
-            response.message || 'Failed to resend verification email.'
-          );
-        }
-      },
-      error: (error) => {
-        this.isLoading.set(false);
-        this.errorMessage.set(
-          error.message || 'An error occurred. Please try again.'
-        );
-      },
-    });
-  }
 }

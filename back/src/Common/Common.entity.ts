@@ -7,8 +7,8 @@ import {
 import { Exclude } from 'class-transformer';
 
 export class CommonEntity {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Exclude()
   @CreateDateColumn()

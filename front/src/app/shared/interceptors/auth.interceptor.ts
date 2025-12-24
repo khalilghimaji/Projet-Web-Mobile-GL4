@@ -17,7 +17,7 @@ export class AuthInterceptor implements HttpInterceptor {
   private isRefreshing = false;
   private refreshTokenSubject = new BehaviorSubject<boolean>(false);
 
-  constructor(private injector: Injector, private router: Router) {}
+  constructor(private injector: Injector) {}
 
   private get authService(): AuthService {
     return this.injector.get(AuthService);
@@ -71,9 +71,6 @@ export class AuthInterceptor implements HttpInterceptor {
         }),
         catchError((err) => {
           this.authService.clearAuthData();
-          this.router.navigate(['/login'], {
-            queryParams: { redirectUrl: this.router.url },
-          });
           return throwError(() => err);
         }),
         finalize(() => {

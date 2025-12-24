@@ -18,6 +18,7 @@ import {
 import { CredentialsInterceptor } from './shared/interceptors/credentials.interceptor';
 import { AuthInterceptor } from './shared/interceptors/auth.interceptor';
 import { AuthInitializationService } from './services/auth-initialization.service';
+import { lastValueFrom } from 'rxjs';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -43,7 +44,7 @@ export const appConfig: ApplicationConfig = {
     // Use provideAppInitializer for auth initialization
     provideAppInitializer(() => {
       const authInitService = inject(AuthInitializationService);
-      authInitService.initializeAuth();
+      return lastValueFrom(authInitService.initializeAuth());
     }),
 
     providePrimeNG({

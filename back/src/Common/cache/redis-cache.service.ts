@@ -61,7 +61,7 @@ export class RedisCacheService {
 
   // Store a token with an associated userId for simplified tracking
   async storeUserToken(
-    userId: number,
+    userId: string,
     tokenType: string,
     token: string,
     expiryInSeconds: number,
@@ -86,7 +86,7 @@ export class RedisCacheService {
   }
 
   // Invalidate all tokens for a specific user
-  async invalidateAllUserTokens(userId: number): Promise<void> {
+  async invalidateAllUserTokens(userId: string): Promise<void> {
     try {
       // Get all access tokens for the user
       const accessTokens = await this.redis.smembers(

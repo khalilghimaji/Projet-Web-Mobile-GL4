@@ -70,8 +70,8 @@ export class SideMenuComponent {
 
   constructor(public authService: AuthService) {}
 
-  get isAuthenticated(): boolean {
-    return this.authService.isAuthenticated();
+  get isAuthenticated() {
+    return this.authService.authState$;
   }
 
   // Helper function to generate URL with cache-busting parameter
