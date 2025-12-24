@@ -1,5 +1,5 @@
 import { Component, signal, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import {
   AbstractControl,
   FormBuilder,
@@ -23,7 +23,6 @@ import { environment } from '../../../environments/environment';
   selector: 'app-signup-page',
   standalone: true,
   imports: [
-    CommonModule,
     ReactiveFormsModule,
     RouterModule,
     InputTextModule,
@@ -32,8 +31,8 @@ import { environment } from '../../../environments/environment';
     CheckboxModule,
     RippleModule,
     MessageModule,
-    ProgressSpinnerModule,
-  ],
+    ProgressSpinnerModule
+],
   templateUrl: './signup-page.component.html',
   styleUrl: './signup-page.component.css',
 })

@@ -1,5 +1,5 @@
 import { Component, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
@@ -9,7 +9,7 @@ import { NotificationService } from '../../services/notification.service';
 @Component({
   selector: 'app-auth-callback',
   standalone: true,
-  imports: [CommonModule, RouterModule, ProgressSpinnerModule, MessageModule],
+  imports: [RouterModule, ProgressSpinnerModule, MessageModule],
   templateUrl: './auth-callback.component.html',
   styleUrl: './auth-callback.component.css',
 })

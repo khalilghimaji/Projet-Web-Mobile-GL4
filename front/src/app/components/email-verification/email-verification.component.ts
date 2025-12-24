@@ -1,5 +1,5 @@
 import { Component, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
@@ -10,12 +10,11 @@ import { MessageModule } from 'primeng/message';
   selector: 'app-email-verification',
   standalone: true,
   imports: [
-    CommonModule,
     RouterModule,
     ProgressSpinnerModule,
     ButtonModule,
-    MessageModule,
-  ],
+    MessageModule
+],
   templateUrl: './email-verification.component.html',
   styleUrl: './email-verification.component.css',
 })

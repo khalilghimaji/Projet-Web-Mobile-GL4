@@ -5,7 +5,8 @@
       Secure your account with an extra layer of protection
     </p>
 
-    <div *ngIf="!mfaEnabled() && !setupStarted()">
+    @if (!mfaEnabled() && !setupStarted()) {
+    <div>
       <!-- MFA Setup Introduction -->
       <div class="intro-section">
         <div class="icon-container">
@@ -41,10 +42,13 @@
         </p-button>
       </div>
     </div>
+    }
 
     <!-- MFA Setup Process -->
-    <div *ngIf="!mfaEnabled() && setupStarted()" class="setup-process">
-      <div *ngIf="step() === 1" class="setup-step">
+    @if (!mfaEnabled() && setupStarted()) {
+    <div class="setup-process">
+      @if (step() === 1) {
+      <div class="setup-step">
         <h3>Step 1: Scan QR Code</h3>
         <p>
           Scan this QR code with your authenticator app (like Google
@@ -52,17 +56,17 @@
         </p>
         <div class="qr-container">
           <!-- Updated to use our ImagePreloadDirective -->
+          @if (qrCodeUrl()) {
           <img
-            *ngIf="qrCodeUrl()"
             [src]="qrCodeUrl()"
             alt="QR Code for MFA Setup"
             appImagePreload
             fallback="/images/image.png"
             (loaded)="onQrCodeLoaded($event)"
           />
-          <p-progressSpinner
-            *ngIf="!qrCodeUrl() && isLoading()"
-          ></p-progressSpinner>
+          } @if (!qrCodeUrl() && isLoading()) {
+          <p-progressSpinner></p-progressSpinner>
+          }
         </div>
         <div class="manual-setup">
           <p>Or enter this code manually in your app:</p>
@@ -79,8 +83,8 @@
         >
         </p-button>
       </div>
-
-      <div *ngIf="step() === 2" class="setup-step">
+      } @if (step() === 2) {
+      <div class="setup-step">
         <h3>Step 2: Verify Setup</h3>
         <p>
           Enter the 6-digit code from your authenticator app to verify the setup
@@ -96,9 +100,11 @@
             maxlength="6"
           />
         </div>
-        <div *ngIf="errorMessage()" class="error-message">
+        @if (errorMessage()) {
+        <div class="error-message">
           <p-message severity="error" [text]="errorMessage()"></p-message>
         </div>
+        }
         <div class="button-group w-100">
           <p-button
             label="Back"
@@ -117,18 +123,20 @@
             [disabled]="otpCode().length !== 6 || isLoading()"
             styleClass="p-button-primary mfa-button"
           >
+            @if (isLoading()) {
             <p-progressSpinner
-              *ngIf="isLoading()"
               [style]="{ width: '20px', height: '20px' }"
               styleClass="custom-spinner"
               strokeWidth="4"
             ></p-progressSpinner>
+            }
           </p-button>
         </div>
       </div>
-
+      }
       <!-- Step 3: Recovery Codes -->
-      <div *ngIf="step() === 3" class="setup-step">
+      @if (step() === 3) {
+      <div class="setup-step">
         <h3>Step 3: Save Your Recovery Codes</h3>
         <p>
           Please save these recovery codes in a secure location. You will need
@@ -136,9 +144,11 @@
         </p>
         <div class="recovery-codes-container">
           <div class="recovery-codes">
-            <div class="code" *ngFor="let code of recoveryCodes()">
+            @for (code of recoveryCodes(); track code) {
+            <div class="code">
               {{ code }}
             </div>
+            }
           </div>
         </div>
         <p class="warning-text">
@@ -165,10 +175,13 @@
           </p-button>
         </div>
       </div>
+      }
     </div>
+    }
 
     <!-- MFA Management (when already enabled) -->
-    <div *ngIf="mfaEnabled()" class="mfa-management">
+    @if (mfaEnabled()) {
+    <div class="mfa-management">
       <div class="status-active">
         <i class="pi pi-check-circle"></i>
         <h3>Two-Factor Authentication is Active</h3>
@@ -176,14 +189,12 @@
           Your account is currently protected with two-factor authentication.
         </p>
       </div>
-
       <div class="disable-section">
         <h4>Disable Two-Factor Authentication</h4>
         <p>
           You'll need to enter your password to disable two-factor
           authentication.
         </p>
-
         <div class="input-container">
           <i class="pi pi-lock"></i>
           <input
@@ -194,11 +205,11 @@
             placeholder="Enter your password"
           />
         </div>
-
-        <div *ngIf="errorMessage()" class="error-message">
+        @if (errorMessage()) {
+        <div class="error-message">
           <p-message severity="error" [text]="errorMessage()"></p-message>
         </div>
-
+        }
         <p-button
           label="{{ isLoading() ? 'Processing...' : 'Disable 2FA' }}"
           icon="pi pi-times"
@@ -207,15 +218,17 @@
           [disabled]="password() === '' || isLoading()"
           styleClass="p-button-danger mfa-button"
         >
+          @if (isLoading()) {
           <p-progressSpinner
-            *ngIf="isLoading()"
             [style]="{ width: '20px', height: '20px' }"
             styleClass="custom-spinner"
             strokeWidth="4"
           ></p-progressSpinner>
+          }
         </p-button>
       </div>
     </div>
+    }
 
     <div class="back-link">
       <a routerLink="/" class="back-to-home">

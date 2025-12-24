@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { NotificationsApiService } from '../../services/notifications-api.service';
 import { Notification } from '../../services/Api/model/notification';
 import { catchError, EMPTY, map, scan, startWith, switchMap } from 'rxjs';
@@ -9,7 +9,7 @@ import { rxResource } from '@angular/core/rxjs-interop';
   selector: 'app-notifications-page',
   templateUrl: './notifications-page.component.html',
   styleUrls: ['./notifications-page.component.css'],
-  imports: [CommonModule, NotificationElementComponent],
+  imports: [NotificationElementComponent],
   standalone: true,
 })
 export class NotificationsPageComponent {

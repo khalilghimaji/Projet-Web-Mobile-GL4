@@ -1,5 +1,5 @@
 import { Component, Input, OnInit, output, input } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
@@ -18,12 +18,11 @@ export interface TeamPrediction {
   selector: 'app-score-prediction-popup',
   standalone: true,
   imports: [
-    CommonModule,
     FormsModule,
     DialogModule,
     ButtonModule,
-    InputNumberModule,
-  ],
+    InputNumberModule
+],
   templateUrl: './score-prediction-popup.component.html',
   styleUrls: ['./score-prediction-popup.component.css'],
 })

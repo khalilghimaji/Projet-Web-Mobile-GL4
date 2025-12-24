@@ -1,5 +1,5 @@
 import { Component, input, computed, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { RouterModule, ActivatedRoute } from '@angular/router';
 import { Location } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -14,7 +14,7 @@ import { NotificationService } from '../../services/notification.service';
 @Component({
   selector: 'app-error-page',
   standalone: true,
-  imports: [CommonModule, RouterModule, ScorePredictionPopupComponent],
+  imports: [RouterModule, ScorePredictionPopupComponent],
   templateUrl: './error-page.component.html',
   styleUrls: ['./error-page.component.css'],
 })

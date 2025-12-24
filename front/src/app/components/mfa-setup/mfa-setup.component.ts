@@ -1,5 +1,5 @@
 import { Component, OnInit, signal, computed, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
@@ -14,14 +14,13 @@ import { toSignal } from '@angular/core/rxjs-interop';
   selector: 'app-mfa-setup',
   standalone: true,
   imports: [
-    CommonModule,
     FormsModule,
     RouterModule,
     ButtonModule,
     InputTextModule,
     ProgressSpinnerModule,
-    MessageModule,
-  ],
+    MessageModule
+],
   templateUrl: './mfa-setup.component.html',
   styleUrls: ['./mfa-setup.component.css'],
 })

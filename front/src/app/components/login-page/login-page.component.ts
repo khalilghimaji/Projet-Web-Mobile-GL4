@@ -1,5 +1,5 @@
 import { Component, signal, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import {
   FormBuilder,
   ReactiveFormsModule,
@@ -19,7 +19,6 @@ import { CheckboxModule } from 'primeng/checkbox';
   selector: 'app-login-page',
   standalone: true,
   imports: [
-    CommonModule,
     ReactiveFormsModule,
     RouterModule,
     InputTextModule,
@@ -27,8 +26,8 @@ import { CheckboxModule } from 'primeng/checkbox';
     RippleModule,
     MessageModule,
     ProgressSpinnerModule,
-    CheckboxModule,
-  ],
+    CheckboxModule
+],
   templateUrl: './login-page.component.html',
   styleUrl: './login-page.component.css',
 })

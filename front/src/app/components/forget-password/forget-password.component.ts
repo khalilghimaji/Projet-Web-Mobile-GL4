@@ -1,5 +1,5 @@
 import { Component, signal, effect, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import {
   AbstractControl,
   FormBuilder,
@@ -19,13 +19,12 @@ import { toSignal } from '@angular/core/rxjs-interop';
   selector: 'app-forget-password',
   standalone: true,
   imports: [
-    CommonModule,
     ReactiveFormsModule,
     RouterModule,
     InputTextModule,
     ButtonModule,
-    MessageModule,
-  ],
+    MessageModule
+],
   templateUrl: './forget-password.component.html',
   styleUrl: './forget-password.component.css',
 })

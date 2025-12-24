@@ -28,8 +28,8 @@
   <div class="top-section">
     <div class="top-items">
       <!-- Regular menu items -->
+      @for (item of topMenuItems; track item) {
       <div
-        *ngFor="let item of topMenuItems"
         class="nav-item"
         [routerLink]="item.route"
         routerLinkActive="active"
@@ -38,18 +38,21 @@
         <div class="content">
           <i [class]="item.icon"></i>
           <span class="label">{{ item.label }}</span>
+          @if (item.hasChildren) {
           <i
-            *ngIf="item.hasChildren"
             class="pi angle-icon"
             [class.pi-angle-down]="!item.active"
             [class.pi-angle-up]="item.active"
             (click)="$event.stopPropagation(); item.active = !item.active"
           ></i>
-          <div *ngIf="item.badge" class="badge">{{ item.badge }}</div>
+          } @if (item.badge) {
+          <div class="badge">{{ item.badge }}</div>
+          }
         </div>
-        <div *ngIf="item.hasChildren && item.active" class="submenu">
+        @if (item.hasChildren && item.active) {
+        <div class="submenu">
+          @for (child of item.children; track child) {
           <div
-            *ngFor="let child of item.children"
             class="nav-item"
             [routerLink]="child.route"
             routerLinkActive="active"
@@ -58,11 +61,16 @@
             <div class="content">
               <i [class]="child.icon"></i>
               <span class="label">{{ child.label }}</span>
-              <div *ngIf="child.badge" class="badge">{{ child.badge }}</div>
+              @if (child.badge) {
+              <div class="badge">{{ child.badge }}</div>
+              }
             </div>
           </div>
+          }
         </div>
+        }
       </div>
+      }
 
       <!-- Auth menu items for non-authenticated users -->
       @if (!(isAuthenticated|async)) { @for (item of authMenuItems; track

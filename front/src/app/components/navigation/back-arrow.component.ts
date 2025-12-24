@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { CommonModule, Location } from '@angular/common';
+import { Location } from '@angular/common';
 import {
   trigger,
   state,
@@ -11,7 +11,7 @@ import {
 @Component({
   selector: 'app-back-arrow',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   template: `
     <button
       class="back-arrow"
