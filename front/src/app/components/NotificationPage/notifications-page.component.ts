@@ -1,8 +1,16 @@
-import { Component, OnInit, OnDestroy, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NotificationsApiService } from '../../services/notifications-api.service';
 import { Notification } from '../../services/Api/model/notification';
-import { Subscription } from 'rxjs';
+import {
+  catchError,
+  EMPTY,
+  lastValueFrom,
+  map,
+  Observable,
+  scan,
+  Subscription,
+} from 'rxjs';
 import { NotificationElementComponent } from './notification-element/notification-element.component';
 
 @Component({
@@ -12,52 +20,21 @@ import { NotificationElementComponent } from './notification-element/notificatio
   imports: [CommonModule, NotificationElementComponent],
   standalone: true,
 })
-export class NotificationsPageComponent implements OnInit, OnDestroy {
-  notifications = signal<Notification[]>([]);
-  private sseSubscription: Subscription | null = null;
+export class NotificationsPageComponent{
+  private notificationsApi = inject(NotificationsApiService);
+  private initialNotifs = await lastValueFrom(this.notificationsApi.getUserNotifications());
+  protected subscription = this.notificationsApi.connectToSSE().pipe(
+    scan(
+      (curr, notification) => [...curr, notification],
+      this.initialNotifs
+      )
+    catchError((error) => {
+      console.error('SSE error:', error);
+      return EMPTY;
+    }));
 
-  constructor(private notificationsApi: NotificationsApiService) {}
+  constructor() {}
 
-  ngOnInit(): void {
-    this.loadNotifications();
-    this.connectToSSE();
-  }
-
-  ngOnDestroy(): void {
-    this.disconnectSSE();
-  }
-
-  private loadNotifications(): void {
-    this.notificationsApi.getUserNotifications().subscribe({
-      next: (notifications) => {
-        this.notifications.set(notifications);
-      },
-      error: (error) => {
-        console.error('Error loading notifications:', error);
-      },
-    });
-  }
-
-  private connectToSSE(): void {
-    this.sseSubscription = this.notificationsApi.connectToSSE().subscribe({
-      next: (notification) => {
-        this.notifications.update((notifications) => [
-          notification,
-          ...notifications,
-        ]); // Add new notification to the top
-      },
-      error: (error) => {
-        console.error('SSE error:', error);
-      },
-    });
-  }
-
-  private disconnectSSE(): void {
-    if (this.sseSubscription) {
-      this.sseSubscription.unsubscribe();
-    }
-    this.notificationsApi.disconnectSSE();
-  }
 
   markAsRead(notification: Notification): void {
     this.notificationsApi.markAsRead(notification.id.toString()).subscribe({

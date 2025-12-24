@@ -92,6 +92,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
         lastName: user.lastName,
         isMFAEnabled: user.isMFAEnabled,
         imgUrl: user.imageUrl,
+        diamonds: user.diamonds,
       };
     } catch (error) {
       this.logger.error(`JWT validation error: ${error.message}`);

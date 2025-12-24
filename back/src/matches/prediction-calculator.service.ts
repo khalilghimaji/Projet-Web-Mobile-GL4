@@ -29,7 +29,7 @@ export class PredictionCalculatorService {
         await this.notificationsService.notify({
           userId: prediction.user.id,
           type: NotificationType.CHANGE_OF_POSSESSED_GEMS,
-          message: `You gained ${gain} diamonds for your prediction!`,
+          message: `You gained ${gain} diamonds for your prediction! And now you have ${prediction.user.diamonds} diamonds.`,
           data: { gain, newDiamonds: prediction.user.diamonds },
         });
       }

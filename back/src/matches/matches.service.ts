@@ -10,6 +10,8 @@ import { Prediction } from './entities/prediction.entity';
 import { User } from '../auth/entities/user.entity';
 import { MatchStatus } from '../Enums/matchstatus.enum';
 import { PredictionCalculatorService } from './prediction-calculator.service';
+import { NotificationType } from 'src/Enums/notification-type.enum';
+import { NotificationsService } from 'src/notifications/notifications.service';
 
 @Injectable()
 export class MatchesService {
@@ -21,6 +23,7 @@ export class MatchesService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private readonly predictionCalculator: PredictionCalculatorService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async activateMatch(id: string): Promise<Match> {
@@ -92,12 +95,20 @@ export class MatchesService {
     user.diamonds -= 5;
     await this.userRepository.save(user);
 
+    await this.notificationsService.notify({
+      userId: user.id,
+      type: NotificationType.CHANGE_OF_POSSESSED_GEMS,
+      message: `You spent 5 diamonds for your prediction! And now you have ${user.diamonds} diamonds.`,
+      data: { gain: -5, newDiamonds: user.diamonds },
+    });
+
     const prediction = this.predictionRepository.create({
       userId,
       matchId,
       scoreFirstEquipe: scoreFirst,
       scoreSecondEquipe: scoreSecond,
     });
-    return this.predictionRepository.save(prediction);
+    await this.predictionRepository.save(prediction);
+    return prediction;
   }
 }

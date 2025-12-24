@@ -33,7 +33,7 @@ export class NotificationsApiService {
 
   connectToSSE(): Observable<Notification> {
     if (this.eventSource) {
-      this.eventSource.close();
+      return this.notificationsSubject.asObservable();
     }
 
     this.eventSource = new EventSource(
@@ -44,7 +44,6 @@ export class NotificationsApiService {
     );
 
     this.eventSource.onmessage = (event) => {
-      console.log('SSE message received:', event);
       if (event.data !== 'ping') {
         try {
           const notification: Notification = JSON.parse(event.data);

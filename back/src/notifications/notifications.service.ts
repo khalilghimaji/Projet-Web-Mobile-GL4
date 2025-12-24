@@ -9,9 +9,13 @@ interface NotificationPayload {
   userId: string;
   type: NotificationType;
   message: string;
-  data?: any;
+  data?: DataMessage;
 }
 
+interface DataMessage {
+  gain: number;
+  newDiamonds: number;
+}
 @Injectable()
 export class NotificationsService {
   private clients: Map<string, Subject<MessageEvent>> = new Map();
@@ -30,8 +34,8 @@ export class NotificationsService {
 
   async notify(payload: NotificationPayload): Promise<void> {
     const notification = await this.storeNotification(payload);
+    notification.data = { ...payload.data };
     const client = this.clients.get(payload.userId);
-    console.log('Client is : '+client);
     if (client) {
       const messageEvent = new MessageEvent('message', {
         data: JSON.stringify(notification),
