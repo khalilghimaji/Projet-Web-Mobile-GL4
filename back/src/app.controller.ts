@@ -12,12 +12,14 @@ import { diskStorage } from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 import { extname } from 'path';
 import { ApiBody, ApiConsumes } from '@nestjs/swagger';
+import { ConfigService } from '@nestjs/config';
 
 @Controller()
 export class AppController {
   constructor(
     private readonly appService: AppService,
     private readonly mailService: MailService,
+    private readonly configService: ConfigService,
   ) {}
 
   @Post('upload')
@@ -47,7 +49,7 @@ export class AppController {
     },
   })
   uploadFile(@UploadedFile() file: Express.Multer.File) {
-    const imageUrl = `http://localhost:3000/public/uploads/${file.filename}`;
+    const imageUrl = `http://localhost:${this.configService.get('APP_PORT')}/public/uploads/${file.filename}`;
     return { imageUrl };
   }
 

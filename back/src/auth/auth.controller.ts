@@ -16,6 +16,7 @@ import {
   ParseFilePipe,
   MaxFileSizeValidator,
   FileTypeValidator,
+  FileValidator,
   BadRequestException,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
@@ -69,6 +70,20 @@ import { ForgotPasswordResponseDto } from './dto/responses/forgot-password-respo
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { ResetPasswordResponseDto } from './dto/responses/reset-password-response.dto';
 
+class CustomImageValidator extends FileValidator {
+  constructor() {
+    super({});
+  }
+
+  isValid(file: Express.Multer.File): boolean {
+    return ['image/png', 'image/jpeg', 'image/jpg'].includes(file.mimetype);
+  }
+
+  buildErrorMessage(file: any): string {
+    return `Invalid file type. Allowed: png, jpeg, jpg. Got: ${file.mimetype}`;
+  }
+}
+
 @ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
@@ -104,13 +119,14 @@ export class AuthController {
     @UploadedFile(
       new ParseFilePipe({
         validators: [
-          new MaxFileSizeValidator({ maxSize: 1000000 }),
-          new FileTypeValidator({ fileType: 'image/jpeg|image/jpg|image/png' }),
+          new MaxFileSizeValidator({ maxSize: 10000000 }),
+          new CustomImageValidator(),
         ],
         fileIsRequired: true,
-        exceptionFactory: () => {
+        exceptionFactory: (e) => {
+          console.log(e);
           return new BadRequestException(
-            'Le fichier est requis et ne doit pas dépasser 1Mo',
+            'File is required and must not exceed 10MB. Allowed types: jpeg, jpg, png.',
           );
         },
       }),
@@ -121,7 +137,7 @@ export class AuthController {
     try {
       // Ensure filename is properly encoded to handle spaces and special characters
       const encodedFilename = encodeURIComponent(imageUrl.filename);
-      signUpDto.imageUrl = `http://localhost:3000/uploads/users/${encodedFilename}`;
+      signUpDto.imageUrl = `http://localhost:${this.configService.get('APP_PORT')}/uploads/users/${encodedFilename}`;
       return this.authService.signUp(signUpDto);
     } catch {
       await unlink(join(imageUrl.path));

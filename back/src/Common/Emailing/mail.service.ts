@@ -88,7 +88,7 @@ export class MailService {
     // Generate the verification URL with base URL from config
     const baseUrl = this.configService.get<string>(
       'FRONTEND_URL',
-      'http://localhost:3000',
+      `http://localhost:${this.configService.get<number>('APP_PORT')}`,
     );
     const verificationUrl = `${baseUrl}/verify-email?token=${token}`;
 
@@ -157,7 +157,7 @@ export class MailService {
     // Generate the reset password URL with base URL from config
     const baseUrl = this.configService.get<string>(
       'FRONTEND_URL',
-      'http://localhost:3000',
+      `http://localhost:${this.configService.get<number>('APP_PORT')}`,
     );
     const resetUrl = `${baseUrl}/forget-password/reset?token=${token}`;
 

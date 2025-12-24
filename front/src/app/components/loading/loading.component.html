@@ -1,0 +1,8 @@
+@if(loadingService.loading$ | async) {
+<div class="loading-backdrop">
+  <div class="spinner-wrapper">
+    <p-progressSpinner styleClass="custom-spinner"></p-progressSpinner>
+    <div class="loading-text">Loading...</div>
+  </div>
+</div>
+}
