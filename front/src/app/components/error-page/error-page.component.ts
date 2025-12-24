@@ -8,6 +8,8 @@ import {
   ScorePredictionPopupComponent,
   TeamPrediction,
 } from '../score-prediction-popup/score-prediction-popup.component';
+import { MatchesService } from '../../services/Api';
+import { NotificationService } from '../../services/notification.service';
 
 @Component({
   selector: 'app-error-page',
@@ -24,6 +26,9 @@ export class ErrorPageComponent {
   // Get error code from route params or input
   private routeParams = toSignal(this.route.paramMap);
   private routeData = toSignal(this.route.data);
+
+  private readonly matchesService = inject(MatchesService);
+  private readonly notificationService = inject(NotificationService);
 
   // Computed error code from route or input
   errorCode = computed(() => {
@@ -89,7 +94,27 @@ export class ErrorPageComponent {
 
   onPredictionSubmitted(prediction: TeamPrediction) {
     console.log('Prediction submitted:', prediction);
-    this.showPredictionDialog.set(false);
+    const matchId = '123';
+    this.matchesService
+      .matchesControllerMakePrediction(matchId, {
+        scoreFirst: prediction.team1Score || 0,
+        scoreSecond: prediction.team2Score || 0,
+      })
+      .subscribe({
+        next: () => {
+          this.notificationService.showSuccess(
+            'Your prediction has been saved successfully!'
+          );
+        },
+        error: () => {
+          this.notificationService.showError(
+            'There was an error saving your prediction. Please try again.'
+          );
+        },
+        complete: () => {
+          this.showPredictionDialog.set(false);
+        },
+      });
   }
 
   onCloseDialog(event: any) {

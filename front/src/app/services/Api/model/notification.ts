@@ -9,15 +9,18 @@
  */
 
 export interface Notification {
-  id: number;
-  userId: number;
+  userId: string;
   type: Notification.TypeEnum;
   message: string;
-  data: DataMessage | null;
+  data: MessageData;
   read: boolean;
+  id: string;
   createdAt: string;
+  updatedAt: string;
+  version: number;
 }
-export interface DataMessage {
+
+interface MessageData {
   gain: number;
   newDiamonds: number;
 }

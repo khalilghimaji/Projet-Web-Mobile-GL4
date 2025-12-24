@@ -75,7 +75,7 @@ export class SideMenuComponent implements OnInit, OnDestroy {
   ) {
     this.authService.currentUser$.subscribe((user) => {
       if (user && 'diamonds' in user) {
-        this.diamonds.set(user.diamonds);
+        this.diamonds.set(user.diamonds ?? 0);
       }
     });
   }

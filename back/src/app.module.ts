@@ -15,7 +15,6 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { JwtService } from '@nestjs/jwt';
 import { JwtModule } from '@nestjs/jwt';
 import { ScheduleModule } from '@nestjs/schedule';
-import { NotificationSchedulerModule } from './notification-scheduler/notification-scheduler.module';
 import { MatchesModule } from './matches/matches.module';
 
 config({ path: `${process.cwd()}/Config/.env.dev` });
@@ -61,7 +60,6 @@ config({ path: `${process.cwd()}/Config/.env.dev` });
       serveRoot: '/public/uploads',
     }),
     NotificationsModule,
-    NotificationSchedulerModule,
     MatchesModule,
   ],
   controllers: [AppController],

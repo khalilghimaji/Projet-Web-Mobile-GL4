@@ -12,7 +12,7 @@ export interface UserDto {
   /**
    * User ID
    */
-  id: number;
+  id: string;
   /**
    * User email
    */
@@ -28,13 +28,14 @@ export interface UserDto {
   /**
    * User image
    */
-  imgUrl: string;
+  imgUrl?: string;
   /**
    * Whether MFA is enabled
    */
-  isMFAEnabled: boolean;
+  isMFAEnabled?: boolean;
+
   /**
    * User diamonds
    */
-  diamonds: number;
+  diamonds?: number;
 }

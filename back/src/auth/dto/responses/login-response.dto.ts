@@ -1,18 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-
-class UserDto {
-  @ApiProperty({ description: 'User ID', example: '1' })
-  id: string;
-
-  @ApiProperty({ description: 'User email', example: 'user@example.com' })
-  email: string;
-
-  @ApiProperty({ description: 'User first name', example: 'John' })
-  firstName: string;
-
-  @ApiProperty({ description: 'User last name', example: 'Doe' })
-  lastName: string;
-}
+import { UserDto } from './mfa-verify-response.dto';
 
 export class LoginResponseDto {
   @ApiProperty({

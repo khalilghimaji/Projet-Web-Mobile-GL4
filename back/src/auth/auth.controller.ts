@@ -47,7 +47,6 @@ import {
   LoginResponseDto,
   MfaRequiredResponseDto,
 } from './dto/responses/login-response.dto';
-import { RefreshTokenResponseDto } from './dto/responses/refresh-token-response.dto';
 import { LogoutResponseDto } from './dto/responses/logout-response.dto';
 import {
   MfaVerifyResponseDto,

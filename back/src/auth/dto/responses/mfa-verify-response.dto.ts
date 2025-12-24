@@ -14,10 +14,13 @@ export class UserDto {
   lastName: string;
 
   @ApiProperty({ description: 'User image' })
-  imgUrl: string;
+  imgUrl?: string;
 
   @ApiProperty({ description: 'Whether MFA is enabled', example: true })
-  isMFAEnabled: boolean;
+  isMFAEnabled?: boolean;
+
+  @ApiProperty({ description: 'User diamonds', example: 100 })
+  diamonds?: number;
 }
 
 export class MfaVerifyResponseDto {

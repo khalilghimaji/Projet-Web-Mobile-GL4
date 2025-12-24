@@ -1,13 +1,12 @@
 .gitignore
-.openapi-generator-ignore
 README.md
 api.base.service.ts
 api.module.ts
 api/api.ts
 api/app.service.ts
 api/authentication.service.ts
+api/matches.service.ts
 api/notifications.service.ts
-api/userRating.service.ts
 configuration.ts
 encoder.ts
 git_push.sh
@@ -18,6 +17,7 @@ model/forgotPasswordResponseDto.ts
 model/loginDto.ts
 model/loginResponseDto.ts
 model/logoutResponseDto.ts
+model/match.ts
 model/mfaDisableResponseDto.ts
 model/mfaEnableDto.ts
 model/mfaEnableResponseDto.ts
@@ -27,10 +27,14 @@ model/mfaVerifyResponseDto.ts
 model/models.ts
 model/notification.ts
 model/oAuthResponseDto.ts
+model/predictDto.ts
+model/prediction.ts
 model/refresResponse.ts
 model/resetPasswordDto.ts
 model/resetPasswordResponseDto.ts
 model/signUpResponseDto.ts
+model/terminateMatchDto.ts
+model/user.ts
 model/userDto.ts
 model/verifyEmailDto.ts
 model/verifyEmailResponseDto.ts
