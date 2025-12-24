@@ -13,13 +13,7 @@ import {
 } from 'rxjs';
 import {
   AuthenticationService,
-  LoginDto,
-  MfaEnableDto,
-  MfaVerifyDto,
-  SignUpResponseDto,
   UserDto,
-  VerifyEmailDto,
-  DisableMfaDto,
 } from './Api';
 
 @Injectable({
@@ -104,9 +98,7 @@ export class AuthService {
     return throwError(() => error);
   }
 
-  enableMfa(
-    otpCode: string
-  ): Observable<{
+  enableMfa(otpCode: string): Observable<{
     success: boolean;
     message: string;
     recoveryCodes: string[];
@@ -161,7 +153,7 @@ export class AuthService {
     rememberMe: boolean
   ): Observable<{ requiresOtp: boolean; message: string; success: boolean }> {
     return this.apiAuthService
-      .authControllerLogin({ email, password, rememberMe: true })
+      .authControllerLogin({ email, password, rememberMe: rememberMe })
       .pipe(
         map((response) => {
           this.userEmail = email;

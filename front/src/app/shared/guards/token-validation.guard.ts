@@ -25,8 +25,6 @@ export const tokenValidationGuard: CanActivateFn = (route, state) => {
     take(1),
     map(() => true),
     catchError(() => {
-      // Profile request failed - redirect to login
-      // The interceptor will have already attempted token refresh on 401
       router.navigate(['/login'], {
         queryParams: { redirectUrl: state.url },
       });
