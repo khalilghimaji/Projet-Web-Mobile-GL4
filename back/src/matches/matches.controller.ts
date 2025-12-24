@@ -43,6 +43,7 @@ export class MatchesController {
       id,
       body.scoreFirst,
       body.scoreSecond,
+      body.numberOfDiamondsBet,
     );
   }
 }

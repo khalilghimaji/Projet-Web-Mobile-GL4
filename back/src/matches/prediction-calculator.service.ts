@@ -9,7 +9,7 @@ import { User } from 'src/auth/entities/user.entity';
 export class PredictionCalculatorService {
   constructor(private readonly notificationsService: NotificationsService) {}
 
-  async calculateAndApplyGains(
+  async calculateAndApplyGainsAtMatchEnd(
     predictions: Prediction[],
     actualScoreFirst: number,
     actualScoreSecond: number,
@@ -19,6 +19,7 @@ export class PredictionCalculatorService {
       const gain = this.calculateGain(
         prediction.scoreFirstEquipe,
         prediction.scoreSecondEquipe,
+        prediction.numberOfDiamondsBet,
         actualScoreFirst,
         actualScoreSecond,
       );
@@ -36,11 +37,34 @@ export class PredictionCalculatorService {
     }
   }
 
+  async calculateAndApplyGainsAtMatchUpdate(
+    predictions: Prediction[],
+    actualScoreFirst: number,
+    actualScoreSecond: number,
+  ): Promise<void> {
+    for (const prediction of predictions) {
+      const gain = this.calculateGain(
+        prediction.scoreFirstEquipe,
+        prediction.scoreSecondEquipe,
+        prediction.numberOfDiamondsBet,
+        actualScoreFirst,
+        actualScoreSecond,
+      );
+      await this.notificationsService.notify({
+        userId: prediction.user.id,
+        type: NotificationType.CHANGE_OF_POSSESSED_GEMS,
+        message: `You gained ${gain} diamonds for your prediction! And now you have ${prediction.user.diamonds} diamonds.`,
+        data: { gain, newDiamonds: prediction.user.diamonds },
+      });
+    }
+  }
+
   private calculateGain(
     predFirst: number,
     predSecond: number,
     actualFirst: number,
     actualSecond: number,
+    diamondsBet: number,
   ): number {
     // Exact match
     if (predFirst === actualFirst && predSecond === actualSecond) {

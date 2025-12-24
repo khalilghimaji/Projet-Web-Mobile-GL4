@@ -4,7 +4,7 @@ import { RouterModule } from '@angular/router';
 import { DrawerModule } from 'primeng/drawer';
 import { AuthService } from '../../services/auth.service';
 import { NotificationsApiService } from '../../services/notifications-api.service';
-import { Subscription } from 'rxjs';
+import { filter, Subscription } from 'rxjs';
 import { ImageDefaultPipe } from '../../shared/pipes/image-default.pipe';
 
 interface MenuItem {
@@ -91,15 +91,18 @@ export class SideMenuComponent implements OnInit, OnDestroy {
   }
 
   private connectToSSE(): void {
-    this.sseSubscription = this.notificationsApi.connectToSSE().subscribe({
-      next: (notification) => {
-        if (notification.data?.newDiamonds)
-          this.diamonds.set(notification.data?.newDiamonds);
-      },
-      error: (error) => {
-        console.error('SSE error:', error);
-      },
-    });
+    this.sseSubscription = this.notificationsApi
+      .connectToSSE()
+      .pipe(filter((event) => event.type === 'CHANGE_OF_POSSESSED_GEMS'))
+      .subscribe({
+        next: (notification) => {
+          if (notification.data?.newDiamonds)
+            this.diamonds.set(notification.data?.newDiamonds);
+        },
+        error: (error) => {
+          console.error('SSE error:', error);
+        },
+      });
   }
   get isAuthenticated() {
     return this.authService.authState$;

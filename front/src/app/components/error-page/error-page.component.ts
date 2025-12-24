@@ -94,11 +94,11 @@ export class ErrorPageComponent {
 
   onPredictionSubmitted(prediction: TeamPrediction) {
     console.log('Prediction submitted:', prediction);
-    const matchId = '123';
     this.matchesService
-      .matchesControllerMakePrediction(matchId, {
+      .matchesControllerMakePrediction(String(prediction.matchId) || '0', {
         scoreFirst: prediction.team1Score || 0,
         scoreSecond: prediction.team2Score || 0,
+        numberOfDiamondsBet: prediction.numberOfDiamonds || 1,
       })
       .subscribe({
         next: () => {
@@ -106,7 +106,8 @@ export class ErrorPageComponent {
             'Your prediction has been saved successfully!'
           );
         },
-        error: () => {
+        error: (e) => {
+          console.error('Error saving prediction:', e);
           this.notificationService.showError(
             'There was an error saving your prediction. Please try again.'
           );

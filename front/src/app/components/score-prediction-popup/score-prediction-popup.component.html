@@ -11,71 +11,108 @@
     <h3>Score Prediction</h3>
   </ng-template>
 
-  <div class="prediction-container">
-    <!-- Team 1 -->
-    <div class="team-section">
-      <div class="team-header">
-        @if ( team1Flag()) {
-        <img
-          [src]="team1Flag()"
-          [alt]="team1Name() + ' flag'"
-          class="team-flag"
-        />}
-        <h4 class="team-name">{{ team1Name() }}</h4>
+  <form [formGroup]="predictionForm">
+    <div class="prediction-container">
+      <!-- Team 1 -->
+      <div class="team-section">
+        <div class="team-header">
+          @if ( team1Flag()) {
+          <img
+            [src]="team1Flag()"
+            [alt]="team1Name() + ' flag'"
+            class="team-flag"
+          />}
+          <h4 class="team-name">{{ team1Name() }}</h4>
+        </div>
+        <div class="score-input-container">
+          <label [for]="'team1-score'">Score</label>
+          <p-inputNumber
+            [inputId]="'team1-score'"
+            formControlName="team1Score"
+            [min]="0"
+            [max]="99"
+            [showButtons]="true"
+            buttonLayout="horizontal"
+            incrementButtonIcon="pi pi-plus"
+            decrementButtonIcon="pi pi-minus"
+            [step]="1"
+            styleClass="score-input"
+          >
+          </p-inputNumber>
+        </div>
       </div>
-      <div class="score-input-container">
-        <label [for]="'team1-score'">Score</label>
-        <p-inputNumber
-          [inputId]="'team1-score'"
-          [(ngModel)]="team1Score"
-          [min]="0"
-          [max]="99"
-          [showButtons]="true"
-          buttonLayout="horizontal"
-          incrementButtonIcon="pi pi-plus"
-          decrementButtonIcon="pi pi-minus"
-          [step]="1"
-          styleClass="score-input"
-        >
-        </p-inputNumber>
+
+      <!-- VS Divider -->
+      <div class="vs-divider">
+        <span class="vs-text">VS</span>
+      </div>
+
+      <!-- Team 2 -->
+      <div class="team-section">
+        <div class="team-header">
+          @if ( team2Flag()) {
+          <img
+            [src]="team2Flag()"
+            [alt]="team2Name() + ' flag'"
+            class="team-flag"
+          />
+          }
+          <h4 class="team-name">{{ team2Name() }}</h4>
+        </div>
+        <div class="score-input-container">
+          <label [for]="'team2-score'">Score</label>
+          <p-inputNumber
+            [inputId]="'team2-score'"
+            formControlName="team2Score"
+            [min]="0"
+            [max]="99"
+            [showButtons]="true"
+            buttonLayout="horizontal"
+            incrementButtonIcon="pi pi-plus"
+            decrementButtonIcon="pi pi-minus"
+            [step]="1"
+            styleClass="score-input"
+          >
+          </p-inputNumber>
+        </div>
       </div>
     </div>
 
-    <!-- VS Divider -->
-    <div class="vs-divider">
-      <span class="vs-text">VS</span>
+    <!-- Match ID -->
+    <div class="match-id-section">
+      <label for="match-id-input">Match ID*</label>
+      <p-inputNumber
+        inputId="match-id-input"
+        formControlName="matchId"
+        [min]="1"
+        [showButtons]="true"
+        buttonLayout="horizontal"
+        incrementButtonIcon="pi pi-plus"
+        decrementButtonIcon="pi pi-minus"
+        [step]="1"
+        styleClass="match-id-input"
+      >
+      </p-inputNumber>
     </div>
 
-    <!-- Team 2 -->
-    <div class="team-section">
-      <div class="team-header">
-        @if ( team2Flag()) {
-        <img
-          [src]="team2Flag()"
-          [alt]="team2Name() + ' flag'"
-          class="team-flag"
-        />
-        }
-        <h4 class="team-name">{{ team2Name() }}</h4>
-      </div>
-      <div class="score-input-container">
-        <label [for]="'team2-score'">Score</label>
-        <p-inputNumber
-          [inputId]="'team2-score'"
-          [(ngModel)]="team2Score"
-          [min]="0"
-          [max]="99"
-          [showButtons]="true"
-          buttonLayout="horizontal"
-          incrementButtonIcon="pi pi-plus"
-          decrementButtonIcon="pi pi-minus"
-          [step]="1"
-          styleClass="score-input"
-        >
-        </p-inputNumber>
-      </div>
+    <!-- Number of Diamonds -->
+    <div class="diamonds-section">
+      <label for="diamonds-input">Number of Diamonds</label>
+      <p-inputNumber
+        inputId="diamonds-input"
+        formControlName="numberOfDiamonds"
+        [min]="1"
+        [max]="100"
+        [showButtons]="true"
+        buttonLayout="horizontal"
+        incrementButtonIcon="pi pi-plus"
+        decrementButtonIcon="pi pi-minus"
+        [step]="1"
+        styleClass="diamonds-input"
+      >
+      </p-inputNumber>
     </div>
-  </div>
+  </form>
 
   <ng-template pTemplate="footer">
     <div class="dialog-footer">

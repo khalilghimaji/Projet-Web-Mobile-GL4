@@ -24,4 +24,10 @@ export class Prediction extends CommonEntity {
 
   @Column()
   scoreSecondEquipe: number;
+
+  @Column()
+  numberOfDiamondsBet: number;
+
+  @Column()
+  pointsEarned: number;
 }

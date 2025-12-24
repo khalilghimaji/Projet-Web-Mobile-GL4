@@ -12,5 +12,6 @@
 export interface PredictDto { 
     scoreFirst: number;
     scoreSecond: number;
+    numberOfDiamondsBet: number;
 }
 

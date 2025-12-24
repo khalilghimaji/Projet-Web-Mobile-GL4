@@ -18,6 +18,8 @@ export interface Prediction {
     matchId: string;
     scoreFirstEquipe: number;
     scoreSecondEquipe: number;
+    numberOfDiamondsBet: number;
+    pointsEarned: number;
     id: string;
     createdAt: string;
     updatedAt: string;

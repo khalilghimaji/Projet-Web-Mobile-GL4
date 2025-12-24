@@ -12,7 +12,7 @@ export interface Notification {
   userId: string;
   type: Notification.TypeEnum;
   message: string;
-  data: MessageData;
+  data: DataMessage;
   read: boolean;
   id: string;
   createdAt: string;
@@ -20,7 +20,7 @@ export interface Notification {
   version: number;
 }
 
-interface MessageData {
+interface DataMessage {
   gain: number;
   newDiamonds: number;
 }

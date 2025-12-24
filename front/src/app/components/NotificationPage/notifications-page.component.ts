@@ -2,7 +2,16 @@ import { Component, inject } from '@angular/core';
 
 import { NotificationsApiService } from '../../services/notifications-api.service';
 import { Notification } from '../../services/Api/model/notification';
-import { catchError, EMPTY, map, scan, startWith, switchMap } from 'rxjs';
+import {
+  catchError,
+  EMPTY,
+  filter,
+  map,
+  scan,
+  startWith,
+  switchMap,
+  tap,
+} from 'rxjs';
 import { NotificationElementComponent } from './notification-element/notification-element.component';
 import { rxResource } from '@angular/core/rxjs-interop';
 @Component({
@@ -21,6 +30,7 @@ export class NotificationsPageComponent {
         map((res) => res.map((n) => ({ ...n, isRealTime: false }))),
         switchMap((initial) =>
           this.notificationsApi.connectToSSE().pipe(
+            filter((event) => event.type === 'CHANGE_OF_POSSESSED_GEMS'),
             scan(
               (curr, notification) => [
                 { ...notification, isRealTime: true },
