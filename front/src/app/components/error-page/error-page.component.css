@@ -64,7 +64,9 @@
   }
 }
 
-.home-button, .back-button {
+.home-button,
+.back-button,
+.predict-button {
   display: inline-block;
   padding: 12px 24px;
   border-radius: 25px;
@@ -97,4 +99,16 @@
 .back-button:hover {
   background-color: rgba(52, 152, 219, 0.1);
   transform: translateY(-3px);
+}
+
+.predict-button {
+  background: linear-gradient(90deg, #27ae60, #229954);
+  color: white;
+  border: none;
+}
+
+.predict-button:hover {
+  background: linear-gradient(90deg, #229954, #27ae60);
+  transform: translateY(-3px);
+  box-shadow: 0 7px 14px rgba(50, 50, 93, 0.1), 0 3px 6px rgba(0, 0, 0, 0.08);
 }

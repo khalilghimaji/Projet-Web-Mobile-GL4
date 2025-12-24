@@ -1,14 +1,18 @@
-import { Component, input, computed, inject } from '@angular/core';
+import { Component, input, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute } from '@angular/router';
 import { Location } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
+import {
+  ScorePredictionPopupComponent,
+  TeamPrediction,
+} from '../score-prediction-popup/score-prediction-popup.component';
 
 @Component({
   selector: 'app-error-page',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, ScorePredictionPopupComponent],
   templateUrl: './error-page.component.html',
   styleUrls: ['./error-page.component.css'],
 })
@@ -64,9 +68,31 @@ export class ErrorPageComponent {
     );
   });
 
+  // Score prediction popup state
+  showPredictionDialog = signal(false);
+
+  // Demo team data
+  team1Name = 'Barcelona';
+  team2Name = 'Real Madrid';
+  team1Flag = 'https://flagcdn.com/w320/it.png';
+  team2Flag = 'https://flagcdn.com/w320/es.png';
+
   constructor(private location: Location) {}
 
   goBack() {
     this.location.back();
+  }
+
+  openPredictionDialog() {
+    this.showPredictionDialog.set(true);
+  }
+
+  onPredictionSubmitted(prediction: TeamPrediction) {
+    console.log('Prediction submitted:', prediction);
+    this.showPredictionDialog.set(false);
+  }
+
+  onCloseDialog(event: any) {
+    this.showPredictionDialog.set(false);
   }
 }

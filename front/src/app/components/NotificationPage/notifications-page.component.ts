@@ -1,18 +1,10 @@
-import { Component, OnInit, OnDestroy, signal, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NotificationsApiService } from '../../services/notifications-api.service';
 import { Notification } from '../../services/Api/model/notification';
-import {
-  catchError,
-  EMPTY,
-  lastValueFrom,
-  map,
-  Observable,
-  scan,
-  Subscription,
-} from 'rxjs';
+import { catchError, EMPTY, map, scan, startWith, switchMap } from 'rxjs';
 import { NotificationElementComponent } from './notification-element/notification-element.component';
-
+import { rxResource } from '@angular/core/rxjs-interop';
 @Component({
   selector: 'app-notifications-page',
   templateUrl: './notifications-page.component.html',
@@ -20,21 +12,33 @@ import { NotificationElementComponent } from './notification-element/notificatio
   imports: [CommonModule, NotificationElementComponent],
   standalone: true,
 })
-export class NotificationsPageComponent{
+export class NotificationsPageComponent {
   private notificationsApi = inject(NotificationsApiService);
-  private initialNotifs = await lastValueFrom(this.notificationsApi.getUserNotifications());
-  protected subscription = this.notificationsApi.connectToSSE().pipe(
-    scan(
-      (curr, notification) => [...curr, notification],
-      this.initialNotifs
-      )
-    catchError((error) => {
-      console.error('SSE error:', error);
-      return EMPTY;
-    }));
+  private initialNotifs$ = this.notificationsApi.getUserNotifications();
+  notifications = rxResource({
+    stream: () =>
+      this.initialNotifs$.pipe(
+        map((res) => res.map((n) => ({ ...n, isRealTime: false }))),
+        switchMap((initial) =>
+          this.notificationsApi.connectToSSE().pipe(
+            scan(
+              (curr, notification) => [
+                { ...notification, isRealTime: true },
+                ...curr,
+              ],
+              initial
+            ),
+            startWith(initial),
+            catchError((error) => {
+              console.error('SSE error:', error);
+              return EMPTY;
+            })
+          )
+        )
+      ),
+  });
 
   constructor() {}
-
 
   markAsRead(notification: Notification): void {
     this.notificationsApi.markAsRead(notification.id.toString()).subscribe({
@@ -52,8 +56,8 @@ export class NotificationsPageComponent{
       .deleteNotification(notification.id.toString())
       .subscribe({
         next: () => {
-          this.notifications.update((notifications) =>
-            notifications.filter((n) => n.id !== notification.id)
+          this.notifications!.update((notifications) =>
+            notifications?.filter((n) => n.id !== notification.id)
           );
         },
         error: (error) => {

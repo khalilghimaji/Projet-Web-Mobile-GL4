@@ -14,9 +14,11 @@
   <div class="notification-body">
     {{ notification().message }}
   </div>
-  <div class="notification-actions" *ngIf="!notification().read">
+  @if (!notification().read) {
+  <div class="notification-actions">
     <button class="btn btn-primary" (click)="onMarkAsRead()">
       Mark as Read
     </button>
   </div>
+  }
 </div>
