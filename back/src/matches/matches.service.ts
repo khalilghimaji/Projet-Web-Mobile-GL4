@@ -64,6 +64,20 @@ export class MatchesService {
     }
     return true;
   }
+
+  async addDiamond(userId: string, numberOfDiamonds: number) {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User not found');
+    user.diamonds += numberOfDiamonds;
+    const newdiamonds = user.diamonds;
+    await this.userRepository.save(user);
+    await this.notificationsService.notify({
+      userId: userId,
+      type: NotificationType.CHANGE_OF_POSSESSED_GEMS,
+      message: `You received ${numberOfDiamonds} diamonds!`,
+      data: { gain: numberOfDiamonds, newDiamonds: newdiamonds },
+    });
+  }
   async disableMatch(id: string): Promise<Match> {
     const match = await this.matchRepository.findOne({ where: { id } });
     if (!match) throw new NotFoundException('Match not found');

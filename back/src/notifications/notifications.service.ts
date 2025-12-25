@@ -56,7 +56,7 @@ export class NotificationsService {
       userId: payload.userId,
       type: payload.type,
       message: payload.message,
-      data: payload.data ? JSON.stringify(payload.data) : null,
+      data: payload.data,
       read: false,
     });
     return this.notificationRepository.save(notification);

@@ -69,6 +69,14 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'diamond-store',
+    canActivate: [tokenValidationGuard],
+    loadComponent: () =>
+      import('./components/diamond-store/diamond-store.component').then(
+        (c) => c.DiamondStoreComponent
+      ),
+  },
+  {
     path: 'error',
     loadComponent: () =>
       import('./components/error-page/error-page.component').then(

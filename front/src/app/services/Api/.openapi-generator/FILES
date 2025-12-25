@@ -11,6 +11,8 @@ configuration.ts
 encoder.ts
 git_push.sh
 index.ts
+model/canPredictMatchDto.ts
+model/dataMessage.ts
 model/disableMfaDto.ts
 model/forgotPasswordDto.ts
 model/forgotPasswordResponseDto.ts

@@ -25,7 +25,6 @@ export interface User {
     googleId: string;
     githubId: string;
     diamonds: number;
-    points: number;
     refreshToken?: string;
     predictions: Array<Prediction>;
     notifications: Array<Notification>;
