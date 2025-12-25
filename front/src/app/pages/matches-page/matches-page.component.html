@@ -1,0 +1,6 @@
+<ng-container *ngFor="let match of matches">
+  <match-list-item-container
+    [matchId]="match.id"
+    [scoreSignal]="match.signals.score">
+  </match-list-item-container>
+</ng-container>
