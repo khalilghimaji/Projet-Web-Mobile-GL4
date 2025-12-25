@@ -14,6 +14,7 @@ export class PredictionCalculatorService {
     actualScoreFirst: number,
     actualScoreSecond: number,
     userRepository: Repository<User>,
+    predictionRepository: Repository<Prediction>,
   ): Promise<void> {
     for (const prediction of predictions) {
       const gain = this.calculateGain(
@@ -33,6 +34,8 @@ export class PredictionCalculatorService {
           message: `You gained ${gain} diamonds for your prediction! And now you have ${prediction.user.diamonds} diamonds.`,
           data: { gain, newDiamonds: prediction.user.diamonds },
         });
+        prediction.pointsEarned = 0;
+        await predictionRepository.save(prediction);
       }
     }
   }
@@ -41,7 +44,9 @@ export class PredictionCalculatorService {
     predictions: Prediction[],
     actualScoreFirst: number,
     actualScoreSecond: number,
+    predictionRepository: Repository<Prediction>,
   ): Promise<void> {
+    const users = new Set<string>();
     for (const prediction of predictions) {
       const gain = this.calculateGain(
         prediction.scoreFirstEquipe,
@@ -50,13 +55,30 @@ export class PredictionCalculatorService {
         actualScoreFirst,
         actualScoreSecond,
       );
-      await this.notificationsService.notify({
-        userId: prediction.user.id,
-        type: NotificationType.CHANGE_OF_POSSESSED_GEMS,
-        message: `You gained ${gain} diamonds for your prediction! And now you have ${prediction.user.diamonds} diamonds.`,
-        data: { gain, newDiamonds: prediction.user.diamonds },
-      });
+      prediction.pointsEarned = gain;
+      await predictionRepository.save(prediction);
+      users.add(prediction.user.id);
     }
+    const notifications: Promise<void>[] = [];
+    for (const userId of users) {
+      notifications.push(
+        (async () => {
+          const result = await predictionRepository
+            .createQueryBuilder('prediction')
+            .select('SUM(prediction.pointsEarned)', 'sum')
+            .where('prediction.userId = :userId', { userId })
+            .getRawOne();
+          const sum = result.sum || 0;
+          await this.notificationsService.notify({
+            userId,
+            type: NotificationType.DIAMOND_UPDATE,
+            message: '',
+            data: { gain: sum, newDiamonds: 0 },
+          });
+        })(),
+      );
+    }
+    await Promise.all(notifications);
   }
 
   private calculateGain(

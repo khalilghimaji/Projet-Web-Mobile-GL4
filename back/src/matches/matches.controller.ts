@@ -32,6 +32,15 @@ export class MatchesController {
     );
   }
 
+  @Post(':id/update')
+  async updateMatch(@Param('id') id: string, @Body() body: TerminateMatchDto) {
+    return this.matchesService.updateMatch(
+      id,
+      body.scoreFirst,
+      body.scoreSecond,
+    );
+  }
+
   @Post(':id/predict')
   async makePrediction(
     @User() user: any,

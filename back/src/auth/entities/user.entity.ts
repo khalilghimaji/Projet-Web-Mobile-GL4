@@ -44,9 +44,6 @@ export class User extends CommonEntity {
   @Column({ default: 0 })
   diamonds: number;
 
-  @Column({ default: 0 })
-  points: number;
-
   @Column({ nullable: true, type: 'text' })
   refreshToken?: string;
 

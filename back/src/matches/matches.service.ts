@@ -69,6 +69,7 @@ export class MatchesService {
       actualScoreFirst,
       actualScoreSecond,
       this.userRepository,
+      this.predictionRepository,
     );
 
     return this.matchRepository.save(match);
@@ -94,6 +95,7 @@ export class MatchesService {
       match.predictions,
       actualScoreFirst,
       actualScoreSecond,
+      this.predictionRepository,
     );
 
     return this.matchRepository.save(match);
