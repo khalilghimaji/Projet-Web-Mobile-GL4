@@ -248,17 +248,126 @@
   flex-direction: column;
 }
 
+.diamonds-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
 .diamonds-display {
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  color: #00CED1;
-  font-weight: 500;
+  gap: 6px;
+  padding: 8px 12px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 20px;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.diamonds-display:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
 .diamonds-display i {
-  color: #00CED1;
+  color: #FFD700;
+  font-size: 16px;
+  filter: drop-shadow(0 0 4px rgba(255, 215, 0, 0.5));
+  animation: sparkle 2s ease-in-out infinite;
+}
+
+@keyframes sparkle {
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.8;
+    transform: scale(1.1);
+  }
+}
+
+.diamonds-count {
+  font-size: 16px;
+  font-weight: 700;
+  color: #FFFFFF;
+  letter-spacing: 0.5px;
+}
+
+.diamonds-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.diamonds-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  animation: slideIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.diamonds-badge.positive {
+  background: linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%);
+  color: #FFFFFF;
+  box-shadow: 0 2px 6px rgba(76, 175, 80, 0.3);
+}
+
+.diamonds-badge.positive:hover {
+  box-shadow: 0 3px 8px rgba(76, 175, 80, 0.4);
+  transform: scale(1.05);
+}
+
+.diamonds-badge.negative {
+  background: linear-gradient(135deg, #FF5252 0%, #F44336 100%);
+  color: #FFFFFF;
+  box-shadow: 0 2px 6px rgba(255, 82, 82, 0.3);
+}
+
+.diamonds-badge.negative:hover {
+  box-shadow: 0 3px 8px rgba(255, 82, 82, 0.4);
+  transform: scale(1.05);
+}
+
+.diamonds-badge i {
+  font-size: 10px;
+  animation: bounce 1s ease-in-out infinite;
+}
+
+@keyframes bounce {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-3px);
+  }
 }
 
 .profile-name {

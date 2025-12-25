@@ -37,7 +37,47 @@ export class MatchesService {
     }
     return this.matchRepository.save(match);
   }
+  async canPredict(
+    userId: string,
+    matchId: string,
+    numberOfDiamondsBet: number,
+  ) {
+    const match = await this.matchRepository.findOne({
+      where: { id: matchId },
+    });
+    if (!match) return false;
+    if (match.status !== MatchStatus.ONGOING) return false;
 
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) return false;
+    if (user.diamonds < numberOfDiamondsBet) return false;
+
+    const exists = await this.predictionRepository.exists({
+      where: {
+        userId,
+        matchId,
+      },
+    });
+
+    if (exists) {
+      return false;
+    }
+    return true;
+  }
+
+  async addDiamond(userId: string, numberOfDiamonds: number) {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User not found');
+    user.diamonds += numberOfDiamonds;
+    const newdiamonds = user.diamonds;
+    await this.userRepository.save(user);
+    await this.notificationsService.notify({
+      userId: userId,
+      type: NotificationType.CHANGE_OF_POSSESSED_GEMS,
+      message: `You received ${numberOfDiamonds} diamonds!`,
+      data: { gain: numberOfDiamonds, newDiamonds: newdiamonds },
+    });
+  }
   async disableMatch(id: string): Promise<Match> {
     const match = await this.matchRepository.findOne({ where: { id } });
     if (!match) throw new NotFoundException('Match not found');
@@ -64,14 +104,44 @@ export class MatchesService {
     match.scoreSecondTeam = actualScoreSecond;
 
     // Calculate gains
-    await this.predictionCalculator.calculateAndApplyGains(
+    await this.predictionCalculator.calculateAndApplyGainsAtMatchEnd(
       match.predictions,
       actualScoreFirst,
       actualScoreSecond,
       this.userRepository,
+      this.predictionRepository,
     );
 
     return this.matchRepository.save(match);
+  }
+
+  async updateMatch(
+    id: string,
+    actualScoreFirst: number,
+    actualScoreSecond: number,
+  ): Promise<Match> {
+    if (actualScoreFirst > 0 || actualScoreSecond > 0) {
+      const match = await this.matchRepository.findOne({
+        where: { id },
+        relations: ['predictions', 'predictions.user'],
+      });
+      if (!match) throw new NotFoundException('Match not found');
+      if (match.status !== MatchStatus.ONGOING)
+        throw new BadRequestException('Match is not ongoing');
+      match.scoreFirstTeam = actualScoreFirst;
+      match.scoreSecondTeam = actualScoreSecond;
+
+      // Calculate gains
+      await this.predictionCalculator.calculateAndApplyGainsAtMatchUpdate(
+        match.predictions,
+        actualScoreFirst,
+        actualScoreSecond,
+        this.predictionRepository,
+      );
+
+      return this.matchRepository.save(match);
+    }
+    throw new BadRequestException('No score update provided');
   }
 
   async makePrediction(
@@ -79,6 +149,7 @@ export class MatchesService {
     matchId: string,
     scoreFirst: number,
     scoreSecond: number,
+    diamondsBet: number,
   ): Promise<Prediction> {
     const match = await this.matchRepository.findOne({
       where: { id: matchId },
@@ -89,17 +160,31 @@ export class MatchesService {
 
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
-    if (user.diamonds < 5) throw new BadRequestException('Not enough diamonds');
+    if (user.diamonds < diamondsBet)
+      throw new BadRequestException('Not enough diamonds');
+
+    const exists = await this.predictionRepository.exists({
+      where: {
+        userId,
+        matchId,
+      },
+    });
+
+    if (exists) {
+      throw new BadRequestException(
+        'Prediction already exists for this user and this match',
+      );
+    }
 
     // Deduct diamonds
-    user.diamonds -= 5;
+    user.diamonds -= diamondsBet;
     await this.userRepository.save(user);
 
     await this.notificationsService.notify({
       userId: user.id,
       type: NotificationType.CHANGE_OF_POSSESSED_GEMS,
-      message: `You spent 5 diamonds for your prediction! And now you have ${user.diamonds} diamonds.`,
-      data: { gain: -5, newDiamonds: user.diamonds },
+      message: `You spent ${diamondsBet} diamonds for your prediction! And now you have ${user.diamonds} diamonds.`,
+      data: { gain: -diamondsBet, newDiamonds: user.diamonds },
     });
 
     const prediction = this.predictionRepository.create({
@@ -107,6 +192,8 @@ export class MatchesService {
       matchId,
       scoreFirstEquipe: scoreFirst,
       scoreSecondEquipe: scoreSecond,
+      numberOfDiamondsBet: diamondsBet,
+      pointsEarned: 0,
     });
     await this.predictionRepository.save(prediction);
     return prediction;

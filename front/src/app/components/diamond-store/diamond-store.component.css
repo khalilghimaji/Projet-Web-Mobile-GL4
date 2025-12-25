@@ -1,0 +1,187 @@
+.diamond-store-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+    min-height: 100vh;
+}
+
+.store-header {
+    text-align: center;
+    margin-bottom: 3rem;
+    padding: 2rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 16px;
+    color: white;
+    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
+}
+
+.store-title {
+    font-size: 3rem;
+    margin: 0 0 1rem 0;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.store-subtitle {
+    font-size: 1.2rem;
+    margin: 0;
+    opacity: 0.95;
+}
+
+.packages-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+:host ::ng-deep .package-card {
+    position: relative;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border-radius: 12px;
+    overflow: visible;
+}
+
+:host ::ng-deep .package-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+}
+
+:host ::ng-deep .package-card.popular {
+    border: 3px solid #667eea;
+    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
+}
+
+.popular-badge {
+    position: absolute;
+    top: -12px;
+    right: 20px;
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 0.85rem;
+    box-shadow: 0 4px 12px rgba(245, 87, 108, 0.4);
+    z-index: 1;
+}
+
+.package-icon {
+    font-size: 4rem;
+    text-align: center;
+    padding: 2rem 0 1rem 0;
+    background: linear-gradient(to bottom, #f8f9fa, #ffffff);
+}
+
+.package-content {
+    text-align: center;
+    padding: 1.5rem 0;
+}
+
+.package-amount {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #333;
+    margin: 0 0 0.5rem 0;
+}
+
+.package-price {
+    font-size: 1.5rem;
+    color: #667eea;
+    font-weight: 600;
+    margin: 0;
+}
+
+:host ::ng-deep .p-card-footer {
+    padding-top: 0;
+}
+
+:host ::ng-deep .purchase-button {
+    width: 100%;
+}
+
+:host ::ng-deep .purchase-button.popular-button {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+}
+
+:host ::ng-deep .purchase-button.popular-button:hover {
+    background: linear-gradient(135deg, #5568d3 0%, #65408b 100%);
+}
+
+.store-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 2rem;
+    margin-top: 4rem;
+}
+
+.info-section {
+    background: #f8f9fa;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.info-section h3 {
+    font-size: 1.5rem;
+    color: #333;
+    margin-top: 0;
+    margin-bottom: 1rem;
+}
+
+.info-section ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.info-section ul li {
+    padding: 0.75rem 0;
+    padding-left: 1.5rem;
+    position: relative;
+    color: #555;
+    line-height: 1.6;
+}
+
+.info-section ul li::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    color: #667eea;
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+.info-section p {
+    color: #555;
+    line-height: 1.6;
+    margin: 0;
+}
+
+@media (max-width: 768px) {
+    .diamond-store-container {
+        padding: 1rem;
+    }
+
+    .store-title {
+        font-size: 2rem;
+    }
+
+    .store-subtitle {
+        font-size: 1rem;
+    }
+
+    .packages-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    .store-info {
+        grid-template-columns: 1fr;
+    }
+
+    .info-section {
+        padding: 1.5rem;
+    }
+}
