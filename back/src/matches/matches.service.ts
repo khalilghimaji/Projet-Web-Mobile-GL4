@@ -37,7 +37,33 @@ export class MatchesService {
     }
     return this.matchRepository.save(match);
   }
+  async canPredict(
+    userId: string,
+    matchId: string,
+    numberOfDiamondsBet: number,
+  ) {
+    const match = await this.matchRepository.findOne({
+      where: { id: matchId },
+    });
+    if (!match) return false;
+    if (match.status !== MatchStatus.ONGOING) return false;
 
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) return false;
+    if (user.diamonds < numberOfDiamondsBet) return false;
+
+    const exists = await this.predictionRepository.exists({
+      where: {
+        userId,
+        matchId,
+      },
+    });
+
+    if (exists) {
+      return false;
+    }
+    return true;
+  }
   async disableMatch(id: string): Promise<Match> {
     const match = await this.matchRepository.findOne({ where: { id } });
     if (!match) throw new NotFoundException('Match not found');
@@ -80,25 +106,28 @@ export class MatchesService {
     actualScoreFirst: number,
     actualScoreSecond: number,
   ): Promise<Match> {
-    const match = await this.matchRepository.findOne({
-      where: { id },
-      relations: ['predictions', 'predictions.user'],
-    });
-    if (!match) throw new NotFoundException('Match not found');
-    if (match.status !== MatchStatus.ONGOING)
-      throw new BadRequestException('Match is not ongoing');
-    match.scoreFirstTeam = actualScoreFirst;
-    match.scoreSecondTeam = actualScoreSecond;
+    if (actualScoreFirst > 0 || actualScoreSecond > 0) {
+      const match = await this.matchRepository.findOne({
+        where: { id },
+        relations: ['predictions', 'predictions.user'],
+      });
+      if (!match) throw new NotFoundException('Match not found');
+      if (match.status !== MatchStatus.ONGOING)
+        throw new BadRequestException('Match is not ongoing');
+      match.scoreFirstTeam = actualScoreFirst;
+      match.scoreSecondTeam = actualScoreSecond;
 
-    // Calculate gains
-    await this.predictionCalculator.calculateAndApplyGainsAtMatchUpdate(
-      match.predictions,
-      actualScoreFirst,
-      actualScoreSecond,
-      this.predictionRepository,
-    );
+      // Calculate gains
+      await this.predictionCalculator.calculateAndApplyGainsAtMatchUpdate(
+        match.predictions,
+        actualScoreFirst,
+        actualScoreSecond,
+        this.predictionRepository,
+      );
 
-    return this.matchRepository.save(match);
+      return this.matchRepository.save(match);
+    }
+    throw new BadRequestException('No score update provided');
   }
 
   async makePrediction(

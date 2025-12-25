@@ -94,16 +94,24 @@ export class SideMenuComponent implements OnInit, OnDestroy {
   private connectToSSE(): void {
     this.sseSubscription = this.notificationsApi
       .connectToSSE()
-      .pipe(filter((event) => event.type === 'CHANGE_OF_POSSESSED_GEMS'))
+      .pipe(
+        filter(
+          (event) =>
+            event.type === 'CHANGE_OF_POSSESSED_GEMS' ||
+            event.type === 'DIAMOND_UPDATE'
+        )
+      )
       .subscribe({
         next: (notification) => {
           if (
             notification.type === 'CHANGE_OF_POSSESSED_GEMS' &&
             notification.data?.newDiamonds
-          )
+          ) {
             this.diamonds.set(notification.data?.newDiamonds);
-          if (notification.type === 'DIAMOND_UPDATE' && notification.data?.gain)
+          }
+          if (notification.type === 'DIAMOND_UPDATE') {
             this.gainedDiamonds.set(notification.data?.gain);
+          }
         },
         error: (error) => {
           console.error('SSE error:', error);

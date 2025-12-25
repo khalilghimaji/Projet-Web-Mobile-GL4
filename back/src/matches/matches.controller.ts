@@ -1,4 +1,4 @@
-import { Controller, Post, Param, Body, UseGuards } from '@nestjs/common';
+import { Controller, Post, Param, Body, UseGuards, Get } from '@nestjs/common';
 import { MatchesService } from './matches.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { User } from '../Decorator/user.decorator';
@@ -18,6 +18,22 @@ export class MatchesController {
   @Post(':id/disable')
   async disableMatch(@Param('id') id: string) {
     return this.matchesService.disableMatch(id);
+  }
+
+  @Get('can-predict/:id')
+  async canPredict(
+    @User('id') userId: string,
+    @Param('id') matchId: string,
+    @Body()
+    boy: {
+      numberOfDiamondsBet: number;
+    },
+  ) {
+    return this.matchesService.canPredict(
+      userId,
+      matchId,
+      boy.numberOfDiamondsBet,
+    );
   }
 
   @Post(':id/terminate')

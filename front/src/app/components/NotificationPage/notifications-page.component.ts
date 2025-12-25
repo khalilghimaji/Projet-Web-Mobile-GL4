@@ -30,7 +30,11 @@ export class NotificationsPageComponent {
         map((res) => res.map((n) => ({ ...n, isRealTime: false }))),
         switchMap((initial) =>
           this.notificationsApi.connectToSSE().pipe(
-            filter((event) => event.type === 'CHANGE_OF_POSSESSED_GEMS'),
+            filter(
+              (event) =>
+                event.type === 'CHANGE_OF_POSSESSED_GEMS' ||
+                event.type === 'DIAMOND_UPDATE'
+            ),
             scan(
               (curr, notification) => [
                 { ...notification, isRealTime: true },
