@@ -67,10 +67,12 @@ export class TeamService {
    */
   getTeamResource(teamId: Signal<number>) {
 
-    const url = `${this.apiUrl}/?met=Teams&teamId=${teamId()}&APIkey=${this.apiKey}`;
+    
 
     return rxResource({
-      stream: () => {
+      params : teamId,
+      stream: (params) => {
+        const url = `${this.apiUrl}/?met=Teams&teamId=${params.params}&APIkey=${this.apiKey}`;
         return this.http.get<ApiResponse<Team>>(url).pipe(
           map(response => this.transformTeamResponse(response))
         );
@@ -89,11 +91,11 @@ export class TeamService {
     
     const from = this.formatDate(pastDate);
     const to = this.formatDate(today);
-    const url = `${this.apiUrl}/?met=Fixtures&teamId=${teamId()}&from=${from}&to=${to}&APIkey=${this.apiKey}`;
 
     return rxResource({
-      stream: () => {
-        return this.http.get<ApiResponse<Fixture>>(url).pipe(
+      params: teamId,
+      stream: (params) => {
+        return this.http.get<ApiResponse<Fixture>>(`${this.apiUrl}/?met=Fixtures&teamId=${params.params}&from=${from}&to=${to}&APIkey=${this.apiKey}`).pipe(
           map(response => this.transformFixturesResponse(response))
         );
       }
@@ -113,34 +115,17 @@ export class TeamService {
     const url = `${this.apiUrl}/?met=Fixtures&teamId=${teamId()}&from=${from}&to=${to}&APIkey=${this.apiKey}`;
 
     return rxResource({
-      stream: () => {
-        return this.http.get<ApiResponse<Fixture>>(url).pipe(
+      params: teamId,
+      stream: (params) => {
+        return this.http.get<ApiResponse<Fixture>>(`${this.apiUrl}/?met=Fixtures&teamId=${params.params}&from=${from}&to=${to}&APIkey=${this.apiKey}`).pipe(
           map(response => this.transformNextMatchResponse(response))
         );
       }
     });
   }
 
-  /**
-   * Get standings using resource
-   */
-  getStandingsResource(leagueId: Signal<number | undefined>) {
-    const id = leagueId();
-    const url = id ? `${this.apiUrl}/?met=Standings&leagueId=${id}&APIkey=${this.apiKey}` : '';
-
-    return rxResource({
-      stream: () => {
-        if (!url) {
-          return this.http.get<ApiResponse<Standing>>('').pipe(
-            map(() => [])
-          );
-        }
-        return this.http.get<ApiResponse<Standing>>(url).pipe(
-          map(response => this.transformStandingsResponse(response))
-        );
-      }
-    });
-  }
+  
+  
 
   /**
    * Format date to yyyy-mm-dd

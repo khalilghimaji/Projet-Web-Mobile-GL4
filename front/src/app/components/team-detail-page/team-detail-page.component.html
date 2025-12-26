@@ -11,8 +11,7 @@
   @else if (teamResource.error()) {
   <div class="error-container">
     <div class="error-card">
-      <h2>❌ Error Loading Team</h2>
-      <p>{{ teamResource.error() }}</p>
+      <h2>Error Loading Team</h2>
     </div>
   </div>
   }
@@ -20,377 +19,33 @@
   <!-- Team Data -->
   @else if (teamResource.value(); as team) {
   <div class="team-content">
-    <!-- Team Header -->
-    <section class="team-header">
-      <div class="team-header-content">
-        <div class="team-logo-wrapper">
-          @if (team.team_logo) {
-          <img
-            [src]="team.team_logo"
-            [alt]="team.team_name"
-            class="team-logo"
-          />
-          } @else {
-          <div class="team-logo-placeholder">
-            <span>{{ team.team_name.charAt(0) }}</span>
-          </div>
-          }
-        </div>
-        <div class="team-info">
-          <h1 class="team-name">{{ team.team_name }}</h1>
-          <div class="team-stats">
-            <div class="stat-item">
-              <span class="stat-label">Team ID</span>
-              <span class="stat-value">{{ team.team_key }}</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-label">Squad Size</span>
-              <span class="stat-value">{{ team.players?.length || 0 }}</span>
-            </div>
-            @if (team.coaches && team.coaches.length > 0) {
-            <div class="stat-item">
-              <span class="stat-label">Coach</span>
-              <span class="stat-value">{{ team.coaches[0].coach_name }}</span>
-            </div>
-            }
-          </div>
-        </div>
-      </div>
-    </section>
+    <!-- Navigation Buttons -->
+    <div class="navigation-buttons">
+      <button class="nav-btn prev-btn" (click)="decrementTeamId()">
+        ← Previous Team ({{ teamId() - 1 }})
+      </button>
+      <span class="current-team-id">Current Team ID: {{ teamId() }}</span>
+      <button class="nav-btn next-btn" (click)="incrementTeamId()">
+        Next Team ({{ teamId() + 1 }}) →
+      </button>
+    </div>
 
-    <!-- Next Match -->
+    <!-- Team Header Section -->
+    <app-team-header [team]="team" />
+
+    <!-- Next Match Section -->
     @if (nextMatchResource.value(); as nextMatch) {
-    <section class="next-match-section">
-      <h2 class="section-title">⚽ Next Match</h2>
-      <div class="next-match-card">
-        <div class="match-date">
-          <span class="date">{{ nextMatch.event_date }}</span>
-          <span class="time">{{ nextMatch.event_time }}</span>
-        </div>
-        <div class="match-teams">
-          <div class="team-container">
-            <img
-              [src]="nextMatch.home_team_logo"
-              [alt]="nextMatch.event_home_team"
-              class="match-team-logo"
-            />
-            <span class="match-team-name">{{ nextMatch.event_home_team }}</span>
-          </div>
-          <span class="vs">VS</span>
-          <div class="team-container">
-            <img
-              [src]="nextMatch.away_team_logo"
-              [alt]="nextMatch.event_away_team"
-              class="match-team-logo"
-            />
-            <span class="match-team-name">{{ nextMatch.event_away_team }}</span>
-          </div>
-        </div>
-        <div class="match-info">
-          <span class="league">{{ nextMatch.league_name }}</span>
-          <span class="stadium">{{ nextMatch.event_stadium || "TBD" }}</span>
-        </div>
-      </div>
-    </section>
+    <app-next-match [match]="nextMatch" />
     }
 
-    <!-- Recent Matches -->
+    <!-- Recent Matches Section -->
     @if (matchesResource.value(); as recentMatches) {
-    <section class="recent-matches-section">
-      <h2 class="section-title">📊 Recent Matches</h2>
-      <div class="matches-grid">
-        @for (match of recentMatches.slice(0, 10); track match.event_key) {
-        <div
-          class="match-card"
-          [class.win]="isWin(match, team.team_key)"
-          [class.draw]="isDraw(match)"
-          [class.loss]="isLoss(match, team.team_key)"
-        >
-          <div class="match-header">
-            <span class="match-date">{{ match.event_date }}</span>
-            <span class="match-league">{{ match.league_name }}</span>
-          </div>
-          <div class="match-teams-compact">
-            <div class="team-line">
-              <span class="team-name">{{ match.event_home_team }}</span>
-              <span class="score">{{
-                match.event_final_result.split("-")[0] || "-"
-              }}</span>
-            </div>
-            <div class="team-line">
-              <span class="team-name">{{ match.event_away_team }}</span>
-              <span class="score">{{
-                match.event_final_result.split("-")[1] || "-"
-              }}</span>
-            </div>
-          </div>
-          <div class="match-result">
-            {{ getMatchResult(match, team.team_key) }}
-          </div>
-        </div>
-        }
-      </div>
-    </section>
+    <app-recent-matches [matches]="recentMatches" [teamKey]="team.team_key" />
     }
 
-    <!-- Squad -->
+    <!-- Squad Section -->
     @if (team.players && team.players.length > 0) {
-    <section class="squad-section">
-      <h2 class="section-title">👥 Squad</h2>
-
-      <!-- Goalkeepers -->
-      <div class="position-group">
-        <h3 class="position-title">Goalkeepers</h3>
-        <div class="players-grid">
-          @for (player of getPlayersByPosition(team.players, 'Goalkeepers');
-          track player.player_key) {
-          <div class="player-card">
-            <div class="player-header">
-              @if (player.player_image) {
-              <img
-                [src]="player.player_image"
-                [alt]="player.player_name"
-                class="player-image"
-              />
-              } @else {
-              <div class="player-image-placeholder">
-                <span>{{ player.player_name.charAt(0) }}</span>
-              </div>
-              }
-              <div class="player-info">
-                <div class="player-name">{{ player.player_name }}</div>
-                <div class="player-meta">
-                  <span class="player-number"
-                    >#{{ player.player_number || "N/A" }}</span
-                  >
-                  <span class="player-age">{{ player.player_age }} years</span>
-                </div>
-              </div>
-            </div>
-            @if (player.player_match_played && player.player_match_played !==
-            '') {
-            <div class="player-stats">
-              <div class="stat">
-                <span class="stat-label">Matches</span>
-                <span class="stat-value">{{ player.player_match_played }}</span>
-              </div>
-              <div class="stat">
-                <span class="stat-label">Saves</span>
-                <span class="stat-value">{{ player.player_saves || "0" }}</span>
-              </div>
-              <div class="stat">
-                <span class="stat-label">Rating</span>
-                <span class="stat-value">{{
-                  player.player_rating || "N/A"
-                }}</span>
-              </div>
-            </div>
-            } @if (player.player_injured === 'Yes') {
-            <div class="player-injury">🚑 Injured</div>
-            }
-          </div>
-          }
-        </div>
-      </div>
-
-      <!-- Defenders -->
-      <div class="position-group">
-        <h3 class="position-title">Defenders</h3>
-        <div class="players-grid">
-          @for (player of getPlayersByPosition(team.players, 'Defenders'); track
-          player.player_key) {
-          <div class="player-card">
-            <div class="player-header">
-              @if (player.player_image) {
-              <img
-                [src]="player.player_image"
-                [alt]="player.player_name"
-                class="player-image"
-              />
-              } @else {
-              <div class="player-image-placeholder">
-                <span>{{ player.player_name.charAt(0) }}</span>
-              </div>
-              }
-              <div class="player-info">
-                <div class="player-name">
-                  {{ player.player_name }} @if (player.player_is_captain ===
-                  '1') {
-                  <span class="captain-badge">©</span>
-                  }
-                </div>
-                <div class="player-meta">
-                  <span class="player-number"
-                    >#{{ player.player_number || "N/A" }}</span
-                  >
-                  <span class="player-age">{{ player.player_age }} years</span>
-                </div>
-              </div>
-            </div>
-            @if (player.player_match_played && player.player_match_played !==
-            '') {
-            <div class="player-stats">
-              <div class="stat">
-                <span class="stat-label">Matches</span>
-                <span class="stat-value">{{ player.player_match_played }}</span>
-              </div>
-              <div class="stat">
-                <span class="stat-label">Goals</span>
-                <span class="stat-value">{{ player.player_goals || "0" }}</span>
-              </div>
-              <div class="stat">
-                <span class="stat-label">Assists</span>
-                <span class="stat-value">{{
-                  player.player_assists || "0"
-                }}</span>
-              </div>
-              <div class="stat">
-                <span class="stat-label">Rating</span>
-                <span class="stat-value">{{
-                  player.player_rating || "N/A"
-                }}</span>
-              </div>
-            </div>
-            } @if (player.player_injured === 'Yes') {
-            <div class="player-injury">🚑 Injured</div>
-            }
-          </div>
-          }
-        </div>
-      </div>
-
-      <!-- Midfielders -->
-      <div class="position-group">
-        <h3 class="position-title">Midfielders</h3>
-        <div class="players-grid">
-          @for (player of getPlayersByPosition(team.players, 'Midfielders');
-          track player.player_key) {
-          <div class="player-card">
-            <div class="player-header">
-              @if (player.player_image) {
-              <img
-                [src]="player.player_image"
-                [alt]="player.player_name"
-                class="player-image"
-              />
-              } @else {
-              <div class="player-image-placeholder">
-                <span>{{ player.player_name.charAt(0) }}</span>
-              </div>
-              }
-              <div class="player-info">
-                <div class="player-name">
-                  {{ player.player_name }} @if (player.player_is_captain ===
-                  '1') {
-                  <span class="captain-badge">©</span>
-                  }
-                </div>
-                <div class="player-meta">
-                  <span class="player-number"
-                    >#{{ player.player_number || "N/A" }}</span
-                  >
-                  <span class="player-age">{{ player.player_age }} years</span>
-                </div>
-              </div>
-            </div>
-            @if (player.player_match_played && player.player_match_played !==
-            '') {
-            <div class="player-stats">
-              <div class="stat">
-                <span class="stat-label">Matches</span>
-                <span class="stat-value">{{ player.player_match_played }}</span>
-              </div>
-              <div class="stat">
-                <span class="stat-label">Goals</span>
-                <span class="stat-value">{{ player.player_goals || "0" }}</span>
-              </div>
-              <div class="stat">
-                <span class="stat-label">Assists</span>
-                <span class="stat-value">{{
-                  player.player_assists || "0"
-                }}</span>
-              </div>
-              <div class="stat">
-                <span class="stat-label">Rating</span>
-                <span class="stat-value">{{
-                  player.player_rating || "N/A"
-                }}</span>
-              </div>
-            </div>
-            } @if (player.player_injured === 'Yes') {
-            <div class="player-injury">🚑 Injured</div>
-            }
-          </div>
-          }
-        </div>
-      </div>
-
-      <!-- Forwards -->
-      <div class="position-group">
-        <h3 class="position-title">Forwards</h3>
-        <div class="players-grid">
-          @for (player of getPlayersByPosition(team.players, 'Forwards'); track
-          player.player_key) {
-          <div class="player-card">
-            <div class="player-header">
-              @if (player.player_image) {
-              <img
-                [src]="player.player_image"
-                [alt]="player.player_name"
-                class="player-image"
-              />
-              } @else {
-              <div class="player-image-placeholder">
-                <span>{{ player.player_name.charAt(0) }}</span>
-              </div>
-              }
-              <div class="player-info">
-                <div class="player-name">
-                  {{ player.player_name }} @if (player.player_is_captain ===
-                  '1') {
-                  <span class="captain-badge">©</span>
-                  }
-                </div>
-                <div class="player-meta">
-                  <span class="player-number"
-                    >#{{ player.player_number || "N/A" }}</span
-                  >
-                  <span class="player-age">{{ player.player_age }} years</span>
-                </div>
-              </div>
-            </div>
-            @if (player.player_match_played && player.player_match_played !==
-            '') {
-            <div class="player-stats">
-              <div class="stat">
-                <span class="stat-label">Matches</span>
-                <span class="stat-value">{{ player.player_match_played }}</span>
-              </div>
-              <div class="stat">
-                <span class="stat-label">Goals</span>
-                <span class="stat-value">{{ player.player_goals || "0" }}</span>
-              </div>
-              <div class="stat">
-                <span class="stat-label">Assists</span>
-                <span class="stat-value">{{
-                  player.player_assists || "0"
-                }}</span>
-              </div>
-              <div class="stat">
-                <span class="stat-label">Rating</span>
-                <span class="stat-value">{{
-                  player.player_rating || "N/A"
-                }}</span>
-              </div>
-            </div>
-            } @if (player.player_injured === 'Yes') {
-            <div class="player-injury">🚑 Injured</div>
-            }
-          </div>
-          }
-        </div>
-      </div>
-    </section>
+    <app-squad-section [players]="team.players" />
     }
   </div>
   }

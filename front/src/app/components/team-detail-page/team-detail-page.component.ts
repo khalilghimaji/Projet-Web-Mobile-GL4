@@ -1,14 +1,23 @@
-import { Component, ChangeDetectionStrategy, computed, inject} from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TeamService } from '../../services/team.service';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
-import { Team, Player, Fixture } from '../../models/models';
+import { TeamHeaderComponent } from '../team-header/team-header.component';
+import { NextMatchComponent } from '../next-match/next-match.component';
+import { RecentMatchesComponent } from '../recent-matches/recent-matches.component';
+import { SquadSectionComponent } from '../squad-section/squad-section.component';
 
 @Component({
   selector: 'app-team-detail-page',
-  imports: [CommonModule],
+  imports: [
+    CommonModule,
+    TeamHeaderComponent,
+    NextMatchComponent,
+    RecentMatchesComponent,
+    SquadSectionComponent
+  ],
   templateUrl: './team-detail-page.component.html',
   styleUrl: './team-detail-page.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -17,6 +26,8 @@ export class TeamDetailPageComponent {
 
   private readonly teamService = inject(TeamService);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  
   teamId = toSignal(
     this.route.params.pipe(map(params => Number(params['id']))),
     { requireSync: true }
@@ -28,49 +39,22 @@ export class TeamDetailPageComponent {
   nextMatchResource = this.teamService.getNextMatchResource(this.teamId);
 
   /**
-   * Filter players by position
+   * Navigate to next team (increment team ID)
    */
-  getPlayersByPosition(players: Player[], position: string): Player[] {
-    return players.filter(p => p.player_type === position);
+  incrementTeamId(): void {
+    const currentId = this.teamId();
+    const nextId = currentId + 1;
+    this.router.navigate(['/team', nextId]);
   }
 
   /**
-   * Check if match is a win for the team
+   * Navigate to previous team (decrement team ID)
    */
-  isWin(match: Fixture, teamKey: number): boolean {
-    if (!match.event_final_result) return false;
-    const [homeScore, awayScore] = match.event_final_result.split('-').map(Number);
-    const isHome = Number(match.home_team_key) == teamKey;
-    return isHome ? homeScore > awayScore : awayScore > homeScore;
-  }
-
-  /**
-   * Check if match is a draw
-   */
-  isDraw(match: Fixture): boolean {
-    if (!match.event_final_result) return false;
-    const [homeScore, awayScore] = match.event_final_result.split('-').map(Number);
-    return homeScore === awayScore;
-  }
-
-  /**
-   * Check if match is a loss for the team
-   */
-  isLoss(match: Fixture, teamKey: number): boolean {
-    if (!match.event_final_result) return false;
-    const [homeScore, awayScore] = match.event_final_result.split('-').map(Number);
-    const isHome = Number(match.home_team_key) === teamKey;
-    return isHome ? homeScore < awayScore : awayScore < homeScore;
-  }
-
-  /**
-   * Get match result text
-   */
-  getMatchResult(match: Fixture, teamKey: number): string {
-    if (!match.event_final_result) return 'N/A';
-    if (this.isWin(match, teamKey)) return 'WIN';
-    if (this.isDraw(match)) return 'DRAW';
-    if (this.isLoss(match, teamKey)) return 'LOSS';
-    return 'N/A';
+  decrementTeamId(): void {
+    const currentId = this.teamId();
+    const prevId = currentId - 1;
+    if (prevId > 0) {
+      this.router.navigate(['/team', prevId]);
+    }
   }
 }

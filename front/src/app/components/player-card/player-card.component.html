@@ -1,0 +1,59 @@
+<div class="player-card">
+  <div class="player-header">
+    @if (player().player_image) {
+    <img
+      [src]="player().player_image"
+      [alt]="player().player_name"
+      class="player-image"
+    />
+    } @else {
+    <div class="player-image-placeholder">
+      <span>{{ player().player_name.charAt(0) }}</span>
+    </div>
+    }
+    <div class="player-info">
+      <div class="player-name">
+        {{ player().player_name }}
+        @if (player().player_is_captain === '1') {
+        <span class="captain-badge">©</span>
+        }
+      </div>
+      <div class="player-meta">
+        <span class="player-number"
+          >#{{ player().player_number || "N/A" }}</span
+        >
+        <span class="player-age">{{ player().player_age }} years</span>
+      </div>
+    </div>
+  </div>
+
+  @if (player().player_match_played && player().player_match_played !== '') {
+  <div class="player-stats">
+    <div class="stat">
+      <span class="stat-label">Matches</span>
+      <span class="stat-value">{{ player().player_match_played }}</span>
+    </div>
+    @if (player().player_type === 'Goalkeepers') {
+    <div class="stat">
+      <span class="stat-label">Saves</span>
+      <span class="stat-value">{{ player().player_saves || "0" }}</span>
+    </div>
+    } @else {
+    <div class="stat">
+      <span class="stat-label">Goals</span>
+      <span class="stat-value">{{ player().player_goals || "0" }}</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">Assists</span>
+      <span class="stat-value">{{ player().player_assists || "0" }}</span>
+    </div>
+    }
+    <div class="stat">
+      <span class="stat-label">Rating</span>
+      <span class="stat-value">{{ player().player_rating || "N/A" }}</span>
+    </div>
+  </div>
+  } @if (player().player_injured === 'Yes') {
+  <div class="player-injury">🚑 Injured</div>
+  }
+</div>
