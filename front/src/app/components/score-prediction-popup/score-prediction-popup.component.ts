@@ -1,17 +1,28 @@
-import { Component, Input, OnInit, output, input } from '@angular/core';
+import { Component, Input, OnInit, output, input, inject } from '@angular/core';
 
-import { FormsModule } from '@angular/forms';
+import {
+  FormsModule,
+  ReactiveFormsModule,
+  FormBuilder,
+  FormGroup,
+  FormControl,
+  Validators,
+  AbstractControl,
+  ValidationErrors,
+} from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { InputNumberModule } from 'primeng/inputnumber';
+import { Observable, of } from 'rxjs';
+import { debounceTime, map, catchError } from 'rxjs/operators';
+import { MatchesService } from '../../services/Api';
+import { NotificationService } from '../../services/notification.service';
 
 export interface TeamPrediction {
-  team1Name: string;
-  team2Name: string;
-  team1Flag?: string;
-  team2Flag?: string;
   team1Score?: number;
   team2Score?: number;
+  matchId?: number;
+  numberOfDiamonds?: number;
 }
 
 @Component({
@@ -19,14 +30,15 @@ export interface TeamPrediction {
   standalone: true,
   imports: [
     FormsModule,
+    ReactiveFormsModule,
     DialogModule,
     ButtonModule,
-    InputNumberModule
-],
+    InputNumberModule,
+  ],
   templateUrl: './score-prediction-popup.component.html',
   styleUrls: ['./score-prediction-popup.component.css'],
 })
-export class ScorePredictionPopupComponent implements OnInit {
+export class ScorePredictionPopupComponent {
   @Input() visible = false;
   team1Name = input('');
   team2Name = input('');
@@ -36,13 +48,44 @@ export class ScorePredictionPopupComponent implements OnInit {
   visibleChange = output<boolean>();
   predictionSubmitted = output<TeamPrediction>();
 
-  team1Score: number = 0;
-  team2Score: number = 0;
+  @Input() matchId: number = 0;
 
-  ngOnInit(): void {
-    // Initialize scores to 0
-    this.team1Score = 0;
-    this.team2Score = 0;
+  private readonly matchesService = inject(MatchesService);
+  private readonly notificationService = inject(NotificationService);
+
+  predictionForm: FormGroup = new FormGroup({
+    team1Score: new FormControl(0, [Validators.min(0)]),
+    team2Score: new FormControl(0, [Validators.min(0)]),
+    matchId: new FormControl(this.matchId, [Validators.required]),
+    numberOfDiamonds: new FormControl(1, {
+      validators: [Validators.min(1)],
+      asyncValidators: [this.diamondAsyncValidator.bind(this)],
+      updateOn: 'blur',
+    }),
+  });
+
+  constructor() {}
+  diamondAsyncValidator(
+    control: AbstractControl
+  ): Observable<ValidationErrors | null> {
+    if (!control.value || control.value < 1 || control.pristine) {
+      return of(null);
+    }
+
+    const matchId = control.parent?.get('matchId')?.value || this.matchId;
+
+    return this.matchesService
+      .matchesControllerCanPredict(matchId, {
+        numberOfDiamondsBet: control.value,
+      })
+      .pipe(
+        map((canPredict) => {
+          return canPredict ? null : { insufficientDiamonds: true };
+        }),
+        catchError(() => {
+          return of({ invalidDiamond: true });
+        })
+      );
   }
 
   onHide(): void {
@@ -51,17 +94,39 @@ export class ScorePredictionPopupComponent implements OnInit {
   }
 
   onSubmit(): void {
-    const prediction: TeamPrediction = {
-      team1Name: this.team1Name(),
-      team2Name: this.team2Name(),
-      team1Flag: this.team1Flag(),
-      team2Flag: this.team2Flag(),
-      team1Score: this.team1Score,
-      team2Score: this.team2Score,
-    };
-
-    this.predictionSubmitted.emit(prediction);
-    this.onHide();
+    if (this.predictionForm.valid) {
+      const prediction: TeamPrediction = {
+        team1Score: this.predictionForm.value.team1Score,
+        team2Score: this.predictionForm.value.team2Score,
+        matchId: this.predictionForm.value.matchId,
+        numberOfDiamonds: this.predictionForm.value.numberOfDiamonds,
+      };
+      this.matchesService
+        .matchesControllerMakePrediction(String(prediction.matchId) || '0', {
+          scoreFirst: prediction.team1Score || 0,
+          scoreSecond: prediction.team2Score || 0,
+          numberOfDiamondsBet: prediction.numberOfDiamonds || 1,
+        })
+        .subscribe({
+          next: () => {
+            this.notificationService.showSuccess(
+              'Your prediction has been saved successfully!'
+            );
+          },
+          error: (e) => {
+            console.error('Error saving prediction:', e);
+            this.notificationService.showError(
+              'There was an error saving your prediction. Please try again.'
+            );
+          },
+          complete: () => {
+            this.visible = false;
+            this.visibleChange.emit(false);
+          },
+        });
+      this.predictionSubmitted.emit(prediction);
+      this.onHide();
+    }
   }
 
   onCancel(): void {

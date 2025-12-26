@@ -15,7 +15,6 @@ import { NotificationsService } from './notifications.service';
 import { User } from 'src/Decorator/user.decorator';
 import { Request } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { JwtService } from '@nestjs/jwt';
 
 @Controller('notifications')
 @UseGuards(JwtAuthGuard)
@@ -26,7 +25,6 @@ export class NotificationsController implements OnModuleInit, OnModuleDestroy {
 
   constructor(
     private readonly notificationsService: NotificationsService,
-    private jwtService: JwtService,
   ) {
     this.heartbeat$ = interval(this.heartbeatInterval).pipe(
       map(() => new MessageEvent('heartbeat', { data: 'ping' })),

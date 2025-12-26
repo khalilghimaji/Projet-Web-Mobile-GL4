@@ -123,3 +123,17 @@
         font-size: 1.1rem;
     }
 }
+
+.error-message {
+    color: #ef4444;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+    display: block;
+}
+
+.validating-message {
+    color: #3b82f6;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+    display: block;
+}

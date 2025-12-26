@@ -9,9 +9,7 @@
  */
 
 
-export interface PredictDto { 
-    scoreFirst: number;
-    scoreSecond: number;
+export interface CanPredictMatchDto { 
     numberOfDiamondsBet: number;
 }
 

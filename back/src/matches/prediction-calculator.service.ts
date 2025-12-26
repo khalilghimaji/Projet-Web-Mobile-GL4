@@ -9,31 +9,91 @@ import { User } from 'src/auth/entities/user.entity';
 export class PredictionCalculatorService {
   constructor(private readonly notificationsService: NotificationsService) {}
 
-  async calculateAndApplyGains(
+  async calculateAndApplyGainsAtMatchEnd(
     predictions: Prediction[],
     actualScoreFirst: number,
     actualScoreSecond: number,
     userRepository: Repository<User>,
+    predictionRepository: Repository<Prediction>,
   ): Promise<void> {
+    const processes: Promise<void>[] = [];
+    for (const prediction of predictions) {
+      processes.push(
+        (async () => {
+          const gain = this.calculateGain(
+            prediction.scoreFirstEquipe,
+            prediction.scoreSecondEquipe,
+            actualScoreFirst,
+            actualScoreSecond,
+            prediction.numberOfDiamondsBet,
+          );
+          prediction.pointsEarned = 0;
+          await predictionRepository.save(prediction);
+          await this.notificationsService.notify({
+            userId: prediction.user.id,
+            type: NotificationType.DIAMOND_UPDATE,
+            message:
+              'The match ended. With the score ' +
+              `${actualScoreFirst} - ${actualScoreSecond}`,
+            data: { gain: 0, newDiamonds: 0 },
+          });
+          if (gain > 0) {
+            prediction.user.diamonds += gain;
+            await userRepository.save(prediction.user);
+            await this.notificationsService.notify({
+              userId: prediction.user.id,
+              type: NotificationType.CHANGE_OF_POSSESSED_GEMS,
+              message: `You gained ${gain} diamonds for your prediction! And now you have ${prediction.user.diamonds} diamonds.`,
+              data: { gain, newDiamonds: prediction.user.diamonds },
+            });
+          }
+        })(),
+      );
+    }
+    await Promise.all(processes);
+  }
+
+  async calculateAndApplyGainsAtMatchUpdate(
+    predictions: Prediction[],
+    actualScoreFirst: number,
+    actualScoreSecond: number,
+    predictionRepository: Repository<Prediction>,
+  ): Promise<void> {
+    const users = new Set<string>();
     for (const prediction of predictions) {
       const gain = this.calculateGain(
         prediction.scoreFirstEquipe,
         prediction.scoreSecondEquipe,
         actualScoreFirst,
         actualScoreSecond,
+        prediction.numberOfDiamondsBet,
       );
-
-      if (gain > 0) {
-        prediction.user.diamonds += gain;
-        await userRepository.save(prediction.user);
-        await this.notificationsService.notify({
-          userId: prediction.user.id,
-          type: NotificationType.CHANGE_OF_POSSESSED_GEMS,
-          message: `You gained ${gain} diamonds for your prediction! And now you have ${prediction.user.diamonds} diamonds.`,
-          data: { gain, newDiamonds: prediction.user.diamonds },
-        });
-      }
+      prediction.pointsEarned = gain;
+      await predictionRepository.save(prediction);
+      users.add(prediction.user.id);
     }
+    const notifications: Promise<void>[] = [];
+    for (const userId of users) {
+      notifications.push(
+        (async () => {
+          const result = await predictionRepository
+            .createQueryBuilder('prediction')
+            .select('SUM(prediction.pointsEarned)', 'sum')
+            .where('prediction.userId = :userId', { userId })
+            .getRawOne();
+          const sum = result.sum || 0;
+          await this.notificationsService.notify({
+            userId,
+            type: NotificationType.DIAMOND_UPDATE,
+            message:
+              'There was a match update of the match you predicted. And the new score is ' +
+              `${actualScoreFirst} - ${actualScoreSecond}`,
+            data: { gain: sum, newDiamonds: 0 },
+          });
+        })(),
+      );
+    }
+    await Promise.all(notifications);
   }
 
   private calculateGain(
@@ -41,6 +101,7 @@ export class PredictionCalculatorService {
     predSecond: number,
     actualFirst: number,
     actualSecond: number,
+    diamondsBet: number,
   ): number {
     // Exact match
     if (predFirst === actualFirst && predSecond === actualSecond) {

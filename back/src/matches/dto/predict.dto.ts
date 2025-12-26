@@ -6,4 +6,7 @@ export class PredictDto {
 
   @IsNumber()
   scoreSecond: number;
+
+  @IsNumber()
+  numberOfDiamondsBet: number;
 }

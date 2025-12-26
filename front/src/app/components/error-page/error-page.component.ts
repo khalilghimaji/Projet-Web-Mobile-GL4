@@ -27,9 +27,6 @@ export class ErrorPageComponent {
   private routeParams = toSignal(this.route.paramMap);
   private routeData = toSignal(this.route.data);
 
-  private readonly matchesService = inject(MatchesService);
-  private readonly notificationService = inject(NotificationService);
-
   // Computed error code from route or input
   errorCode = computed(() => {
     const routeCode = this.routeParams()?.get('code');
@@ -73,6 +70,8 @@ export class ErrorPageComponent {
     );
   });
 
+  // ================ this part is specific to demonstrate score prediction popup ==================
+
   // Score prediction popup state
   showPredictionDialog = signal(false);
 
@@ -81,43 +80,23 @@ export class ErrorPageComponent {
   team2Name = 'Real Madrid';
   team1Flag = 'https://flagcdn.com/w320/it.png';
   team2Flag = 'https://flagcdn.com/w320/es.png';
-
+  // ====================================  end ============================================
   constructor(private location: Location) {}
 
   goBack() {
     this.location.back();
   }
-
+  // ================ score prediction popup methods ==================
   openPredictionDialog() {
     this.showPredictionDialog.set(true);
   }
 
   onPredictionSubmitted(prediction: TeamPrediction) {
     console.log('Prediction submitted:', prediction);
-    const matchId = '123';
-    this.matchesService
-      .matchesControllerMakePrediction(matchId, {
-        scoreFirst: prediction.team1Score || 0,
-        scoreSecond: prediction.team2Score || 0,
-      })
-      .subscribe({
-        next: () => {
-          this.notificationService.showSuccess(
-            'Your prediction has been saved successfully!'
-          );
-        },
-        error: () => {
-          this.notificationService.showError(
-            'There was an error saving your prediction. Please try again.'
-          );
-        },
-        complete: () => {
-          this.showPredictionDialog.set(false);
-        },
-      });
   }
 
   onCloseDialog(event: any) {
     this.showPredictionDialog.set(false);
   }
+  // ===============================  end =================================================
 }

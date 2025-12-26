@@ -1,3 +1,5 @@
+export * from './canPredictMatchDto';
+export * from './dataMessage';
 export * from './disableMfaDto';
 export * from './forgotPasswordDto';
 export * from './forgotPasswordResponseDto';

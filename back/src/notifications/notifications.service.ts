@@ -26,6 +26,10 @@ export class NotificationsService {
   ) {}
 
   subscribe(userId: string): Observable<MessageEvent> {
+    const client = this.clients.get(userId);
+    if (client) {
+      return client.asObservable();
+    }
     const subject = new Subject<MessageEvent>();
     this.clients.set(userId, subject);
     console.log(`User ${userId} subscribed to SSE`);
@@ -52,7 +56,7 @@ export class NotificationsService {
       userId: payload.userId,
       type: payload.type,
       message: payload.message,
-      data: payload.data ? JSON.stringify(payload.data) : null,
+      data: payload.data,
       read: false,
     });
     return this.notificationRepository.save(notification);

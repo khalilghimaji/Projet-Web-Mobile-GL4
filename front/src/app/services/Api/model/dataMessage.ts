@@ -9,9 +9,8 @@
  */
 
 
-export interface PredictDto { 
-    scoreFirst: number;
-    scoreSecond: number;
-    numberOfDiamondsBet: number;
+export interface DataMessage { 
+    gain?: number;
+    newDiamonds?: number;
 }
 

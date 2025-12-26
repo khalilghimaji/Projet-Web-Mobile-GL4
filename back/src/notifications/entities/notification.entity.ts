@@ -1,11 +1,11 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-} from 'typeorm';
+import { Entity, Column } from 'typeorm';
 import { NotificationType } from '../../Enums/notification-type.enum';
 import { CommonEntity } from 'src/Common/Common.entity';
+
+class DataMessage {
+  gain?: number;
+  newDiamonds?: number;
+}
 
 @Entity()
 export class Notification extends CommonEntity {
@@ -22,7 +22,7 @@ export class Notification extends CommonEntity {
   message: string;
 
   @Column({ type: 'json', nullable: true })
-  data: any;
+  data?: DataMessage;
 
   @Column({ default: false })
   read: boolean;

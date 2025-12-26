@@ -125,9 +125,29 @@
             {{ userProfile.firstName }} {{ userProfile.lastName }}
           </div>
           <div class="profile-email">{{ userProfile.email }}</div>
-          <div class="diamonds-display">
-            <i class="pi pi-star"></i>
-            <span>{{ diamonds() }} Diamonds</span>
+          <div class="diamonds-container">
+            <div class="diamonds-display">
+              <i class="pi pi-diamond"></i>
+              <span class="diamonds-count">{{ diamonds() }}</span>
+              <span class="diamonds-label">Diamonds</span>
+            </div>
+            @if (gainedDiamonds() !== 0) {
+            <div
+              class="diamonds-badge"
+              [class.positive]="gainedDiamonds() > 0"
+              [class.negative]="gainedDiamonds() < 0"
+            >
+              <i
+                class="pi"
+                [class.pi-arrow-up]="gainedDiamonds() > 0"
+                [class.pi-arrow-down]="gainedDiamonds() < 0"
+              ></i>
+              <span
+                >{{ gainedDiamonds() > 0 ? "+" : ""
+                }}{{ gainedDiamonds() }}</span
+              >
+            </div>
+            }
           </div>
         </div>
       </div>
