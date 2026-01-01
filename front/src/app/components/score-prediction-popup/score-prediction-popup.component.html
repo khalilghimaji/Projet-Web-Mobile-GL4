@@ -141,6 +141,7 @@
         icon="pi pi-check"
         (onClick)="onSubmit()"
         severity="success"
+        [disabled]="predictionForm.invalid || predictionForm.pending"
       />
     </div>
   </ng-template>
