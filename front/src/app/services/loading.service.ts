@@ -36,6 +36,7 @@ export class LoadingService {
         if (event instanceof NavigationStart) {
           // Start with 20% progress when navigation begins
           this.progressSubject.next(20);
+          this.loadingSubject.next(true);
 
           // Simulate progress while waiting for navigation to complete
           let progress = 20;
@@ -53,7 +54,7 @@ export class LoadingService {
           event instanceof NavigationError
         ) {
           this.progressSubject.next(100);
-
+          this.loadingSubject.next(false);
           // Reset progress after a short delay
           setTimeout(() => {
             if (!this.loadingSubject.value) {

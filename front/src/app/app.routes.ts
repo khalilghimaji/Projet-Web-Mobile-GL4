@@ -96,6 +96,13 @@ export const routes: Routes = [
         (c) => c.ErrorPageComponent
       ),
   },
+  {
+    path: 'team/:id',
+    loadComponent: () =>
+      import('./components/team-detail-page/team-detail-page.component').then(
+        (c) => c.TeamDetailPageComponent
+      ),
+  },
   // Wildcard route for 404 - this should be the last route
   {
     path: '**',
