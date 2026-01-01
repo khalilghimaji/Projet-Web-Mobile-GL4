@@ -77,6 +77,14 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'rankings',
+    canActivate: [tokenValidationGuard],
+    loadComponent: () =>
+      import('./components/ranking-page/ranking-page.component').then(
+        (c) => c.RankingPageComponent
+      ),
+  },
+  {
     path: 'error',
     loadComponent: () =>
       import('./components/error-page/error-page.component').then(

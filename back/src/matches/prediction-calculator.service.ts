@@ -40,22 +40,18 @@ export class PredictionCalculatorService {
               `${actualScoreFirst} - ${actualScoreSecond}`,
             data: { gain: 0, newDiamonds: 0 },
           });
-          if (gain > 0) {
-            prediction.user.diamonds += gain;
-            prediction.user.score = prediction.user.diamonds;
-            await userRepository.save(prediction.user);
-            await this.notificationsService.notify({
-              userId: prediction.user.id,
-              type: NotificationType.CHANGE_OF_POSSESSED_GEMS,
-              message: `You gained ${gain} diamonds for your prediction! And now you have ${prediction.user.diamonds} diamonds.`,
-              data: { gain, newDiamonds: prediction.user.diamonds },
-            });
-          }
+          prediction.user.diamonds += gain;
+          await userRepository.save(prediction.user);
+          await this.notificationsService.notify({
+            userId: prediction.user.id,
+            type: NotificationType.CHANGE_OF_POSSESSED_GEMS,
+            message: `You gained ${gain} diamonds for your prediction! And now you have ${prediction.user.diamonds} diamonds.`,
+            data: { gain, newDiamonds: prediction.user.diamonds },
+          });
         })(),
       );
     }
     await Promise.all(processes);
-    await this.notifyUsersAboutRankingUpdate(userRepository);
   }
 
   async calculateAndApplyGainsAtMatchUpdate(
@@ -101,7 +97,10 @@ export class PredictionCalculatorService {
       );
     }
     await Promise.all(notifications);
-    await this.notifyUsersAboutRankingUpdate(userRepository);
+    await notifyUsersAboutRankingUpdate(
+      userRepository,
+      this.notificationsService,
+    );
   }
 
   private calculateGain(
@@ -145,32 +144,6 @@ export class PredictionCalculatorService {
 
     return 0;
   }
-
-  private async notifyUsersAboutRankingUpdate(
-    userRepository: Repository<User>,
-  ) {
-    const usersWithRankingsWithIds = await userRepository.find({
-      order: { score: 'DESC' },
-      select: ['firstName', 'lastName', 'score', 'imageUrl', 'id'],
-    });
-    const usersWithRankings: UserRanking[] = usersWithRankingsWithIds.map(
-      (user) => ({
-        firstName: user.firstName,
-        lastName: user.lastName,
-        score: user.score,
-        imageUrl: user.imageUrl,
-      }),
-    );
-    for (const user of usersWithRankingsWithIds) {
-      const rank = usersWithRankings.indexOf(user) + 1;
-      await this.notificationsService.notify({
-        userId: user.id,
-        type: NotificationType.RANKING_UPDATE,
-        message: `You are now at rank ${rank}.`,
-        data: { rankings: usersWithRankings },
-      });
-    }
-  }
 }
 async function updateRankingScore(
   id: string,
@@ -181,5 +154,31 @@ async function updateRankingScore(
   if (user) {
     user.score = user.diamonds + gain;
     await userRepository.save(user);
+  }
+}
+export async function notifyUsersAboutRankingUpdate(
+  userRepository: Repository<User>,
+  notificationsService: NotificationsService,
+) {
+  const usersWithRankingsWithIds = await userRepository.find({
+    order: { score: 'DESC' },
+    select: ['firstName', 'lastName', 'score', 'imageUrl', 'id'],
+  });
+  const usersWithRankings: UserRanking[] = usersWithRankingsWithIds.map(
+    (user) => ({
+      firstName: user.firstName,
+      lastName: user.lastName,
+      score: user.score,
+      imageUrl: user.imageUrl,
+    }),
+  );
+  for (const user of usersWithRankingsWithIds) {
+    const rank = usersWithRankingsWithIds.indexOf(user) + 1;
+    await notificationsService.notify({
+      userId: user.id,
+      type: NotificationType.RANKING_UPDATE,
+      message: `You are now at rank ${rank}.`,
+      data: { rankings: usersWithRankings },
+    });
   }
 }

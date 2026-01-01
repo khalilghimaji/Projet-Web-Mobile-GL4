@@ -66,6 +66,11 @@ export class SideMenuComponent implements OnInit, OnDestroy {
       route: '/diamond-store',
     },
     {
+      icon: 'pi pi-trophy',
+      label: 'Rankings',
+      route: '/rankings',
+    },
+    {
       icon: 'pi pi-shield',
       label: 'Security Settings',
       route: '/mfa-setup',

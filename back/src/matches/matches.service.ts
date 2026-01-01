@@ -9,7 +9,10 @@ import { Match } from './entities/match.entity';
 import { Prediction } from './entities/prediction.entity';
 import { User } from '../auth/entities/user.entity';
 import { MatchStatus } from '../Enums/matchstatus.enum';
-import { PredictionCalculatorService } from './prediction-calculator.service';
+import {
+  notifyUsersAboutRankingUpdate,
+  PredictionCalculatorService,
+} from './prediction-calculator.service';
 import { NotificationType } from 'src/Enums/notification-type.enum';
 import { NotificationsService } from 'src/notifications/notifications.service';
 
@@ -69,6 +72,7 @@ export class MatchesService {
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
     user.diamonds += numberOfDiamonds;
+    user.score += numberOfDiamonds;
     const newdiamonds = user.diamonds;
     await this.userRepository.save(user);
     await this.notificationsService.notify({
@@ -77,6 +81,10 @@ export class MatchesService {
       message: `You received ${numberOfDiamonds} diamonds!`,
       data: { gain: numberOfDiamonds, newDiamonds: newdiamonds },
     });
+    await notifyUsersAboutRankingUpdate(
+      this.userRepository,
+      this.notificationsService,
+    );
   }
   async disableMatch(id: string): Promise<Match> {
     const match = await this.matchRepository.findOne({ where: { id } });
@@ -137,7 +145,7 @@ export class MatchesService {
         actualScoreFirst,
         actualScoreSecond,
         this.predictionRepository,
-        this.userRepository
+        this.userRepository,
       );
 
       return this.matchRepository.save(match);
@@ -179,6 +187,7 @@ export class MatchesService {
 
     // Deduct diamonds
     user.diamonds -= diamondsBet;
+    user.score -= diamondsBet;
     await this.userRepository.save(user);
 
     await this.notificationsService.notify({
@@ -187,6 +196,11 @@ export class MatchesService {
       message: `You spent ${diamondsBet} diamonds for your prediction! And now you have ${user.diamonds} diamonds.`,
       data: { gain: -diamondsBet, newDiamonds: user.diamonds },
     });
+
+    await notifyUsersAboutRankingUpdate(
+      this.userRepository,
+      this.notificationsService,
+    );
 
     const prediction = this.predictionRepository.create({
       userId,
