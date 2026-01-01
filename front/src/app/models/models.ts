@@ -159,3 +159,17 @@ export interface GoalScoredEvent {
   league_id: string;
   timestamp: string;
 }
+
+export interface League {
+  league_key: string;
+  league_name: string;
+  country_key: string;
+  country_name: string;
+  league_logo: string;
+  country_logo: string;
+}
+
+export interface LeaguesResponse {
+  success: number;
+  result: League[];
+}

@@ -34,7 +34,13 @@ interface MenuItem {
 export class SideMenuComponent implements OnInit, OnDestroy {
   isMenuOpen = signal(false);
 
-  topMenuItems: MenuItem[] = [];
+  topMenuItems: MenuItem[] = [
+    {
+      icon: 'pi pi-chart-bar',
+      label: 'Standings',
+      route: '/standings',
+    },
+  ];
 
   authMenuItems: MenuItem[] = [
     {

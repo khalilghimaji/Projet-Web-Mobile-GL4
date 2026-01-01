@@ -3,13 +3,14 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { tap, catchError } from 'rxjs/operators';
 import { StandingsResponse } from '../models/models';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class StandingsService {
-  private readonly API_BASE_URL = 'https://apiv2.allsportsapi.com/football/';
-  private readonly API_KEY = '8f01fc8fbf36f8f0cd23b99599f781619766b438e180811708f8e0bb8f7f46c2';
+  private readonly API_BASE_URL = environment.allSportsApi.baseUrl;
+  private readonly API_KEY = environment.allSportsApi.apiKey;
 
   // Cache for standings data
   private standingsCache = new Map<string, BehaviorSubject<StandingsResponse | null>>();
@@ -23,12 +24,8 @@ export class StandingsService {
    * @returns Observable of StandingsResponse
    */
   getStandings(leagueId: string): Observable<StandingsResponse> {
-    const params = new HttpParams()
-      .set('met', 'Standings')
-      .set('APIkey', this.API_KEY)
-      .set('leagueId', leagueId);
-
-    return this.http.get<StandingsResponse>(this.API_BASE_URL, { params }).pipe(
+    const url = `${this.API_BASE_URL}/?met=Standings&leagueId=${leagueId}&APIkey=${this.API_KEY}`;
+    return this.http.get<StandingsResponse>(url).pipe(
       tap(response => {
         // Update cache
         this.updateCache(leagueId, response);
