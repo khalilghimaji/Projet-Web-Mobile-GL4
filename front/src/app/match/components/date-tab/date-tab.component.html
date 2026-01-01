@@ -1,0 +1,32 @@
+<button
+  class="flex flex-1 flex-col items-center justify-center pb-3 pt-2 relative"
+  [class.group]="!dateTab().isToday && !isSelected()"
+  (click)="tabClicked.emit(dateTab().date)"
+>
+  <span
+    class="text-xs font-medium mb-1"
+    [class.text-primary]="dateTab().isToday && isSelected()"
+    [class.font-bold]="dateTab().isToday && isSelected()"
+    [class.text-text-secondary]="!isSelected()"
+  >
+    {{ dateTab().isToday ? 'Today' : dateTab().dayName }}
+  </span>
+
+  <div
+    class="flex h-8 w-8 items-center justify-center rounded-full transition"
+    [class.bg-primary]="isSelected()"
+    [class.text-background-dark]="isSelected()"
+    [class.text-text-secondary]="!isSelected()"
+    [ngClass]="{
+      'shadow-[0_0_15px_rgba(13,242,128,0.3)]': isSelected(),
+      'group-hover:bg-surface-highlight/50': !isSelected()
+    }"
+  >
+    <span class="text-sm font-bold">{{ dateTab().dayNumber }}</span>
+  </div>
+
+  @if (isSelected()) {
+    <div class="absolute bottom-0 h-[3px] w-8 rounded-t-full bg-primary"></div>
+  }
+</button>
+

@@ -10,6 +10,12 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'fixtures',
+    loadComponent: () =>
+      import('./match/pages/fixtures/fixtures.page')
+        .then(m => m.FixturesPage),
+  },
+  {
     path: 'match/:id',
     loadComponent: () =>
       import('./match/pages/match-detail/match-detail.page')

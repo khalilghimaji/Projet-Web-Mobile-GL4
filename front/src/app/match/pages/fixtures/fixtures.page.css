@@ -1,0 +1,16 @@
+/* pages/fixtures/fixtures.page.css */
+
+:host {
+  display: block;
+  height: 100%;
+}
+
+/* Custom scrollbar hiding for cleaner mobile look */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

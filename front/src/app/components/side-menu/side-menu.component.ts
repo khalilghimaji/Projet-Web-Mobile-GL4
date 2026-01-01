@@ -36,6 +36,11 @@ export class SideMenuComponent implements OnInit, OnDestroy {
 
   topMenuItems: MenuItem[] = [
     {
+      icon: 'pi pi-calendar',
+      label: 'Fixtures',
+      route: '/fixtures',
+    },
+    {
       icon: 'pi pi-chart-bar',
       label: 'Standings',
       route: '/standings',
