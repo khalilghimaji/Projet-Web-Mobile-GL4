@@ -43,6 +43,7 @@ testem.log
 .DS_Store
 Thumbs.db
 
+generate-tree.ps1
 # Environment files with secrets
 .env
 .env.local
