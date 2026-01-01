@@ -1,6 +1,7 @@
 import { Entity, Column } from 'typeorm';
 import { NotificationType } from '../../Enums/notification-type.enum';
 import { CommonEntity } from 'src/Common/Common.entity';
+import { UserRankingMessage } from '../notifications.service';
 
 class DataMessage {
   gain?: number;
@@ -22,7 +23,7 @@ export class Notification extends CommonEntity {
   message: string;
 
   @Column({ type: 'json', nullable: true })
-  data?: DataMessage;
+  data?: DataMessage | UserRankingMessage;
 
   @Column({ default: false })
   read: boolean;

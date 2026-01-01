@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { Prediction } from './entities/prediction.entity';
-import { NotificationsService } from '../notifications/notifications.service';
+import {
+  NotificationsService,
+  UserRanking,
+} from '../notifications/notifications.service';
 import { NotificationType } from '../Enums/notification-type.enum';
 import { Repository } from 'typeorm';
 import { User } from 'src/auth/entities/user.entity';
@@ -39,6 +42,7 @@ export class PredictionCalculatorService {
           });
           if (gain > 0) {
             prediction.user.diamonds += gain;
+            prediction.user.score = prediction.user.diamonds;
             await userRepository.save(prediction.user);
             await this.notificationsService.notify({
               userId: prediction.user.id,
@@ -51,6 +55,7 @@ export class PredictionCalculatorService {
       );
     }
     await Promise.all(processes);
+    await this.notifyUsersAboutRankingUpdate(userRepository);
   }
 
   async calculateAndApplyGainsAtMatchUpdate(
@@ -58,8 +63,9 @@ export class PredictionCalculatorService {
     actualScoreFirst: number,
     actualScoreSecond: number,
     predictionRepository: Repository<Prediction>,
+    userRepository: Repository<User>,
   ): Promise<void> {
-    const users = new Set<string>();
+    const users = new Set<{ id: string; gain: number }>();
     for (const prediction of predictions) {
       const gain = this.calculateGain(
         prediction.scoreFirstEquipe,
@@ -70,7 +76,7 @@ export class PredictionCalculatorService {
       );
       prediction.pointsEarned = gain;
       await predictionRepository.save(prediction);
-      users.add(prediction.user.id);
+      users.add({ id: prediction.user.id, gain });
     }
     const notifications: Promise<void>[] = [];
     for (const userId of users) {
@@ -79,21 +85,23 @@ export class PredictionCalculatorService {
           const result = await predictionRepository
             .createQueryBuilder('prediction')
             .select('SUM(prediction.pointsEarned)', 'sum')
-            .where('prediction.userId = :userId', { userId })
+            .where('prediction.userId = :userId', { userId: userId.id })
             .getRawOne();
           const sum = result.sum || 0;
           await this.notificationsService.notify({
-            userId,
+            userId: userId.id,
             type: NotificationType.DIAMOND_UPDATE,
             message:
               'There was a match update of the match you predicted. And the new score is ' +
               `${actualScoreFirst} - ${actualScoreSecond}`,
             data: { gain: sum, newDiamonds: 0 },
           });
+          await updateRankingScore(userId.id, userId.gain, userRepository);
         })(),
       );
     }
     await Promise.all(notifications);
+    await this.notifyUsersAboutRankingUpdate(userRepository);
   }
 
   private calculateGain(
@@ -136,5 +144,42 @@ export class PredictionCalculatorService {
     }
 
     return 0;
+  }
+
+  private async notifyUsersAboutRankingUpdate(
+    userRepository: Repository<User>,
+  ) {
+    const usersWithRankingsWithIds = await userRepository.find({
+      order: { score: 'DESC' },
+      select: ['firstName', 'lastName', 'score', 'imageUrl', 'id'],
+    });
+    const usersWithRankings: UserRanking[] = usersWithRankingsWithIds.map(
+      (user) => ({
+        firstName: user.firstName,
+        lastName: user.lastName,
+        score: user.score,
+        imageUrl: user.imageUrl,
+      }),
+    );
+    for (const user of usersWithRankingsWithIds) {
+      const rank = usersWithRankings.indexOf(user) + 1;
+      await this.notificationsService.notify({
+        userId: user.id,
+        type: NotificationType.RANKING_UPDATE,
+        message: `You are now at rank ${rank}.`,
+        data: { rankings: usersWithRankings },
+      });
+    }
+  }
+}
+async function updateRankingScore(
+  id: string,
+  gain: number,
+  userRepository: Repository<User>,
+) {
+  const user = await userRepository.findOne({ where: { id } });
+  if (user) {
+    user.score = user.diamonds + gain;
+    await userRepository.save(user);
   }
 }

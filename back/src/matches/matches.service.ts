@@ -137,6 +137,7 @@ export class MatchesService {
         actualScoreFirst,
         actualScoreSecond,
         this.predictionRepository,
+        this.userRepository
       );
 
       return this.matchRepository.save(match);
