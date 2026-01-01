@@ -32,13 +32,21 @@ export class PredictionCalculatorService {
           );
           prediction.pointsEarned = 0;
           await predictionRepository.save(prediction);
+          const result = await predictionRepository
+            .createQueryBuilder('prediction')
+            .select('SUM(prediction.pointsEarned)', 'sum')
+            .where('prediction.userId = :userId', {
+              userId: prediction.user.id,
+            })
+            .getRawOne();
+          const sum = result.sum || 0;
           await this.notificationsService.notify({
             userId: prediction.user.id,
             type: NotificationType.DIAMOND_UPDATE,
             message:
               'The match ended. With the score ' +
               `${actualScoreFirst} - ${actualScoreSecond}`,
-            data: { gain: 0, newDiamonds: 0 },
+            data: { gain: sum, newDiamonds: 0 },
           });
           prediction.user.diamonds += gain;
           await userRepository.save(prediction.user);
@@ -92,7 +100,7 @@ export class PredictionCalculatorService {
               `${actualScoreFirst} - ${actualScoreSecond}`,
             data: { gain: sum, newDiamonds: 0 },
           });
-          await updateRankingScore(userId.id, userId.gain, userRepository);
+          await updateRankingScore(userId.id, sum, userRepository);
         })(),
       );
     }
@@ -152,7 +160,8 @@ async function updateRankingScore(
 ) {
   const user = await userRepository.findOne({ where: { id } });
   if (user) {
-    user.score = user.diamonds + gain;
+    const currentScore = Number(user.diamonds) || 0;
+    user.score = currentScore + Number(gain);
     await userRepository.save(user);
   }
 }
