@@ -6,219 +6,123 @@ This guide explains how to implement a league standings feature that:
 - Automatically refreshes standings when a `GOAL_SCORED` WebSocket event is received
 - Displays standings in three categories: Total, Home, and Away
 
+**Status:** ✅ Models & Service already implemented | 🔄 Component & WebSocket integration needed
+
 ---
 
 ## Table of Contents
-1. [Prerequisites](#prerequisites)
-2. [Step 1: Update Data Models](#step-1-update-data-models)
-3. [Step 2: Create Standings Service](#step-2-create-standings-service)
-4. [Step 3: Integrate WebSocket Service](#step-3-integrate-websocket-service)
-5. [Step 4: Create Standings Component](#step-4-create-standings-component)
-6. [Step 5: Add Routing](#step-5-add-routing)
-7. [Step 6: Update Navigation](#step-6-update-navigation)
-8. [Testing](#testing)
+1. [Current Implementation Status](#current-implementation-status)
+2. [Step 1: Create WebSocket Service for Live Events](#step-1-create-websocket-service-for-live-events)
+3. [Step 2: Create Standings Updater Service](#step-2-create-standings-updater-service)
+4. [Step 3: Create Standings Component](#step-3-create-standings-component)
+5. [Step 4: Add Routing](#step-4-add-routing)
+6. [Step 5: Update Navigation](#step-5-update-navigation)
+7. [Testing](#testing)
 
 ---
 
-## Prerequisites
+## Current Implementation Status
 
-Before starting, ensure you have:
-- Angular CLI installed
-- Access to AllSportsAPI with API key: `8f01fc8fbf36f8f0cd23b99599f781619766b438e180811708f8e0bb8f7f46c2`
-- WebSocket service configured for real-time events
-- HttpClient module configured in your app
+### ✅ Already Implemented
 
----
+#### Data Models (`src/app/models/models.ts`)
+The following interfaces are already defined:
+- ✅ `StandingEntry` - Individual team standing with all statistics
+- ✅ `StandingsResponse` - API response structure with total/home/away standings
+- ✅ `GoalScoredEvent` - WebSocket event structure for goal notifications
 
-## Step 1: Update Data Models
+#### Standings Service (`src/app/services/standings.service.ts`)
+The service is fully implemented with:
+- ✅ `getStandings(leagueId)` - Fetch standings from API
+- ✅ `getCachedStandings(leagueId)` - Get cached observable
+- ✅ `refreshStandings(leagueId)` - Refresh specific league
+- ✅ Caching mechanism with BehaviorSubject
+- ✅ API integration with AllSportsAPI
 
-### 1.1 Add Standing Interfaces to `src/app/models/models.ts`
-
+#### Environment Configuration (`src/environments/environment.development.ts`)
+Already configured:
 ```typescript
-export interface StandingEntry {
-  standing_place: string;
-  standing_place_type: string | null;
-  standing_team: string;
-  standing_P: string;  // Played
-  standing_W: string;  // Won
-  standing_D: string;  // Draw
-  standing_L: string;  // Lost
-  standing_F: string;  // Goals For
-  standing_A: string;  // Goals Against
-  standing_GD: string; // Goal Difference
-  standing_PTS: string; // Points
-  team_key: string;
-  league_key: string;
-  league_season: string;
-  league_round: string;
-  standing_updated?: string;
-  fk_stage_key?: string;
-  stage_name?: string;
-}
-
-export interface StandingsResponse {
-  success: number;
-  result: {
-    total: StandingEntry[];
-    home: StandingEntry[];
-    away: StandingEntry[];
-  };
-}
-
-export interface GoalScoredEvent {
-  type: 'GOAL_SCORED';
-  match_id: string;
-  minute: string;
-  scorer: string;
-  team: 'home' | 'away';
-  score: string;
-  home_team: string;
-  away_team: string;
-  league_id: string;
-  timestamp: string;
-}
+export const environment = {
+  production: false,
+  apiUrl: 'http://localhost:3003',
+  allSportsApi: {
+    baseUrl: 'https://apiv2.allsportsapi.com/football',
+    apiKey: '7332a37cfd2c93192d65d6bce5a60e8eaac3a148335af8c64da341727e8d5f3e'
+  }
+};
 ```
 
+### 🔄 Still Needed
+
+1. **WebSocket Service** - For listening to live goal events
+2. **Standings Updater Service** - To connect goals to standings refresh
+3. **Standings Component** - UI to display the standings
+4. **Routing** - Add routes for the standings page
+5. **Navigation** - Add links to side menu
+
 ---
 
-## Step 2: Create Standings Service
+## Step 1: Create WebSocket Service for Live Events
 
-### 2.1 Generate the Service
+The project already has WebSocket infrastructure for live matches. We'll create a similar service for goal events.
+
+### 1.1 Generate the Service
 
 ```bash
-ng generate service services/standings
-```
+ng generate service services/goal-events --skip-tests
 
-### 2.2 Implement Standings Service (`src/app/services/standings.service.ts`)
+### 1.2 Implement Goal Events Service (`src/app/services/goal-events.service.ts`)
 
-```typescript
-import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, BehaviorSubject } from 'rxjs';
-import { tap, catchError } from 'rxjs/operators';
-import { StandingsResponse } from '../models/models';
-
-@Injectable({
-  providedIn: 'root'
-})
-export class StandingsService {
-  private readonly API_BASE_URL = 'https://apiv2.allsportsapi.com/football/';
-  private readonly API_KEY = '8f01fc8fbf36f8f0cd23b99599f781619766b438e180811708f8e0bb8f7f46c2';
-  
-  // Cache for standings data
-  private standingsCache = new Map<string, BehaviorSubject<StandingsResponse | null>>();
-  
-  constructor(private http: HttpClient) {}
-
-  /**
-   * Fetch standings for a specific league
-   * @param leagueId - The league ID to fetch standings for
-   * @returns Observable of StandingsResponse
-   */
-  getStandings(leagueId: string): Observable<StandingsResponse> {
-    const params = new HttpParams()
-      .set('met', 'Standings')
-      .set('APIkey', this.API_KEY)
-      .set('leagueId', leagueId);
-
-    return this.http.get<StandingsResponse>(this.API_BASE_URL, { params }).pipe(
-      tap(response => {
-        // Update cache
-        this.updateCache(leagueId, response);
-      }),
-      catchError(error => {
-        console.error('Error fetching standings:', error);
-        throw error;
-      })
-    );
-  }
-
-  /**
-   * Get cached standings for a league
-   * @param leagueId - The league ID
-   * @returns BehaviorSubject of cached standings
-   */
-  getCachedStandings(leagueId: string): Observable<StandingsResponse | null> {
-    if (!this.standingsCache.has(leagueId)) {
-      this.standingsCache.set(leagueId, new BehaviorSubject<StandingsResponse | null>(null));
-      // Fetch initial data
-      this.getStandings(leagueId).subscribe();
-    }
-    return this.standingsCache.get(leagueId)!.asObservable();
-  }
-
-  /**
-   * Refresh standings for a specific league
-   * @param leagueId - The league ID to refresh
-   */
-  refreshStandings(leagueId: string): void {
-    this.getStandings(leagueId).subscribe();
-  }
-
-  /**
-   * Update cache with new standings data
-   */
-  private updateCache(leagueId: string, data: StandingsResponse): void {
-    if (!this.standingsCache.has(leagueId)) {
-      this.standingsCache.set(leagueId, new BehaviorSubject<StandingsResponse | null>(data));
-    } else {
-      this.standingsCache.get(leagueId)!.next(data);
-    }
-  }
-
-  /**
-   * Clear cache for a specific league or all leagues
-   */
-  clearCache(leagueId?: string): void {
-    if (leagueId) {
-      this.standingsCache.delete(leagueId);
-    } else {
-      this.standingsCache.clear();
-    }
-  }
-}
-```
-
----
-
-## Step 3: Integrate WebSocket Service
-
-### 3.1 Check for Existing WebSocket Service
-
-Check if you have a WebSocket service in `src/app/services/`. If not, create one:
-
-```bash
-ng generate service services/websocket
-```
-
-### 3.2 WebSocket Service Implementation
+Following the pattern used in `live-events.service.ts`, create a dedicated service for goal events:
 
 ```typescript
 import { Injectable } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
 import { GoalScoredEvent } from '../models/models';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
-export class WebsocketService {
+export class GoalEventsService {
   private socket: WebSocket | null = null;
   private goalScoredSubject = new Subject<GoalScoredEvent>();
+  private reconnectAttempts = 0;
+  private maxReconnectAttempts = 5;
   
   constructor() {}
 
   /**
-   * Connect to WebSocket server
+   * Connect to WebSocket server for goal events
+   * Replace 'wss://your-websocket-server.com/goals' with your actual WebSocket URL
    */
-  connect(url: string): void {
-    this.socket = new WebSocket(url);
+  connect(): void {
+    if (this.socket?.readyState === WebSocket.OPEN) {
+      console.log('Already connected to goal events WebSocket');
+      return;
+    }
+
+    // TODO: Replace with your actual WebSocket URL
+    const wsUrl = 'wss://your-websocket-server.com/goals'; 
+    
+    this.socket = new WebSocket(wsUrl);
+
+    this.socket.onopen = () => {
+      console.log('Connected to goal events WebSocket');
+      this.reconnectAttempts = 0;
+    };
 
     this.socket.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      
-      // Handle GOAL_SCORED events
-      if (data.type === 'GOAL_SCORED') {
-        this.goalScoredSubject.next(data as GoalScoredEvent);
+      try {
+        const data = JSON.parse(event.data);
+        
+        // Handle GOAL_SCORED events
+        if (data.type === 'GOAL_SCORED') {
+          console.log('Goal scored event received:', data);
+          this.goalScoredSubject.next(data as GoalScoredEvent);
+        }
+      } catch (error) {
+        console.error('Error parsing WebSocket message:', error);
       }
     };
 
@@ -227,7 +131,17 @@ export class WebsocketService {
     };
 
     this.socket.onclose = () => {
-      console.log('WebSocket connection closed');
+      console.log('Goal events WebSocket connection closed');
+      
+      // Attempt reconnection with exponential backoff
+      if (this.reconnectAttempts < this.maxReconnectAttempts) {
+        this.reconnectAttempts++;
+        const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000);
+        
+        console.log(`Reconnecting in ${delay}ms... (Attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
+        
+        setTimeout(() => this.connect(), delay);
+      }
     };
   }
 
@@ -245,45 +159,70 @@ export class WebsocketService {
     if (this.socket) {
       this.socket.close();
       this.socket = null;
+      this.reconnectAttempts = 0;
     }
   }
 }
 ```
 
-### 3.3 Create Standings Update Service
+---
 
-This service will listen to WebSocket events and trigger standings refresh:
+## Step 2: Create Standings Updater Service
+
+This service connects goal events to standings refresh.
+
+### 2.1 Generate the Service
 
 ```bash
-ng generate service services/standings-updater
+ng generate service services/standings-updater --skip-tests
 ```
+
+### 2.2 Implement Standings Updater (`src/app/services/standings-updater.service.ts`)
 
 ```typescript
 import { Injectable, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { WebsocketService } from './websocket.service';
+import { GoalEventsService } from './goal-events.service';
 import { StandingsService } from './standings.service';
+import { NotificationService } from './notification.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class StandingsUpdaterService implements OnDestroy {
   private subscription?: Subscription;
+  private activeLeagues = new Set<string>();
 
   constructor(
-    private websocketService: WebsocketService,
-    private standingsService: StandingsService
+    private goalEventsService: GoalEventsService,
+    private standingsService: StandingsService,
+    private notificationService: NotificationService
   ) {}
 
   /**
    * Start listening for goal events and auto-refresh standings
    */
   startListening(): void {
-    this.subscription = this.websocketService.onGoalScored().subscribe(event => {
+    if (this.subscription) {
+      return; // Already listening
+    }
+
+    // Connect to WebSocket
+    this.goalEventsService.connect();
+
+    // Subscribe to goal events
+    this.subscription = this.goalEventsService.onGoalScored().subscribe(event => {
       console.log('Goal scored! Refreshing standings for league:', event.league_id);
+      
+      // Show notification
+      this.notificationService.showInfo(
+        `${event.scorer} scored for ${event.team === 'home' ? event.home_team : event.away_team}! Score: ${event.score}`,
+        'Goal Scored'
+      );
       
       // Refresh standings for the affected league
       this.standingsService.refreshStandings(event.league_id);
+      this.activeLeagues.add(event.league_id);
     });
   }
 
@@ -293,7 +232,16 @@ export class StandingsUpdaterService implements OnDestroy {
   stopListening(): void {
     if (this.subscription) {
       this.subscription.unsubscribe();
+      this.subscription = undefined;
     }
+    this.goalEventsService.disconnect();
+  }
+
+  /**
+   * Get list of leagues that have had updates
+   */
+  getActiveLeagues(): string[] {
+    return Array.from(this.activeLeagues);
   }
 
   ngOnDestroy(): void {
@@ -304,29 +252,30 @@ export class StandingsUpdaterService implements OnDestroy {
 
 ---
 
-## Step 4: Create Standings Component
+## Step 3: Create Standings Component
 
-### 4.1 Generate Component
+### 3.1 Generate Component
 
 ```bash
-ng generate component components/league-standings
+ng generate component components/league-standings --skip-tests
 ```
 
-### 4.2 Component TypeScript (`league-standings.component.ts`)
+### 3.2 Component TypeScript (`src/app/components/league-standings/league-standings.component.ts`)
 
 ```typescript
-import { Component, OnInit, OnDestroy, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, OnDestroy, Input, inject } from '@angular/core';
+import { CommonModule, DatePipe } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { StandingsService } from '../../services/standings.service';
 import { StandingsUpdaterService } from '../../services/standings-updater.service';
 import { StandingEntry, StandingsResponse } from '../../models/models';
+import { LoadingComponent } from '../loading/loading.component';
 
 @Component({
   selector: 'app-league-standings',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, LoadingComponent, DatePipe],
   templateUrl: './league-standings.component.html',
   styleUrls: ['./league-standings.component.css']
 })
@@ -339,17 +288,14 @@ export class LeagueStandingsComponent implements OnInit, OnDestroy {
   error: string | null = null;
   
   private subscription?: Subscription;
-
-  constructor(
-    private route: ActivatedRoute,
-    private standingsService: StandingsService,
-    private standingsUpdater: StandingsUpdaterService
-  ) {}
+  private route = inject(ActivatedRoute);
+  private standingsService = inject(StandingsService);
+  private standingsUpdater = inject(StandingsUpdaterService);
 
   ngOnInit(): void {
     // Get league ID from route or input
     const routeLeagueId = this.route.snapshot.paramMap.get('leagueId');
-    const leagueId = this.leagueId || routeLeagueId || '1'; // Default to league 1
+    const leagueId = this.leagueId || routeLeagueId || '207'; // Default to Serie A (207)
 
     // Start listening for goal events
     this.standingsUpdater.startListening();
@@ -412,10 +358,110 @@ export class LeagueStandingsComponent implements OnInit, OnDestroy {
     
     return '';
   }
+
+  /**
+   * Check if goal difference is positive
+   */
+  isPositive(value: string): boolean {
+    return parseInt(value) > 0;
+  }
+
+  /**
+   * Check if goal difference is negative
+   */
+  isNegative(value: string): boolean {
+    return parseInt(value) < 0;
+  }
 }
 ```
 
-### 4.3 Component HTML (`league-standings.component.html`)
+### 3.3 Component HTML (`src/app/components/league-standings/league-standings.component.html`)
+
+```html
+<div class="standings-container">
+  <div class="standings-header">
+    <h2>League Standings</h2>
+    
+    <!-- View Toggle -->
+    <div class="view-toggle">
+      <button 
+        [class.active]="selectedView === 'total'"
+        (click)="setView('total')">
+        Overall
+      </button>
+      <button 
+        [class.active]="selectedView === 'home'"
+        (click)="setView('home')">
+        Home
+      </button>
+      <button 
+        [class.active]="selectedView === 'away'"
+        (click)="setView('away')">
+        Away
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-state">
+    <app-loading></app-loading>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error" class="error-state">
+    <p>{{ error }}</p>
+  </div>
+
+  <!-- Standings Table -->
+  <div *ngIf="!loading && !error && standings" class="standings-table">
+    <table>
+      <thead>
+        <tr>
+          <th class="position">#</th>
+          <th class="team">Team</th>
+          <th>P</th>
+          <th>W</th>
+          <th>D</th>
+          <th>L</th>
+          <th>GF</th>
+          <th>GA</th>
+          <th>GD</th>
+          <th class="points">Pts</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let standing of currentStandings" 
+            [class]="getPlaceTypeClass(standing.standing_place_type)">
+          <td class="position">{{ standing.standing_place }}</td>
+          <td class="team">
+            <span class="team-name">{{ standing.standing_team }}</span>
+            <span *ngIf="standing.standing_place_type" 
+                  class="place-type-badge">
+              {{ standing.standing_place_type }}
+            </span>
+          </td>
+          <td>{{ standing.standing_P }}</td>
+          <td>{{ standing.standing_W }}</td>
+          <td>{{ standing.standing_D }}</td>
+          <td>{{ standing.standing_L }}</td>
+          <td>{{ standing.standing_F }}</td>
+          <td>{{ standing.standing_A }}</td>
+          <td [class.positive]="isPositive(standing.standing_GD)" 
+              [class.negative]="isNegative(standing.standing_GD)">
+            {{ standing.standing_GD }}
+          </td>
+          <td class="points">{{ standing.standing_PTS }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Last Updated -->
+    <div *ngIf="currentStandings[0]?.standing_updated" class="last-updated">
+      Last updated: {{ currentStandings[0].standing_updated | date:'short' }}
+    </div>
+  </div>
+</div>
+```
 
 ```html
 <div class="standings-container">
@@ -503,7 +549,7 @@ export class LeagueStandingsComponent implements OnInit, OnDestroy {
 </div>
 ```
 
-### 4.4 Component CSS (`league-standings.component.css`)
+### 3.4 Component CSS (`src/app/components/league-standings/league-standings.component.css`)
 
 ```css
 .standings-container {
@@ -694,83 +740,119 @@ tbody td {
 
 ---
 
-## Step 5: Add Routing
+## Step 4: Add Routing
 
-### 5.1 Update `src/app/app.routes.ts`
+Update `src/app/app.routes.ts` to include the standings route:
 
 ```typescript
-import { Routes } from '@angular/router';
-import { LeagueStandingsComponent } from './components/league-standings/league-standings.component';
+{
+  path: 'standings/:leagueId',
+  loadComponent: () =>
+    import('./components/league-standings/league-standings.component').then(
+      (c) => c.LeagueStandingsComponent
+    ),
+},
+{
+  path: 'standings',
+  loadComponent: () =>
+    import('./components/league-standings/league-standings.component').then(
+      (c) => c.LeagueStandingsComponent
+    ),
+},
+```
 
-export const routes: Routes = [
-  // ... existing routes
-  {
-    path: 'standings/:leagueId',
-    component: LeagueStandingsComponent
-  },
-  {
-    path: 'standings',
-    component: LeagueStandingsComponent
-  },
-  // ... other routes
-];
+**Full example placement** (add before the wildcard `**` route):
+
+```typescript
+{
+  path: 'team/:id',
+  loadComponent: () =>
+    import('./components/team-detail-page/team-detail-page.component').then(
+      (c) => c.TeamDetailPageComponent
+    ),
+},
+{
+  path: 'standings/:leagueId',
+  canActivate: [tokenValidationGuard], // Optional: if you want to protect this route
+  loadComponent: () =>
+    import('./components/league-standings/league-standings.component').then(
+      (c) => c.LeagueStandingsComponent
+    ),
+},
+{
+  path: 'standings',
+  canActivate: [tokenValidationGuard], // Optional
+  loadComponent: () =>
+    import('./components/league-standings/league-standings.component').then(
+      (c) => c.LeagueStandingsComponent
+    ),
+},
+// Wildcard route for 404 - this should be the last route
+{
+  path: '**',
+  loadComponent: () =>
+    import('./components/error-page/error-page.component').then(
+      (c) => c.ErrorPageComponent
+    ),
+  data: { errorCode: 404 },
+},
 ```
 
 ---
 
-## Step 6: Update Navigation
+## Step 5: Update Navigation
 
-### 6.1 Add Standings Link to Side Menu
+Add a standings link to your side menu component.
 
-Update your side menu component to include a link to standings:
+### 5.1 Update Side Menu HTML
+
+Find your side menu component (likely `src/app/components/side-menu/`) and add:
 
 ```html
-<a routerLink="/standings/1" routerLinkActive="active">
+<a routerLink="/standings/207" routerLinkActive="active" class="menu-item">
   <span class="icon">📊</span>
-  <span>Standings</span>
+  <span class="label">Standings</span>
 </a>
 ```
 
+**Common League IDs:**
+- Premier League: `152`
+- La Liga: `302`
+- Serie A: `207`
+- Bundesliga: `175`
+- Ligue 1: `168`
+
 ---
 
-## Step 7: Initialize WebSocket in App Component
+## Step 6: Initialize Goal Events in App Component
 
-### 7.1 Update `src/app/app.component.ts`
+Update your main app component to start listening for goal events.
+
+### 6.1 Update `src/app/app.component.ts`
 
 ```typescript
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { WebsocketService } from './services/websocket.service';
-import { environment } from '../environments/environment';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { StandingsUpdaterService } from './services/standings-updater.service';
 
 @Component({
   selector: 'app-root',
-  // ...
+  // ... existing config
 })
 export class AppComponent implements OnInit, OnDestroy {
-  
-  constructor(private websocketService: WebsocketService) {}
+  private standingsUpdater = inject(StandingsUpdaterService);
 
   ngOnInit(): void {
-    // Connect to WebSocket server
-    // Replace with your actual WebSocket URL
-    const wsUrl = environment.websocketUrl || 'ws://your-websocket-server.com';
-    this.websocketService.connect(wsUrl);
+    // Start listening for goal events globally
+    this.standingsUpdater.startListening();
   }
 
   ngOnDestroy(): void {
-    this.websocketService.disconnect();
+    this.standingsUpdater.stopListening();
   }
 }
 ```
 
-### 7.2 Update `src/environments/environment.ts`
-
-```typescript
-export const environment = {
-  production: false,
-  websocketUrl: 'ws://localhost:8080' // Replace with your WebSocket URL
-};
-```
+**Note:** This will start listening for goal events globally. If you only want to listen when on the standings page, skip this step and the component will handle it.
 
 ---
 
@@ -778,18 +860,29 @@ export const environment = {
 
 ### Manual Testing Steps
 
-1. **Test Basic Standings Display**
+1. **Start the Development Server**
+   ```bash
+   cd front
+   npm start
+   ```
+   Or:
    ```bash
    ng serve
    ```
-   Navigate to `http://localhost:4200/standings/1` to view standings for league ID 1.
 
-2. **Test View Switching**
+2. **Test Basic Standings Display**
+   - Navigate to `http://localhost:4200/standings/207`
+   - Verify standings load correctly
+   - Check that all columns display properly
+
+3. **Test View Switching**
    - Click on "Overall", "Home", and "Away" tabs
-   - Verify that standings update correctly
+   - Verify that standings update correctly for each view
+   - Check that the active tab is highlighted
 
-3. **Test WebSocket Integration**
-   - Simulate a GOAL_SCORED event from your WebSocket server:
+4. **Test WebSocket Integration** (requires WebSocket server)
+   - Update `goal-events.service.ts` with your actual WebSocket URL
+   - Trigger a GOAL_SCORED event from your server:
    ```json
    {
      "type": "GOAL_SCORED",
@@ -800,88 +893,76 @@ export const environment = {
      "score": "1-0",
      "home_team": "Barcelona",
      "away_team": "Real Madrid",
-     "league_id": "1",
+     "league_id": "207",
      "timestamp": "2024-01-15T20:23:00Z"
    }
    ```
-   - Verify that standings refresh automatically
+   - Verify notification appears
+   - Verify standings refresh automatically
 
-4. **Test Error Handling**
-   - Disconnect from the internet
+5. **Test Error Handling**
+   - Use an invalid league ID (e.g., `/standings/99999`)
    - Verify error message displays correctly
-   - Reconnect and verify recovery
 
-### Unit Testing
+6. **Test Responsive Design**
+   - Resize browser window
+   - Check mobile view
+   - Verify table is scrollable on small screens
 
-Generate test file and add tests:
+### Browser Console Testing
 
-```typescript
-// league-standings.component.spec.ts
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { LeagueStandingsComponent } from './league-standings.component';
-import { StandingsService } from '../../services/standings.service';
-import { of } from 'rxjs';
+Open browser DevTools and run:
 
-describe('LeagueStandingsComponent', () => {
-  let component: LeagueStandingsComponent;
-  let fixture: ComponentFixture<LeagueStandingsComponent>;
-  let standingsService: jasmine.SpyObj<StandingsService>;
+```javascript
+// Check if service is loaded
+const standingsService = document.querySelector('app-league-standings')?.__ngContext__?.[8]?.standingsService;
+console.log('Service:', standingsService);
 
-  beforeEach(async () => {
-    const standingsServiceSpy = jasmine.createSpyObj('StandingsService', [
-      'getCachedStandings'
-    ]);
-
-    await TestBed.configureTestingModule({
-      imports: [LeagueStandingsComponent],
-      providers: [
-        { provide: StandingsService, useValue: standingsServiceSpy }
-      ]
-    }).compileComponents();
-
-    standingsService = TestBed.inject(StandingsService) as jasmine.SpyObj<StandingsService>;
-    fixture = TestBed.createComponent(LeagueStandingsComponent);
-    component = fixture.componentInstance;
-  });
-
-  it('should create', () => {
-    expect(component).toBeTruthy();
-  });
-
-  it('should load standings on init', () => {
-    const mockStandings = { success: 1, result: { total: [], home: [], away: [] } };
-    standingsService.getCachedStandings.and.returnValue(of(mockStandings));
-    
-    component.ngOnInit();
-    
-    expect(standingsService.getCachedStandings).toHaveBeenCalled();
-    expect(component.standings).toEqual(mockStandings);
-  });
-});
+// Check cache
+console.log('Cache:', standingsService?.standingsCache);
 ```
 
 ---
 
-## Environment Variables
+## Configuration
 
-Create or update your environment files with the following:
+### WebSocket URL Configuration
+
+Update `src/app/services/goal-events.service.ts`:
 
 ```typescript
-// environment.ts
+// Replace this line:
+const wsUrl = 'wss://your-websocket-server.com/goals';
+
+// With your actual WebSocket URL, for example:
+const wsUrl = `${environment.apiUrl.replace('http', 'ws')}/live/goals`;
+```
+
+### API Key Configuration
+
+The API key is already configured in `environment.development.ts`. If you need to change it:
+
+```typescript
 export const environment = {
   production: false,
-  websocketUrl: 'ws://localhost:8080',
-  allSportsApiUrl: 'https://apiv2.allsportsapi.com/football/',
-  allSportsApiKey: '8f01fc8fbf36f8f0cd23b99599f781619766b438e180811708f8e0bb8f7f46c2'
+  apiUrl: 'http://localhost:3003',
+  allSportsApi: {
+    baseUrl: 'https://apiv2.allsportsapi.com/football',
+    apiKey: 'YOUR_NEW_API_KEY_HERE'  // Update this
+  }
 };
+```
 
-// environment.production.ts
-export const environment = {
-  production: true,
-  websocketUrl: 'wss://your-production-websocket.com',
-  allSportsApiUrl: 'https://apiv2.allsportsapi.com/football/',
-  allSportsApiKey: '8f01fc8fbf36f8f0cd23b99599f781619766b438e180811708f8e0bb8f7f46c2'
-};
+Then update `standings.service.ts` to use the environment variable:
+
+```typescript
+import { environment } from '../../environments/environment';
+
+// Replace:
+private readonly API_KEY = '8f01fc8fbf36f8f0cd23b99599f781619766b438e180811708f8e0bb8f7f46c2';
+
+// With:
+private readonly API_KEY = environment.allSportsApi.apiKey;
 ```
 
 ---
@@ -890,70 +971,407 @@ export const environment = {
 
 ### Common Issues
 
-1. **CORS Errors**
-   - The API may require proxy configuration
-   - Create `proxy.conf.json` in root:
-   ```json
-   {
-     "/api": {
-       "target": "https://apiv2.allsportsapi.com",
-       "secure": true,
-       "changeOrigin": true,
-       "pathRewrite": {
-         "^/api": "/football"
-       }
-     }
-   }
+#### 1. CORS Errors with AllSportsAPI
+
+If you encounter CORS errors when calling the API:
+
+**Solution A: Use Angular Proxy (Recommended for Development)**
+
+Create `proxy.conf.json` in the `front/` directory:
+
+```json
+{
+  "/api/allsports": {
+    "target": "https://apiv2.allsportsapi.com",
+    "secure": true,
+    "changeOrigin": true,
+    "pathRewrite": {
+      "^/api/allsports": "/football"
+    }
+  }
+}
+```
+
+Update `angular.json`:
+
+```json
+"serve": {
+  "builder": "@angular-devkit/build-angular:dev-server",
+  "options": {
+    "proxyConfig": "proxy.conf.json"
+  }
+}
+```
+
+Update `standings.service.ts`:
+
+```typescript
+// Change:
+private readonly API_BASE_URL = 'https://apiv2.allsportsapi.com/football/';
+
+// To:
+private readonly API_BASE_URL = '/api/allsports/';
+```
+
+**Solution B: Backend Proxy (Recommended for Production)**
+
+Route API calls through your backend at `http://localhost:3003`:
+
+```typescript
+// In standings.service.ts, change:
+private readonly API_BASE_URL = `${environment.apiUrl}/api/standings`;
+
+// Then create an endpoint in your backend that proxies to AllSportsAPI
+```
+
+#### 2. WebSocket Not Connecting
+
+**Check WebSocket URL:**
+```typescript
+// Make sure the URL is correct in goal-events.service.ts
+const wsUrl = 'wss://your-actual-websocket-url.com/goals';
+```
+
+**Test WebSocket in Browser Console:**
+```javascript
+const ws = new WebSocket('wss://your-websocket-url.com');
+ws.onopen = () => console.log('Connected');
+ws.onerror = (e) => console.error('Error:', e);
+```
+
+**Common Issues:**
+- Wrong protocol (use `wss://` for HTTPS, `ws://` for HTTP)
+- Firewall blocking connections
+- WebSocket server not running
+- CORS issues (WebSockets don't use CORS, but check server configuration)
+
+#### 3. Standings Not Updating After Goals
+
+**Debug Steps:**
+
+1. Check if WebSocket is connected:
+   ```typescript
+   // Add in goal-events.service.ts
+   this.socket.onopen = () => {
+     console.log('✅ WebSocket connected successfully');
+   };
    ```
-   - Update `angular.json`:
-   ```json
-   "serve": {
-     "options": {
-       "proxyConfig": "proxy.conf.json"
-     }
+
+2. Check if events are received:
+   ```typescript
+   this.socket.onmessage = (event) => {
+     console.log('📨 Received:', event.data);
+     // ... rest of code
+   };
+   ```
+
+3. Check if standings service is called:
+   ```typescript
+   // Add in standings-updater.service.ts
+   refreshStandings(leagueId: string): void {
+     console.log('🔄 Refreshing standings for league:', leagueId);
+     this.standingsService.refreshStandings(leagueId);
    }
    ```
 
-2. **WebSocket Not Connecting**
-   - Verify WebSocket URL is correct
-   - Check if WebSocket server is running
-   - Ensure firewall allows WebSocket connections
+#### 4. TypeScript Errors
 
-3. **Standings Not Updating**
-   - Check browser console for errors
-   - Verify league_id in GOAL_SCORED event matches current league
-   - Check network tab for API calls
+If you get "Cannot find module" errors:
+
+```bash
+# Clear node_modules and reinstall
+rm -rf node_modules
+npm install
+
+# Or with pnpm (which you're using)
+pnpm install
+```
+
+#### 5. Component Not Loading
+
+**Check routing:**
+- Ensure route is defined before wildcard (`**`) route
+- Check that component is imported correctly
+- Verify `loadComponent` syntax for standalone components
+
+**Check browser console for errors:**
+```
+F12 → Console tab
+```
 
 ---
 
-## Next Steps
+## Performance Optimization
 
-1. **Add League Selector**: Create a dropdown to switch between different leagues
-2. **Add Season Selector**: Allow users to view historical standings
-3. **Team Details**: Link team names to detailed team pages
-4. **Live Indicators**: Add visual indicators when standings update in real-time
-5. **Notifications**: Toast notifications when goals are scored and standings update
+### 1. Lazy Load Standings Component
+
+Already implemented via `loadComponent()` in routes.
+
+### 2. Cache Management
+
+Clear old cache periodically:
+
+```typescript
+// In standings.service.ts
+private cacheTimeout = 5 * 60 * 1000; // 5 minutes
+
+getStandings(leagueId: string): Observable<StandingsResponse> {
+  // Add timestamp to cache
+  const cached = this.standingsCache.get(leagueId);
+  if (cached && Date.now() - cached.timestamp < this.cacheTimeout) {
+    return cached.data;
+  }
+  
+  // Fetch new data...
+}
+```
+
+### 3. Optimize WebSocket Reconnection
+
+Already implemented with exponential backoff in `goal-events.service.ts`.
+
+### 4. Use Virtual Scrolling for Large Tables
+
+If standings tables become very large:
+
+```bash
+npm install @angular/cdk
+```
+
+```typescript
+import { ScrollingModule } from '@angular/cdk/scrolling';
+
+// In component:
+imports: [CommonModule, ScrollingModule]
+```
+
+```html
+<cdk-virtual-scroll-viewport itemSize="50" class="standings-viewport">
+  <tr *cdkVirtualFor="let standing of currentStandings">
+    <!-- table content -->
+  </tr>
+</cdk-virtual-scroll-viewport>
+```
+
+---
+
+## Next Steps & Enhancements
+
+### 1. League Selector Dropdown
+
+Add a dropdown to switch between leagues:
+
+```typescript
+leagues = [
+  { id: '152', name: 'Premier League' },
+  { id: '302', name: 'La Liga' },
+  { id: '207', name: 'Serie A' },
+  { id: '175', name: 'Bundesliga' },
+  { id: '168', name: 'Ligue 1' }
+];
+
+selectLeague(leagueId: string): void {
+  this.router.navigate(['/standings', leagueId]);
+}
+```
+
+### 2. Season Selector
+
+Allow viewing historical standings:
+
+```typescript
+getStandingsForSeason(leagueId: string, season: string): Observable<StandingsResponse> {
+  const params = new HttpParams()
+    .set('met', 'Standings')
+    .set('APIkey', this.API_KEY)
+    .set('leagueId', leagueId)
+    .set('season', season); // e.g., '2022/2023'
+  
+  return this.http.get<StandingsResponse>(this.API_BASE_URL, { params });
+}
+```
+
+### 3. Team Links
+
+Make team names clickable:
+
+```html
+<a [routerLink]="['/team', standing.team_key]" class="team-link">
+  {{ standing.standing_team }}
+</a>
+```
+
+### 4. Live Update Indicator
+
+Add visual feedback when standings update:
+
+```typescript
+standingsUpdated = false;
+
+refreshStandings(leagueId: string): void {
+  this.standingsUpdated = true;
+  this.standingsService.refreshStandings(leagueId);
+  setTimeout(() => this.standingsUpdated = false, 3000);
+}
+```
+
+```html
+<div *ngIf="standingsUpdated" class="update-badge">
+  ✨ Updated
+</div>
+```
+
+### 5. Filter by Position Type
+
+Add filters for Champions League, Europa League, Relegation zones:
+
+```typescript
+filterByType(type: string): StandingEntry[] {
+  return this.currentStandings.filter(
+    s => s.standing_place_type?.includes(type)
+  );
+}
+```
+
+### 6. Export to CSV/PDF
+
+Add export functionality:
+
+```typescript
+exportToCSV(): void {
+  const csv = this.currentStandings.map(s => 
+    `${s.standing_place},${s.standing_team},${s.standing_PTS}`
+  ).join('\n');
+  
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'standings.csv';
+  a.click();
+}
+```
+
+### 7. Compare Teams
+
+Side-by-side comparison:
+
+```typescript
+compareTeams(team1Key: string, team2Key: string): void {
+  const team1 = this.currentStandings.find(s => s.team_key === team1Key);
+  const team2 = this.currentStandings.find(s => s.team_key === team2Key);
+  // Show comparison modal
+}
+```
+
+### 8. Mobile App Integration
+
+If building a mobile version with Ionic:
+
+```typescript
+import { App } from '@capacitor/app';
+import { PushNotifications } from '@capacitor/push-notifications';
+
+// Send push notification on goal
+onGoalScored(event: GoalScoredEvent): void {
+  PushNotifications.createChannel({
+    id: 'goals',
+    name: 'Goal Notifications',
+    importance: 5
+  });
+}
+```
+
+---
+
+## API Reference
+
+### AllSportsAPI Endpoints Used
+
+#### Get Standings
+```
+GET https://apiv2.allsportsapi.com/football/
+?met=Standings
+&APIkey=YOUR_API_KEY
+&leagueId=LEAGUE_ID
+```
+
+**Response Structure:**
+```json
+{
+  "success": 1,
+  "result": {
+    "total": [StandingEntry[]],
+    "home": [StandingEntry[]],
+    "away": [StandingEntry[]]
+  }
+}
+```
+
+### WebSocket Events
+
+#### GOAL_SCORED Event
+```json
+{
+  "type": "GOAL_SCORED",
+  "match_id": "string",
+  "minute": "string",
+  "scorer": "string",
+  "team": "home" | "away",
+  "score": "string",
+  "home_team": "string",
+  "away_team": "string",
+  "league_id": "string",
+  "timestamp": "ISO 8601 string"
+}
+```
 
 ---
 
 ## Additional Resources
 
-- [AllSportsAPI Documentation](https://allsportsapi.com/documentation)
-- [Angular HttpClient Guide](https://angular.io/guide/http)
-- [RxJS Documentation](https://rxjs.dev/)
-- [WebSocket API](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket)
+- **AllSportsAPI Documentation:** https://allsportsapi.com/documentation
+- **Angular Official Docs:** https://angular.dev
+- **RxJS Documentation:** https://rxjs.dev
+- **WebSocket API:** https://developer.mozilla.org/en-US/docs/Web/API/WebSocket
+- **Angular Material (for advanced UI):** https://material.angular.io
+- **PrimeNG (UI Library):** https://primeng.org (already used in your project)
+
+---
+
+## Project Structure After Implementation
+
+```
+front/src/app/
+├── components/
+│   ├── league-standings/
+│   │   ├── league-standings.component.ts
+│   │   ├── league-standings.component.html
+│   │   └── league-standings.component.css
+│   └── ... (other components)
+├── services/
+│   ├── standings.service.ts ✅ (already exists)
+│   ├── goal-events.service.ts 🆕
+│   └── standings-updater.service.ts 🆕
+├── models/
+│   └── models.ts ✅ (already has StandingEntry, StandingsResponse, GoalScoredEvent)
+└── app.routes.ts (updated)
+```
 
 ---
 
 ## Summary
 
-This implementation provides:
-- ✅ Real-time league standings display
-- ✅ Three view modes (Total, Home, Away)
-- ✅ Automatic refresh on goal events via WebSocket
-- ✅ Caching for performance
-- ✅ Responsive design
-- ✅ Error handling
-- ✅ TypeScript type safety
+This implementation provides a complete league standings feature with:
 
-The feature is modular and can be easily extended with additional functionality.
+✅ **Real-time Updates** - Automatic refresh on goal events via WebSocket  
+✅ **Three View Modes** - Total, Home, and Away statistics  
+✅ **Caching System** - Efficient data management with BehaviorSubject  
+✅ **Error Handling** - Graceful degradation and user feedback  
+✅ **Responsive Design** - Mobile-friendly table layout  
+✅ **Type Safety** - Full TypeScript interfaces  
+✅ **Modular Architecture** - Easy to extend and maintain  
+✅ **Lazy Loading** - Performance-optimized routing  
+✅ **Notification Integration** - Uses existing PrimeNG toast system  
+
+The feature integrates seamlessly with your existing Angular application structure and follows the patterns already established in your codebase.
