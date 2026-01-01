@@ -10,6 +10,12 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'match/:id',
+    loadComponent: () =>
+      import('./match/pages/match-detail/match-detail.page')
+        .then(m => m.MatchDetailPage),
+  },
+  {
     path: 'signup',
     loadComponent: () =>
       import('./components/signup-page/signup-page.component').then(
@@ -88,6 +94,13 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./components/error-page/error-page.component').then(
         (c) => c.ErrorPageComponent
+      ),
+  },
+  {
+    path: 'team/:id',
+    loadComponent: () =>
+      import('./components/team-detail-page/team-detail-page.component').then(
+        (c) => c.TeamDetailPageComponent
       ),
   },
   // Wildcard route for 404 - this should be the last route

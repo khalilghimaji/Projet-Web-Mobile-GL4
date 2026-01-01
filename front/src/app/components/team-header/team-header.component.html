@@ -1,0 +1,36 @@
+<section class="team-header">
+  <div class="team-header-content">
+    <div class="team-logo-wrapper">
+      @if (team().team_logo) {
+      <img
+        [src]="team().team_logo"
+        [alt]="team().team_name"
+        class="team-logo"
+      />
+      } @else {
+      <div class="team-logo-placeholder">
+        <span>{{ team().team_name.charAt(0) }}</span>
+      </div>
+      }
+    </div>
+    <div class="team-info">
+      <h1 class="team-name">{{ team().team_name }}</h1>
+      <div class="team-stats">
+        <div class="stat-item">
+          <span class="stat-label">Team ID</span>
+          <span class="stat-value">{{ team().team_key }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Squad Size</span>
+          <span class="stat-value">{{ team().players?.length || 0 }}</span>
+        </div>
+        @if (team().coaches && team().coaches!.length > 0) {
+        <div class="stat-item">
+          <span class="stat-label">Coach</span>
+          <span class="stat-value">{{ team().coaches![0].coach_name }}</span>
+        </div>
+        }
+      </div>
+    </div>
+  </div>
+</section>

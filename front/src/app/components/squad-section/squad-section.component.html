@@ -1,0 +1,50 @@
+<section class="squad-section">
+  <h2 class="section-title">
+    <lucide-icon [img]="Users" [size]="28"></lucide-icon>
+    Squad
+  </h2>
+
+  <!-- Goalkeepers -->
+  <div class="position-group">
+    <h3 class="position-title">Goalkeepers</h3>
+    <div class="players-grid">
+      @for (player of getPlayersByPosition(players(), 'Goalkeepers'); track
+      player.player_key) {
+      <app-player-card [player]="player" />
+      }
+    </div>
+  </div>
+
+  <!-- Defenders -->
+  <div class="position-group">
+    <h3 class="position-title">Defenders</h3>
+    <div class="players-grid">
+      @for (player of getPlayersByPosition(players(), 'Defenders'); track
+      player.player_key) {
+      <app-player-card [player]="player" />
+      }
+    </div>
+  </div>
+
+  <!-- Midfielders -->
+  <div class="position-group">
+    <h3 class="position-title">Midfielders</h3>
+    <div class="players-grid">
+      @for (player of getPlayersByPosition(players(), 'Midfielders'); track
+      player.player_key) {
+      <app-player-card [player]="player" />
+      }
+    </div>
+  </div>
+
+  <!-- Forwards -->
+  <div class="position-group">
+    <h3 class="position-title">Forwards</h3>
+    <div class="players-grid">
+      @for (player of getPlayersByPosition(players(), 'Forwards'); track
+      player.player_key) {
+      <app-player-card [player]="player" />
+      }
+    </div>
+  </div>
+</section>

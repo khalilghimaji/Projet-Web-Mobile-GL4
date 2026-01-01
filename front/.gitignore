@@ -42,3 +42,12 @@ testem.log
 # System files
 .DS_Store
 Thumbs.db
+
+generate-tree.ps1
+# Environment files with secrets
+.env
+.env.local
+src/environments/environment.development.ts
+src/environments/environment.ts
+
+pnpm-lock.yaml
