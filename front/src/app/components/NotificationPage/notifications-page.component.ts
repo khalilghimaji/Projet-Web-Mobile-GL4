@@ -33,7 +33,8 @@ export class NotificationsPageComponent {
             filter(
               (event) =>
                 event.type === 'CHANGE_OF_POSSESSED_GEMS' ||
-                event.type === 'DIAMOND_UPDATE'
+                event.type === 'DIAMOND_UPDATE' ||
+                event.type === 'RANKING_UPDATE'
             ),
             scan(
               (curr, notification) => [

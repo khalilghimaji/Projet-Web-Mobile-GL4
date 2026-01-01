@@ -9,12 +9,23 @@ interface NotificationPayload {
   userId: string;
   type: NotificationType;
   message: string;
-  data?: DataMessage;
+  data?: DataMessage | UserRankingMessage;
 }
 
 interface DataMessage {
   gain: number;
   newDiamonds: number;
+}
+
+export interface UserRanking {
+  firstName: string;
+  lastName: string;
+  score: number;
+  imageUrl: string;
+}
+
+export interface UserRankingMessage {
+  rankings: UserRanking[];
 }
 @Injectable()
 export class NotificationsService {

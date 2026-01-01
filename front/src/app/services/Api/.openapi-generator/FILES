@@ -7,12 +7,12 @@ api/app.service.ts
 api/authentication.service.ts
 api/matches.service.ts
 api/notifications.service.ts
+api/user.service.ts
 configuration.ts
 encoder.ts
 git_push.sh
 index.ts
 model/canPredictMatchDto.ts
-model/dataMessage.ts
 model/disableMfaDto.ts
 model/forgotPasswordDto.ts
 model/forgotPasswordResponseDto.ts
@@ -28,6 +28,10 @@ model/mfaVerifyDto.ts
 model/mfaVerifyResponseDto.ts
 model/models.ts
 model/notification.ts
+model/notificationData.ts
+model/notificationDataAnyOf.ts
+model/notificationDataAnyOf1.ts
+model/notificationDataAnyOf1RankingsInner.ts
 model/oAuthResponseDto.ts
 model/predictDto.ts
 model/prediction.ts
