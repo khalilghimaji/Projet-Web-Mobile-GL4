@@ -6,7 +6,6 @@ import {
 } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { routes } from './app.routes';
-import { provideClientHydration } from '@angular/platform-browser';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { MessageService } from 'primeng/api';
 import { providePrimeNG } from 'primeng/config';
@@ -18,13 +17,12 @@ import {
 } from '@angular/common/http';
 import { CredentialsInterceptor } from './shared/interceptors/credentials.interceptor';
 import { AuthInterceptor } from './shared/interceptors/auth.interceptor';
-import { AuthInitializationService } from './services/auth-initialization.service';
-import { lastValueFrom } from 'rxjs';
+import { catchError, map, of } from 'rxjs';
+import { AuthService } from './services/auth.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes),
-    provideClientHydration(),
     provideAnimations(),
     provideZonelessChangeDetection(),
     MessageService,
@@ -43,10 +41,17 @@ export const appConfig: ApplicationConfig = {
       useClass: AuthInterceptor,
       multi: true,
     },
-    // Use provideAppInitializer for auth initialization
     provideAppInitializer(() => {
-      const authInitService = inject(AuthInitializationService);
-      return lastValueFrom(authInitService.initializeAuth());
+      const authService = inject(AuthService);
+      return authService.getProfile().pipe(
+        map((user) => {
+          return true;
+        }),
+        catchError((error) => {
+          console.log('error', error);
+          return of(false);
+        })
+      );
     }),
 
     providePrimeNG({

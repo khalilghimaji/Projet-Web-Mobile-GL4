@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, signal } from '@angular/core';
 
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
@@ -9,14 +9,10 @@ import { MessageModule } from 'primeng/message';
 @Component({
   selector: 'app-email-verification',
   standalone: true,
-  imports: [
-    RouterModule,
-    ProgressSpinnerModule,
-    ButtonModule,
-    MessageModule
-],
+  imports: [RouterModule, ProgressSpinnerModule, ButtonModule, MessageModule],
   templateUrl: './email-verification.component.html',
   styleUrl: './email-verification.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EmailVerificationComponent implements OnInit {
   token = signal<string | null>(null);

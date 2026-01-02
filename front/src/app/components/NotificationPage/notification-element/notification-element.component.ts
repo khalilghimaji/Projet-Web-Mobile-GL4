@@ -1,4 +1,4 @@
-import { Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { MessageModule } from 'primeng/message';
 import { DatePipe, NgStyle } from '@angular/common';
 import { Notification } from '../../../services/Api/model/notification';
@@ -8,6 +8,7 @@ import { Notification } from '../../../services/Api/model/notification';
   imports: [MessageModule, NgStyle, DatePipe],
   templateUrl: './notification-element.component.html',
   styleUrls: ['./notification-element.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
 })
 export class NotificationElementComponent {

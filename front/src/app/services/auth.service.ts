@@ -133,7 +133,6 @@ export class AuthService {
               success: false,
             };
           }
-          console.log('Login response:', response);
           this.setAuthData(response.user);
           return {
             requiresOtp: false,
@@ -278,7 +277,6 @@ export class AuthService {
 
     localStorage.setItem('user_email', userData.email || '');
     localStorage.setItem('user_data', JSON.stringify(userData));
-    console.log('Setting auth data:', userData);
     this.currentUser.next(userData);
     this.authState.next(true);
   }

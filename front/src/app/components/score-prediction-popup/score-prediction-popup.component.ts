@@ -1,4 +1,4 @@
-import { Component, Input, output, input, inject } from '@angular/core';
+import { Component, Input, output, input, inject, ChangeDetectionStrategy } from '@angular/core';
 
 import {
   FormsModule,
@@ -36,6 +36,7 @@ export interface TeamPrediction {
   ],
   templateUrl: './score-prediction-popup.component.html',
   styleUrls: ['./score-prediction-popup.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ScorePredictionPopupComponent {
   @Input() visible = false;

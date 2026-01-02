@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 
 import { NotificationsApiService } from '../../services/notifications-api.service';
 import { Notification } from '../../services/Api/model/notification';
@@ -10,7 +10,6 @@ import {
   scan,
   startWith,
   switchMap,
-  tap,
 } from 'rxjs';
 import { NotificationElementComponent } from './notification-element/notification-element.component';
 import { rxResource } from '@angular/core/rxjs-interop';
@@ -19,6 +18,7 @@ import { rxResource } from '@angular/core/rxjs-interop';
   templateUrl: './notifications-page.component.html',
   styleUrls: ['./notifications-page.component.css'],
   imports: [NotificationElementComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
 })
 export class NotificationsPageComponent {
@@ -58,7 +58,11 @@ export class NotificationsPageComponent {
   markAsRead(notification: Notification): void {
     this.notificationsApi.markAsRead(notification.id.toString()).subscribe({
       next: () => {
-        notification.read = true;
+        this.notifications!.update((notifications) =>
+          notifications?.map((n) =>
+            n.id === notification.id ? { ...n, read: true } : n
+          )
+        );
       },
       error: (error) => {
         console.error('Error marking as read:', error);

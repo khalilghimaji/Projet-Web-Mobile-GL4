@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, inject, computed } from '@angular/core';
+import { Component, OnInit, signal, inject, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CardModule } from 'primeng/card';
 import { TableModule } from 'primeng/table';
@@ -26,6 +26,7 @@ interface RankingUser extends NotificationDataAnyOf1RankingsInner {
   ],
   templateUrl: './ranking-page.component.html',
   styleUrls: ['./ranking-page.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RankingPageComponent implements OnInit {
   private readonly notificationsService = inject(NotificationsApiService);

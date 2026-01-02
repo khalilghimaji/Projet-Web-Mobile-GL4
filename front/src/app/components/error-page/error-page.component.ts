@@ -1,4 +1,11 @@
-import { Component, input, computed, inject, signal } from '@angular/core';
+import {
+  Component,
+  input,
+  computed,
+  inject,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 
 import { RouterModule, ActivatedRoute } from '@angular/router';
 import { Location } from '@angular/common';
@@ -17,6 +24,7 @@ import { NotificationService } from '../../services/notification.service';
   imports: [RouterModule, ScorePredictionPopupComponent],
   templateUrl: './error-page.component.html',
   styleUrls: ['./error-page.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ErrorPageComponent {
   // Input signals for direct component usage

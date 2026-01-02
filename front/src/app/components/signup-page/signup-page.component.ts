@@ -1,4 +1,9 @@
-import { Component, signal, inject } from '@angular/core';
+import {
+  Component,
+  signal,
+  inject,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 
 import {
   AbstractControl,
@@ -31,10 +36,11 @@ import { environment } from '../../../environments/environment';
     CheckboxModule,
     RippleModule,
     MessageModule,
-    ProgressSpinnerModule
-],
+    ProgressSpinnerModule,
+  ],
   templateUrl: './signup-page.component.html',
   styleUrl: './signup-page.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SignupPageComponent {
   private readonly fb = inject(FormBuilder);
