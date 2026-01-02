@@ -86,7 +86,6 @@ export class SideMenuComponent implements OnInit, OnDestroy {
     private notificationsApi: NotificationsApiService
   ) {
     this.authService.currentUser$.subscribe((user) => {
-      console.log('User updated in SideMenuComponent:', user);
       if (user && 'diamonds' in user) {
         this.diamonds.set(user.diamonds ?? 0);
       }

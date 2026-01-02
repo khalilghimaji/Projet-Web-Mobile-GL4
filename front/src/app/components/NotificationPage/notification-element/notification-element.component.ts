@@ -1,11 +1,11 @@
 import { Component, input, output } from '@angular/core';
-import { MessagesModule } from 'primeng/messages';
+import { MessageModule } from 'primeng/message';
 import { DatePipe, NgStyle } from '@angular/common';
 import { Notification } from '../../../services/Api/model/notification';
 
 @Component({
   selector: 'app-notification-element',
-  imports: [MessagesModule, NgStyle, DatePipe],
+  imports: [MessageModule, NgStyle, DatePipe],
   templateUrl: './notification-element.component.html',
   styleUrls: ['./notification-element.component.css'],
   standalone: true,

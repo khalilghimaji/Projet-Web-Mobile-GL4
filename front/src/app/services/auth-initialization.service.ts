@@ -9,10 +9,8 @@ import { catchError, map } from 'rxjs/operators';
 export class AuthInitializationService {
   constructor(private authService: AuthService) {}
   initializeAuth(): Observable<boolean> {
-    // Always attempt to load the profile first, regardless of local token state
     return this.authService.getProfile().pipe(
       map((user) => {
-        console.log('hello');
         return true;
       }),
       catchError((error) => {
