@@ -1,6 +1,6 @@
 import { Component, signal, OnInit, OnDestroy } from '@angular/core';
 import { AsyncPipe, CommonModule, NgOptimizedImage } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 import { DrawerModule } from 'primeng/drawer';
 import { AuthService } from '../../services/auth.service';
 import { NotificationsApiService } from '../../services/notifications-api.service';
@@ -22,7 +22,8 @@ interface MenuItem {
   standalone: true,
   imports: [
     CommonModule,
-    RouterModule,
+    RouterLink,
+    RouterLinkActive,
     NgOptimizedImage,
     DrawerModule,
     AsyncPipe,
