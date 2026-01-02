@@ -120,7 +120,7 @@ export class SideMenuComponent implements OnInit, OnDestroy {
             this.diamonds.set(notification.data?.newDiamonds);
           }
           if (notification.type === 'DIAMOND_UPDATE') {
-            this.gainedDiamonds.set(notification.data?.gain || 0);
+            this.gainedDiamonds.set(Number(notification.data?.gain) || 0);
           }
         },
         error: (error) => {
