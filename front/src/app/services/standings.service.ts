@@ -24,8 +24,8 @@ export class StandingsService {
    * @returns Observable of StandingsResponse
    */
   getStandings(leagueId: string): Observable<StandingsResponse> {
-    const url = `${this.API_BASE_URL}/?met=Standings&leagueId=${leagueId}&APIkey=${this.API_KEY}`;
-    return this.http.get<StandingsResponse>(url).pipe(
+    const params = new HttpParams().append('met', 'Standings').append('leagueId', leagueId).append('APIkey', this.API_KEY);
+    return this.http.get<StandingsResponse>(this.API_BASE_URL, { params }).pipe(
       tap(response => {
         // Update cache
         this.updateCache(leagueId, response);

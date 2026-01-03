@@ -32,8 +32,10 @@ export class LeaguesService {
      * Fetch all leagues from API
      */
     getAllLeagues(): Observable<League[]> {
-        const url = `${this.API_BASE_URL}/?met=Leagues&APIkey=${this.API_KEY}`;
-        return this.http.get<LeaguesResponse>(url).pipe(
+
+        const params = new HttpParams().append('met', 'Leagues').append('APIkey', this.API_KEY);
+
+        return this.http.get<LeaguesResponse>(this.API_BASE_URL, { params }).pipe(
             map(response => {
                 console.log('API Response:', response);
                 return response.result || [];

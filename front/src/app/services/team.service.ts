@@ -1,5 +1,5 @@
 import { Injectable, Signal, inject } from '@angular/core';
-import { HttpClient , httpResource } from '@angular/common/http';
+import { HttpClient, httpResource } from '@angular/common/http';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 import { environment } from '../../environments/environment.development';
@@ -44,7 +44,7 @@ export class TeamService {
    */
   private transformNextMatchResponse(response: ApiResponse<Fixture>): Fixture | null {
     if (response.success === 1 && response.result && response.result.length > 0) {
-      const upcoming = response.result.find(f => 
+      const upcoming = response.result.find(f =>
         f.event_status === '' || f.event_status === 'Not Started'
       );
       return upcoming || response.result[0];
@@ -67,12 +67,12 @@ export class TeamService {
    */
   getTeamResource(teamId: Signal<number>) {
 
-    
+
 
     return rxResource({
-      params : teamId,
+      params: teamId,
       stream: (params) => {
-        const url = `${this.apiUrl}/?met=Teams&teamId=${params.params}&APIkey=${this.apiKey}`;
+        const url = `${this.apiUrl}?met=Teams&teamId=${params.params}&APIkey=${this.apiKey}`;
         return this.http.get<ApiResponse<Team>>(url).pipe(
           map(response => this.transformTeamResponse(response))
         );
@@ -88,14 +88,14 @@ export class TeamService {
     const today = new Date();
     const pastDate = new Date();
     pastDate.setDate(today.getDate() - days);
-    
+
     const from = this.formatDate(pastDate);
     const to = this.formatDate(today);
 
     return rxResource({
       params: teamId,
       stream: (params) => {
-        return this.http.get<ApiResponse<Fixture>>(`${this.apiUrl}/?met=Fixtures&teamId=${params.params}&from=${from}&to=${to}&APIkey=${this.apiKey}`).pipe(
+        return this.http.get<ApiResponse<Fixture>>(`${this.apiUrl}?met=Fixtures&teamId=${params.params}&from=${from}&to=${to}&APIkey=${this.apiKey}`).pipe(
           map(response => this.transformFixturesResponse(response))
         );
       }
@@ -109,23 +109,23 @@ export class TeamService {
     const today = new Date();
     const futureDate = new Date();
     futureDate.setDate(today.getDate() + 30);
-    
+
     const from = this.formatDate(today);
     const to = this.formatDate(futureDate);
-    const url = `${this.apiUrl}/?met=Fixtures&teamId=${teamId()}&from=${from}&to=${to}&APIkey=${this.apiKey}`;
+    const url = `${this.apiUrl}?met=Fixtures&teamId=${teamId()}&from=${from}&to=${to}&APIkey=${this.apiKey}`;
 
     return rxResource({
       params: teamId,
       stream: (params) => {
-        return this.http.get<ApiResponse<Fixture>>(`${this.apiUrl}/?met=Fixtures&teamId=${params.params}&from=${from}&to=${to}&APIkey=${this.apiKey}`).pipe(
+        return this.http.get<ApiResponse<Fixture>>(`${this.apiUrl}?met=Fixtures&teamId=${params.params}&from=${from}&to=${to}&APIkey=${this.apiKey}`).pipe(
           map(response => this.transformNextMatchResponse(response))
         );
       }
     });
   }
 
-  
-  
+
+
 
   /**
    * Format date to yyyy-mm-dd
