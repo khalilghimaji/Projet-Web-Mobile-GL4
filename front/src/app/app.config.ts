@@ -17,6 +17,7 @@ import {
 } from '@angular/common/http';
 import { CredentialsInterceptor } from './shared/interceptors/credentials.interceptor';
 import { AuthInterceptor } from './shared/interceptors/auth.interceptor';
+import { ApiKeyInterceptor } from './shared/interceptors/apikey.interceptor';
 import { AuthInitializationService } from './services/auth-initialization.service';
 import { lastValueFrom } from 'rxjs';
 
@@ -39,6 +40,11 @@ export const appConfig: ApplicationConfig = {
     {
       provide: HTTP_INTERCEPTORS,
       useClass: AuthInterceptor,
+      multi: true,
+    },
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: ApiKeyInterceptor,
       multi: true,
     },
     // Use provideAppInitializer for auth initialization

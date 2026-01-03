@@ -16,7 +16,6 @@ interface ApiResponse<T> {
 export class TeamService {
   private http = inject(HttpClient);
   private apiUrl = environment.allSportsApi.baseUrl;
-  private apiKey = environment.allSportsApi.apiKey;
 
   /**
    * Transform API response body into a Team object
@@ -72,7 +71,7 @@ export class TeamService {
     return rxResource({
       params: teamId,
       stream: (params) => {
-        const url = `${this.apiUrl}?met=Teams&teamId=${params.params}&APIkey=${this.apiKey}`;
+        const url = `${this.apiUrl}?met=Teams&teamId=${params.params}`;
         return this.http.get<ApiResponse<Team>>(url).pipe(
           map(response => this.transformTeamResponse(response))
         );
@@ -95,7 +94,7 @@ export class TeamService {
     return rxResource({
       params: teamId,
       stream: (params) => {
-        return this.http.get<ApiResponse<Fixture>>(`${this.apiUrl}?met=Fixtures&teamId=${params.params}&from=${from}&to=${to}&APIkey=${this.apiKey}`).pipe(
+        return this.http.get<ApiResponse<Fixture>>(`${this.apiUrl}?met=Fixtures&teamId=${params.params}&from=${from}&to=${to}`).pipe(
           map(response => this.transformFixturesResponse(response))
         );
       }
@@ -112,12 +111,12 @@ export class TeamService {
 
     const from = this.formatDate(today);
     const to = this.formatDate(futureDate);
-    const url = `${this.apiUrl}?met=Fixtures&teamId=${teamId()}&from=${from}&to=${to}&APIkey=${this.apiKey}`;
+    const url = `${this.apiUrl}?met=Fixtures&teamId=${teamId()}&from=${from}&to=${to}`;
 
     return rxResource({
       params: teamId,
       stream: (params) => {
-        return this.http.get<ApiResponse<Fixture>>(`${this.apiUrl}?met=Fixtures&teamId=${params.params}&from=${from}&to=${to}&APIkey=${this.apiKey}`).pipe(
+        return this.http.get<ApiResponse<Fixture>>(`${this.apiUrl}?met=Fixtures&teamId=${params.params}&from=${from}&to=${to}`).pipe(
           map(response => this.transformNextMatchResponse(response))
         );
       }

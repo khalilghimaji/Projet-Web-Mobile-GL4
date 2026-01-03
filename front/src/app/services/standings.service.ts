@@ -10,7 +10,6 @@ import { environment } from '../../environments/environment';
 })
 export class StandingsService {
   private readonly API_BASE_URL = environment.allSportsApi.baseUrl;
-  private readonly API_KEY = environment.allSportsApi.apiKey;
 
   // Cache for standings data
   private standingsCache = new Map<string, BehaviorSubject<StandingsResponse | null>>();
@@ -24,7 +23,7 @@ export class StandingsService {
    * @returns Observable of StandingsResponse
    */
   getStandings(leagueId: string): Observable<StandingsResponse> {
-    const params = new HttpParams().append('met', 'Standings').append('leagueId', leagueId).append('APIkey', this.API_KEY);
+    const params = new HttpParams().set('met', 'Standings').set('leagueId', leagueId);
     return this.http.get<StandingsResponse>(this.API_BASE_URL, { params }).pipe(
       tap(response => {
         // Update cache
