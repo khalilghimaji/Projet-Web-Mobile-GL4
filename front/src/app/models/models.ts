@@ -116,3 +116,60 @@ export interface NextMatchData {
   league: string;
   venue: string;
 }
+
+export interface StandingEntry {
+  standing_place: string;
+  standing_place_type: string | null;
+  standing_team: string;
+  standing_P: string;  // Played
+  standing_W: string;  // Won
+  standing_D: string;  // Draw
+  standing_L: string;  // Lost
+  standing_F: string;  // Goals For
+  standing_A: string;  // Goals Against
+  standing_GD: string; // Goal Difference
+  standing_PTS: string; // Points
+  team_key: string;
+  league_key: string;
+  league_season: string;
+  league_round: string;
+  standing_updated?: string;
+  fk_stage_key?: string;
+  stage_name?: string;
+}
+
+export interface StandingsResponse {
+  success: number;
+  result: {
+    total: StandingEntry[];
+    home: StandingEntry[];
+    away: StandingEntry[];
+  };
+}
+
+export interface GoalScoredEvent {
+  type: 'GOAL_SCORED';
+  match_id: string;
+  minute: string;
+  scorer: string;
+  team: 'home' | 'away';
+  score: string;
+  home_team: string;
+  away_team: string;
+  league_id: string;
+  timestamp: string;
+}
+
+export interface League {
+  league_key: string;
+  league_name: string;
+  country_key: string;
+  country_name: string;
+  league_logo: string;
+  country_logo: string;
+}
+
+export interface LeaguesResponse {
+  success: number;
+  result: League[];
+}

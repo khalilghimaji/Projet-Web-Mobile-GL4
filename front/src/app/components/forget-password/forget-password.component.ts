@@ -1,4 +1,4 @@
-import { Component, signal, effect, inject } from '@angular/core';
+import { Component, signal, effect, inject, ChangeDetectionStrategy } from '@angular/core';
 
 import {
   AbstractControl,
@@ -23,10 +23,11 @@ import { toSignal } from '@angular/core/rxjs-interop';
     RouterModule,
     InputTextModule,
     ButtonModule,
-    MessageModule
-],
+    MessageModule,
+  ],
   templateUrl: './forget-password.component.html',
   styleUrl: './forget-password.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ForgetPasswordComponent {
   private readonly fb = inject(FormBuilder);

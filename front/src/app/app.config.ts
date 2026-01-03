@@ -2,11 +2,11 @@ import {
   ApplicationConfig,
   provideAppInitializer,
   inject,
+  provideZonelessChangeDetection,
 } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { routes } from './app.routes';
-import { provideClientHydration } from '@angular/platform-browser';
-import { provideAnimations } from '@angular/platform-browser/animations';
+import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { MessageService } from 'primeng/api';
 import { providePrimeNG } from 'primeng/config';
 import { MyPreset } from './shared/mytheme';
@@ -17,14 +17,15 @@ import {
 } from '@angular/common/http';
 import { CredentialsInterceptor } from './shared/interceptors/credentials.interceptor';
 import { AuthInterceptor } from './shared/interceptors/auth.interceptor';
-import { AuthInitializationService } from './services/auth-initialization.service';
-import { lastValueFrom } from 'rxjs';
+import { ApiKeyInterceptor } from './shared/interceptors/apikey.interceptor';
+import { catchError, EMPTY, map, of } from 'rxjs';
+import { AuthService } from './services/auth.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes),
-    provideClientHydration(),
-    provideAnimations(),
+    provideAnimationsAsync(),
+    provideZonelessChangeDetection(),
     MessageService,
 
     // Provide HttpClient with class-based interceptor support
@@ -41,10 +42,20 @@ export const appConfig: ApplicationConfig = {
       useClass: AuthInterceptor,
       multi: true,
     },
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: ApiKeyInterceptor,
+      multi: true,
+    },
     // Use provideAppInitializer for auth initialization
     provideAppInitializer(() => {
-      const authInitService = inject(AuthInitializationService);
-      return lastValueFrom(authInitService.initializeAuth());
+      const authService = inject(AuthService);
+      return authService.getProfile().pipe(
+        catchError((error) => {
+          console.log('error', error);
+          return EMPTY;
+        })
+      );
     }),
 
     providePrimeNG({

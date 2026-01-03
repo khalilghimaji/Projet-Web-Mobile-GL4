@@ -1,4 +1,9 @@
-import { Component, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  signal,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
@@ -19,12 +24,13 @@ interface DiamondPackage {
   imports: [CommonModule, ButtonModule, CardModule],
   templateUrl: './diamond-store.component.html',
   styleUrls: ['./diamond-store.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DiamondStoreComponent {
   private readonly matchesService = inject(MatchesService);
   private readonly notificationService = inject(NotificationService);
 
-  loading: { [key: number]: boolean } = {};
+  loading = signal<{ [key: number]: boolean }>({});
 
   diamondPackages: DiamondPackage[] = [
     {
@@ -67,7 +73,7 @@ export class DiamondStoreComponent {
   ];
 
   purchaseDiamonds(pkg: DiamondPackage): void {
-    this.loading[pkg.id] = true;
+    this.loading.update((loading) => ({ ...loading, [pkg.id]: true }));
 
     this.matchesService
       .matchesControllerAddDiamond({
@@ -78,19 +84,19 @@ export class DiamondStoreComponent {
           this.notificationService.showSuccess(
             `Successfully purchased ${pkg.amount} diamonds!`
           );
-          this.loading[pkg.id] = false;
+          this.loading.update((loading) => ({ ...loading, [pkg.id]: false }));
         },
         error: (error) => {
           console.error('Error purchasing diamonds:', error);
           this.notificationService.showError(
             'Failed to purchase diamonds. Please try again.'
           );
-          this.loading[pkg.id] = false;
+          this.loading.update((loading) => ({ ...loading, [pkg.id]: false }));
         },
       });
   }
 
   isLoading(packageId: number): boolean {
-    return this.loading[packageId] || false;
+    return this.loading()[packageId] || false;
   }
 }

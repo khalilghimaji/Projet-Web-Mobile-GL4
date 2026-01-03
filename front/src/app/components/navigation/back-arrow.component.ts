@@ -1,24 +1,12 @@
 import { Component } from '@angular/core';
 import { Location } from '@angular/common';
-import {
-  trigger,
-  state,
-  style,
-  animate,
-  transition,
-} from '@angular/animations';
 
 @Component({
   selector: 'app-back-arrow',
   standalone: true,
   imports: [],
   template: `
-    <button
-      class="back-arrow"
-      (click)="goBack()"
-      (mouseenter)="onHover(true)"
-      (mouseleave)="onHover(false)"
-    >
+    <button class="back-arrow" (click)="goBack()">
       <img src="/images/img.png" alt="Back" />
     </button>
   `,
@@ -91,15 +79,9 @@ import {
   ],
 })
 export class BackArrowComponent {
-  buttonState = 'normal';
-
   constructor(private location: Location) {}
 
   goBack(): void {
     this.location.back();
-  }
-
-  onHover(isHovered: boolean) {
-    this.buttonState = isHovered ? 'hovered' : 'normal';
   }
 }

@@ -11,11 +11,13 @@ import { CanPredictMatchDto } from './dto/can-predict-match.dto';
 export class MatchesController {
   constructor(private readonly matchesService: MatchesService) {}
 
+  //cet endpoint sera supprimé
   @Post(':id/activate')
   async activateMatch(@Param('id') id: string) {
     return this.matchesService.activateMatch(id);
   }
 
+  //cet endpoint sera supprimé
   @Post(':id/disable')
   async disableMatch(@Param('id') id: string) {
     return this.matchesService.disableMatch(id);
@@ -43,6 +45,7 @@ export class MatchesController {
     return this.matchesService.addDiamond(userId, boy.numberOfDiamondsBet);
   }
 
+  //cet endpoint sera supprimé
   @Post(':id/terminate')
   async terminateMatch(
     @Param('id') id: string,
@@ -55,6 +58,7 @@ export class MatchesController {
     );
   }
 
+  // cet endpoint sera supprimé
   @Post(':id/update')
   async updateMatch(@Param('id') id: string, @Body() body: TerminateMatchDto) {
     return this.matchesService.updateMatch(

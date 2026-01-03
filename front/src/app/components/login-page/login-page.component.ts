@@ -1,10 +1,11 @@
-import { Component, signal, inject } from '@angular/core';
-
 import {
-  FormBuilder,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
+  Component,
+  signal,
+  inject,
+  ChangeDetectionStrategy,
+} from '@angular/core';
+
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
@@ -26,10 +27,11 @@ import { CheckboxModule } from 'primeng/checkbox';
     RippleModule,
     MessageModule,
     ProgressSpinnerModule,
-    CheckboxModule
-],
+    CheckboxModule,
+  ],
   templateUrl: './login-page.component.html',
   styleUrl: './login-page.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LoginPageComponent {
   private readonly fb = inject(FormBuilder);
@@ -52,8 +54,8 @@ export class LoginPageComponent {
       [
         Validators.required,
         Validators.minLength(6),
-        Validators.maxLength(6),
-        Validators.pattern('^[0-9]*$'),
+        Validators.maxLength(8),
+        Validators.pattern('^[0-9A-Za-z]*$'),
       ],
     ],
   });
