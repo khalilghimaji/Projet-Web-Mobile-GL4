@@ -1,6 +1,25 @@
 import { Routes } from '@angular/router';
 import { tokenValidationGuard } from './shared/guards/token-validation.guard';
 
+export const STANDINGS_ROUTE: Routes = [
+  {
+    path: ':leagueId',
+    // canActivate: [tokenValidationGuard],
+    loadComponent: () =>
+      import('./components/league-standings/league-standings.component').then(
+        (c) => c.LeagueStandingsComponent
+      ),
+  },
+  {
+    path: '',
+    // canActivate: [tokenValidationGuard],
+    loadComponent: () =>
+      import('./components/league-standings/league-standings.component').then(
+        (c) => c.LeagueStandingsComponent
+      ),
+  }
+];
+
 export const routes: Routes = [
   {
     path: 'login',
@@ -8,6 +27,12 @@ export const routes: Routes = [
       import('./components/login-page/login-page.component').then(
         (c) => c.LoginPageComponent
       ),
+  },
+  {
+    path: 'match/:id',
+    loadComponent: () =>
+      import('./match/pages/match-detail/match-detail.page')
+        .then(m => m.MatchDetailPage),
   },
   {
     path: 'signup',
@@ -98,6 +123,16 @@ export const routes: Routes = [
         (c) => c.ErrorPageComponent
       ),
   },
+  {
+    path: 'team/:id',
+    loadComponent: () =>
+      import('./components/team-detail-page/team-detail-page.component').then(
+        (c) => c.TeamDetailPageComponent
+      ),
+  },
+
+  { path: 'standings', children: STANDINGS_ROUTE },
+
   // Wildcard route for 404 - this should be the last route
   {
     path: '**',

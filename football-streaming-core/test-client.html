@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Football WebSocket Test</title>
+    <style>
+        body {
+            font-family: Arial;
+            padding: 20px;
+        }
+
+        #status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+
+        .connected {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        #events {
+            margin-top: 20px;
+        }
+
+        .event {
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .goal {
+            background: #fff3cd;
+        }
+
+        .card {
+            background: #f8d7da;
+        }
+
+        .match-end {
+            background: #d1ecf1;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>⚽ Football Live Data</h1>
+    <div id="status" class="disconnected">Disconnected</div>
+    <button onclick="connect()">Connect</button>
+    <button onclick="disconnect()">Disconnect</button>
+
+    <h2>Live Events</h2>
+    <div id="events"></div>
+
+    <script>
+        let ws = null;
+
+        function connect() {
+            ws = new WebSocket('ws://localhost:8080/ws');
+
+            ws.onopen = () => {
+                document.getElementById('status').textContent = 'Connected ✅';
+                document.getElementById('status').className = 'connected';
+
+                // Subscribe to all matches
+                ws.send(JSON.stringify({ action: 'subscribe_all' }));
+            };
+
+            ws.onclose = () => {
+                document.getElementById('status').textContent = 'Disconnected ❌';
+                document.getElementById('status').className = 'disconnected';
+            };
+
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+            };
+
+            ws.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    console.log('Received event:', data);
+                    displayEvent(data);
+                } catch (e) {
+                    console.error('Failed to parse message:', e, event.data);
+                }
+            };
+        }
+
+        function disconnect() {
+            if (ws) {
+                ws.close();
+            }
+        }
+
+        function displayEvent(event) {
+            const eventsDiv = document.getElementById('events');
+            const eventDiv = document.createElement('div');
+            eventDiv.className = 'event';
+
+            let className = '';
+            let emoji = '📊';
+            let text = '';
+
+            switch (event.type) {
+                case 'GOAL_SCORED':
+                    className = 'goal';
+                    emoji = '⚽';
+                    text = `GOAL! ${event.scorer} (${event.minute}') - ${event.score}`;
+                    break;
+                case 'CARD_ISSUED':
+                    className = 'card';
+                    emoji = event.card_type === 'yellow card' ? '🟨' : '🟥';
+                    text = `CARD: ${event.player} - ${event.card_type} (${event.minute}')`;
+                    break;
+                case 'MATCH_ENDED':
+                    className = 'match-end';
+                    emoji = '🏁';
+                    text = `MATCH ENDED: ${event.home_team} ${event.final_score} ${event.away_team}`;
+                    break;
+                case 'MATCH_STARTED':
+                    emoji = '▶️';
+                    text = `MATCH STARTED: ${event.home_team} vs ${event.away_team}`;
+                    break;
+                case 'SUBSTITUTION':
+                    emoji = '🔄';
+                    text = `SUB: ${event.player_out} → ${event.player_in} (${event.minute}')`;
+                    break;
+                case 'SCORE_UPDATE':
+                    emoji = '📊';
+                    text = `SCORE: ${event.home_team} ${event.score} ${event.away_team}`;
+                    break;
+                case 'SUBSCRIBED':
+                    emoji = '✅';
+                    text = `Subscribed to: ${event.subscription}`;
+                    break;
+                default:
+                    text = JSON.stringify(event);
+            }
+
+            eventDiv.className += ' ' + className;
+            eventDiv.innerHTML = `
+            <strong>${emoji} ${text}</strong>
+            <div style="font-size: 0.9em; color: #666; margin-top: 5px;">
+                ${new Date(event.timestamp || Date.now()).toLocaleTimeString()}
+            </div>
+        `;
+
+            eventsDiv.insertBefore(eventDiv, eventsDiv.firstChild);
+
+            // Keep only last 50 events
+            while (eventsDiv.children.length > 50) {
+                eventsDiv.removeChild(eventsDiv.lastChild);
+            }
+        }
+
+        // Auto-connect on load
+        window.onload = connect;
+    </script>

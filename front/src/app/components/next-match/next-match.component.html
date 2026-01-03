@@ -1,0 +1,35 @@
+<section class="next-match-section">
+  <h2 class="section-title">
+    <lucide-icon [img]="CalendarClock" [size]="28"></lucide-icon>
+    Next Match
+  </h2>
+  <div class="next-match-card">
+    <div class="match-date">
+      <span class="date">{{ match().event_date }}</span>
+      <span class="time">{{ match().event_time }}</span>
+    </div>
+    <div class="match-teams">
+      <div class="team-container">
+        <img
+          [src]="match().home_team_logo"
+          [alt]="match().event_home_team"
+          class="match-team-logo"
+        />
+        <span class="match-team-name">{{ match().event_home_team }}</span>
+      </div>
+      <span class="vs">VS</span>
+      <div class="team-container">
+        <img
+          [src]="match().away_team_logo"
+          [alt]="match().event_away_team"
+          class="match-team-logo"
+        />
+        <span class="match-team-name">{{ match().event_away_team }}</span>
+      </div>
+    </div>
+    <div class="match-info">
+      <span class="league">{{ match().league_name }}</span>
+      <span class="stadium">{{ match().event_stadium || "TBD" }}</span>
+    </div>
+  </div>
+</section>

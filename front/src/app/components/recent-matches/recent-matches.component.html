@@ -1,0 +1,38 @@
+<section class="recent-matches-section">
+  <h2 class="section-title">
+    <lucide-icon [img]="TrendingUp" [size]="28"></lucide-icon>
+    Recent Matches
+  </h2>
+  <div class="matches-grid">
+    @for (match of matches().slice(0, 10); track match.event_key) {
+    <div
+      class="match-card"
+      [class.win]="isWin(match, teamKey())"
+      [class.draw]="isDraw(match)"
+      [class.loss]="isLoss(match, teamKey())"
+    >
+      <div class="match-header">
+        <span class="match-date">{{ match.event_date }}</span>
+        <span class="match-league">{{ match.league_name }}</span>
+      </div>
+      <div class="match-teams-compact">
+        <div class="team-line">
+          <span class="team-name">{{ match.event_home_team }}</span>
+          <span class="score">{{
+            match.event_final_result.split("-")[0] || "-"
+          }}</span>
+        </div>
+        <div class="team-line">
+          <span class="team-name">{{ match.event_away_team }}</span>
+          <span class="score">{{
+            match.event_final_result.split("-")[1] || "-"
+          }}</span>
+        </div>
+      </div>
+      <div class="match-result">
+        {{ getMatchResult(match, teamKey()) }}
+      </div>
+    </div>
+    }
+  </div>
+</section>

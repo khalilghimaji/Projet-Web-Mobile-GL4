@@ -6,7 +6,7 @@ import {
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { AsyncPipe, CommonModule, NgOptimizedImage } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 import { DrawerModule } from 'primeng/drawer';
 import { AuthService } from '../../services/auth.service';
 import { NotificationsApiService } from '../../services/notifications-api.service';
@@ -28,7 +28,8 @@ interface MenuItem {
   standalone: true,
   imports: [
     CommonModule,
-    RouterModule,
+    RouterLink,
+    RouterLinkActive,
     NgOptimizedImage,
     DrawerModule,
     AsyncPipe,
@@ -41,7 +42,13 @@ interface MenuItem {
 export class SideMenuComponent implements OnInit, OnDestroy {
   isMenuOpen = signal(false);
 
-  topMenuItems: MenuItem[] = [];
+  topMenuItems: MenuItem[] = [
+    {
+      icon: 'pi pi-chart-bar',
+      label: 'Standings',
+      route: '/standings',
+    },
+  ];
 
   authMenuItems: MenuItem[] = [
     {

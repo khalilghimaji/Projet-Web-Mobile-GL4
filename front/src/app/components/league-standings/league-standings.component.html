@@ -1,0 +1,122 @@
+<div class="standings-container">
+    <!-- League Selection View -->
+    <div *ngIf="showLeagueSelection" class="league-selection">
+        <div class="selection-header">
+            <h1>Select a League</h1>
+            <p>Choose a league to view its standings</p>
+        </div>
+
+        <!-- Loading State -->
+        <div *ngIf="loading" class="loading-state">
+            <app-loading></app-loading>
+        </div>
+
+        <!-- Error State -->
+        <div *ngIf="error" class="error-state">
+            <p>{{ error }}</p>
+        </div>
+
+        <!-- League Cards Grid -->
+        <div *ngIf="!loading && !error" class="leagues-grid">
+            <div *ngFor="let league of leagues" class="league-card" (click)="selectLeague(league)">
+                <div class="league-card-header">
+                    <img [src]="league.league_logo" [alt]="league.league_name" class="league-logo" />
+                </div>
+                <div class="league-card-body">
+                    <h3 class="league-name">{{ league.league_name }}</h3>
+                    <div class="country-info">
+                        <img [src]="league.country_logo" [alt]="league.country_name" class="country-flag" />
+                        <span class="country-name">{{ league.country_name }}</span>
+                    </div>
+                </div>
+                <div class="league-card-footer">
+                    <span class="view-standings-text">View Standings →</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Standings Table View -->
+    <div *ngIf="!showLeagueSelection">
+        <div class="standings-header">
+            <div class="header-left">
+                <button class="back-button" (click)="backToLeagues()">
+                    <i class="pi pi-arrow-left"></i>
+                    Back to Leagues
+                </button>
+                <h2>League Standings</h2>
+            </div>
+
+            <!-- View Toggle -->
+            <div class="view-toggle">
+                <button [class.active]="selectedView === 'total'" (click)="setView('total')">
+                    Overall
+                </button>
+                <button [class.active]="selectedView === 'home'" (click)="setView('home')">
+                    Home
+                </button>
+                <button [class.active]="selectedView === 'away'" (click)="setView('away')">
+                    Away
+                </button>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div *ngIf="loading" class="loading-state">
+            <app-loading></app-loading>
+        </div>
+
+        <!-- Error State -->
+        <div *ngIf="error" class="error-state">
+            <p>{{ error }}</p>
+        </div>
+
+        <!-- Standings Table -->
+        <div *ngIf="!loading && !error && standings" class="standings-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th class="position">#</th>
+                        <th class="team">Team</th>
+                        <th>P</th>
+                        <th>W</th>
+                        <th>D</th>
+                        <th>L</th>
+                        <th>GF</th>
+                        <th>GA</th>
+                        <th>GD</th>
+                        <th class="points">Pts</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let standing of currentStandings"
+                        [class]="getPlaceTypeClass(standing.standing_place_type)">
+                        <td class="position">{{ standing.standing_place }}</td>
+                        <td class="team">
+                            <span class="team-name">{{ standing.standing_team }}</span>
+                            <span *ngIf="standing.standing_place_type" class="place-type-badge">
+                                {{ standing.standing_place_type }}
+                            </span>
+                        </td>
+                        <td>{{ standing.standing_P }}</td>
+                        <td>{{ standing.standing_W }}</td>
+                        <td>{{ standing.standing_D }}</td>
+                        <td>{{ standing.standing_L }}</td>
+                        <td>{{ standing.standing_F }}</td>
+                        <td>{{ standing.standing_A }}</td>
+                        <td [class.positive]="isPositive(standing.standing_GD)"
+                            [class.negative]="isNegative(standing.standing_GD)">
+                            {{ standing.standing_GD }}
+                        </td>
+                        <td class="points">{{ standing.standing_PTS }}</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- Last Updated -->
+            <div *ngIf="currentStandings[0]?.standing_updated" class="last-updated">
+                Last updated: {{ currentStandings[0].standing_updated | date:'short' }}
+            </div>
+        </div>
+    </div>
+</div>
