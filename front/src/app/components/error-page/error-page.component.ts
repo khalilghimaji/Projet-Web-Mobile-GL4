@@ -10,14 +10,10 @@ import {
 import { RouterModule, ActivatedRoute } from '@angular/router';
 import { Location } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs/operators';
 import {
   ScorePredictionPopupComponent,
   TeamPrediction,
 } from '../score-prediction-popup/score-prediction-popup.component';
-import { MatchesService } from '../../services/Api';
-import { NotificationService } from '../../services/notification.service';
-
 @Component({
   selector: 'app-error-page',
   standalone: true,

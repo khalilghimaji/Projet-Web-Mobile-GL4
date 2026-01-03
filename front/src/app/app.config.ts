@@ -6,7 +6,7 @@ import {
 } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { routes } from './app.routes';
-import { provideAnimations } from '@angular/platform-browser/animations';
+import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { MessageService } from 'primeng/api';
 import { providePrimeNG } from 'primeng/config';
 import { MyPreset } from './shared/mytheme';
@@ -17,13 +17,13 @@ import {
 } from '@angular/common/http';
 import { CredentialsInterceptor } from './shared/interceptors/credentials.interceptor';
 import { AuthInterceptor } from './shared/interceptors/auth.interceptor';
-import { catchError, map, of } from 'rxjs';
+import { catchError, EMPTY, map, of } from 'rxjs';
 import { AuthService } from './services/auth.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes),
-    provideAnimations(),
+    provideAnimationsAsync(),
     provideZonelessChangeDetection(),
     MessageService,
 
@@ -44,12 +44,9 @@ export const appConfig: ApplicationConfig = {
     provideAppInitializer(() => {
       const authService = inject(AuthService);
       return authService.getProfile().pipe(
-        map((user) => {
-          return true;
-        }),
         catchError((error) => {
           console.log('error', error);
-          return of(false);
+          return EMPTY;
         })
       );
     }),

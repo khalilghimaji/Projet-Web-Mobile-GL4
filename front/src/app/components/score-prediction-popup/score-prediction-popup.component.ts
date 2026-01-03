@@ -1,4 +1,11 @@
-import { Component, Input, output, input, inject, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  Input,
+  output,
+  input,
+  inject,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 
 import {
   FormsModule,
@@ -68,6 +75,7 @@ export class ScorePredictionPopupComponent {
   diamondAsyncValidator(
     control: AbstractControl
   ): Observable<ValidationErrors | null> {
+    if (!this.visible) return of(null);
     const matchId = control.parent?.get('matchId')?.value || this.matchId;
 
     return this.matchesService
