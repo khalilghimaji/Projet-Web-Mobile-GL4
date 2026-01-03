@@ -1,4 +1,11 @@
-import { Component, OnInit, signal, inject, computed, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  signal,
+  inject,
+  computed,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CardModule } from 'primeng/card';
 import { TableModule } from 'primeng/table';
@@ -8,6 +15,8 @@ import { MessageModule } from 'primeng/message';
 import { NotificationsApiService } from '../../services/notifications-api.service';
 import { NotificationDataAnyOf1RankingsInner } from '../../services/Api/model/notificationDataAnyOf1RankingsInner';
 import { UserService } from '../../services/Api';
+import { MedalIconPipe } from '../../shared/pipes/medal-icon.pipe';
+import { InitialsPipe } from '../../shared/pipes/initials.pipe';
 
 interface RankingUser extends NotificationDataAnyOf1RankingsInner {
   rank?: number;
@@ -23,6 +32,8 @@ interface RankingUser extends NotificationDataAnyOf1RankingsInner {
     AvatarModule,
     SkeletonModule,
     MessageModule,
+    MedalIconPipe,
+    InitialsPipe,
   ],
   templateUrl: './ranking-page.component.html',
   styleUrls: ['./ranking-page.component.css'],
@@ -83,24 +94,5 @@ export class RankingPageComponent implements OnInit {
         console.error('SSE connection error:', err);
       },
     });
-  }
-
-  getMedalIcon(rank: number): string {
-    switch (rank) {
-      case 1:
-        return '🥇';
-      case 2:
-        return '🥈';
-      case 3:
-        return '🥉';
-      default:
-        return '';
-    }
-  }
-
-  getInitials(firstName?: string, lastName?: string): string {
-    const first = firstName?.charAt(0).toUpperCase() || '';
-    const last = lastName?.charAt(0).toUpperCase() || '';
-    return first + last;
   }
 }

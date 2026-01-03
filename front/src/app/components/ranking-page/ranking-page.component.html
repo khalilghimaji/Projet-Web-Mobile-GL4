@@ -38,7 +38,7 @@
     <div class="podium-container">
       @for (user of topThree(); track user.rank) {
       <div class="podium-item" [class.first-place]="user.rank === 1">
-        <div class="medal">{{ getMedalIcon(user.rank!) }}</div>
+        <div class="medal">{{ user.rank! | medalIcon }}</div>
 
         @if (user.imageUrl) {
         <img
@@ -48,7 +48,7 @@
         />
         } @else {
         <p-avatar
-          [label]="getInitials(user.firstName, user.lastName)"
+          [label]="user.firstName | initials : user.lastName"
           size="xlarge"
           shape="circle"
           styleClass="avatar-large"
@@ -100,7 +100,7 @@
             />
             } @else {
             <p-avatar
-              [label]="getInitials(user.firstName, user.lastName)"
+              [label]="user.firstName | initials : user.lastName"
               size="normal"
               shape="circle"
             ></p-avatar>

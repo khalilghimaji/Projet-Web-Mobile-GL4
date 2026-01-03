@@ -48,8 +48,6 @@ export class SignupPageComponent {
   private readonly authService = inject(AuthService);
   private readonly notificationService = inject(NotificationService);
 
-  facebookHovered = signal(false);
-  googleHovered = signal(false);
   isLoading = signal(false);
   errorMessage = signal('');
   profileImagePreview = signal<string | null>(null);

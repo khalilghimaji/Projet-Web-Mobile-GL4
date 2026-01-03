@@ -333,25 +333,19 @@
               [style]="{
                 backgroundColor: 'white',
                 color: 'rgba(0, 0, 0, 0.54)',
-                border: googleHovered()
-                  ? '1px solid #ddd'
-                  : '1px solid #e0e0e0',
+                border: '1px solid #4285f4',
                 borderRadius: '10px',
                 height: '54px',
                 fontWeight: 'normal',
                 width: '100%',
                 transition: 'all 0.2s ease',
-                boxShadow: googleHovered()
-                  ? '0 6px 10px rgba(0, 0, 0, 0.15)'
-                  : 'none',
-                transform: googleHovered() ? 'translateY(-2px)' : 'none'
+                boxShadow: '0 6px 10px rgba(0, 0, 0, 0.15)',
+                transform: 'translateY(-2px)'
               }"
               styleClass="google-btn"
               label="Sign In with Google"
               icon="pi pi-google"
               [outlined]="true"
-              (mouseenter)="googleHovered.set(true)"
-              (mouseleave)="googleHovered.set(false)"
               (click)="loginWithGoogle()"
             ></p-button>
 
