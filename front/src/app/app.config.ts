@@ -17,6 +17,9 @@ import {
 } from '@angular/common/http';
 import { CredentialsInterceptor } from './shared/interceptors/credentials.interceptor';
 import { AuthInterceptor } from './shared/interceptors/auth.interceptor';
+import { ApiKeyInterceptor } from './shared/interceptors/apikey.interceptor';
+import { AuthInitializationService } from './services/auth-initialization.service';
+import { lastValueFrom } from 'rxjs';
 import { catchError, EMPTY, map, of } from 'rxjs';
 import { AuthService } from './services/auth.service';
 
@@ -41,6 +44,12 @@ export const appConfig: ApplicationConfig = {
       useClass: AuthInterceptor,
       multi: true,
     },
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: ApiKeyInterceptor,
+      multi: true,
+    },
+    // Use provideAppInitializer for auth initialization
     provideAppInitializer(() => {
       const authService = inject(AuthService);
       return authService.getProfile().pipe(

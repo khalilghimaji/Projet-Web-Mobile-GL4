@@ -10,7 +10,6 @@ import { environment } from '../../environments/environment';
 })
 export class LeaguesService {
     private readonly API_BASE_URL = environment.allSportsApi.baseUrl;
-    private readonly API_KEY = environment.allSportsApi.apiKey;
 
     // Famous/Popular leagues to display
     private readonly FEATURED_LEAGUE_IDS = [
@@ -32,8 +31,10 @@ export class LeaguesService {
      * Fetch all leagues from API
      */
     getAllLeagues(): Observable<League[]> {
-        const url = `${this.API_BASE_URL}/?met=Leagues&APIkey=${this.API_KEY}`;
-        return this.http.get<LeaguesResponse>(url).pipe(
+
+        const params = new HttpParams().set('met', 'Leagues');
+
+        return this.http.get<LeaguesResponse>(this.API_BASE_URL, { params }).pipe(
             map(response => {
                 console.log('API Response:', response);
                 return response.result || [];
