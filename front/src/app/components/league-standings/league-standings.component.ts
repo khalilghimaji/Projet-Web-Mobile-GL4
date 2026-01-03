@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Input, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -36,6 +36,7 @@ export class LeagueStandingsComponent implements OnInit, OnDestroy {
   private standingsService = inject(StandingsService);
   private standingsUpdater = inject(StandingsUpdaterService);
   private leaguesService = inject(LeaguesService);
+  private cdr = inject(ChangeDetectorRef);
 
   ngOnInit(): void {
     // Get league ID from route or input
@@ -69,10 +70,12 @@ export class LeagueStandingsComponent implements OnInit, OnDestroy {
       next: (leagues) => {
         this.leagues = leagues;
         this.loading = false;
+        this.cdr.markForCheck();
       },
       error: (err) => {
         this.error = 'Failed to load leagues. Please try again later.';
         this.loading = false;
+        this.cdr.markForCheck();
         console.error('Leagues error:', err);
       }
     });
@@ -93,11 +96,13 @@ export class LeagueStandingsComponent implements OnInit, OnDestroy {
         if (data) {
           this.standings = data;
           this.loading = false;
+          this.cdr.markForCheck();
         }
       },
       error: (err) => {
         this.error = 'Failed to load standings. Please try again later.';
         this.loading = false;
+        this.cdr.markForCheck();
         console.error('Standings error:', err);
       }
     });

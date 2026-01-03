@@ -18,8 +18,6 @@ import {
 import { CredentialsInterceptor } from './shared/interceptors/credentials.interceptor';
 import { AuthInterceptor } from './shared/interceptors/auth.interceptor';
 import { ApiKeyInterceptor } from './shared/interceptors/apikey.interceptor';
-import { AuthInitializationService } from './services/auth-initialization.service';
-import { lastValueFrom } from 'rxjs';
 import { catchError, EMPTY, map, of } from 'rxjs';
 import { AuthService } from './services/auth.service';
 
