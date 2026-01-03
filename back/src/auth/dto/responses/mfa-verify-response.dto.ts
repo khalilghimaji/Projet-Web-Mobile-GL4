@@ -20,7 +20,7 @@ export class UserDto {
   isMFAEnabled?: boolean;
 
   @ApiProperty({ description: 'User diamonds', example: 100 })
-  diamonds?: number;
+  diamonds: number;
 }
 
 export class MfaVerifyResponseDto {

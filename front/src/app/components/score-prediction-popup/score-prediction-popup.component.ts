@@ -1,9 +1,15 @@
-import { Component, Input, OnInit, output, input, inject } from '@angular/core';
+import {
+  Component,
+  Input,
+  output,
+  input,
+  inject,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 
 import {
   FormsModule,
   ReactiveFormsModule,
-  FormBuilder,
   FormGroup,
   FormControl,
   Validators,
@@ -14,7 +20,7 @@ import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { Observable, of } from 'rxjs';
-import { debounceTime, map, catchError } from 'rxjs/operators';
+import { map, catchError } from 'rxjs/operators';
 import { MatchesService } from '../../services/Api';
 import { NotificationService } from '../../services/notification.service';
 
@@ -37,6 +43,7 @@ export interface TeamPrediction {
   ],
   templateUrl: './score-prediction-popup.component.html',
   styleUrls: ['./score-prediction-popup.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ScorePredictionPopupComponent {
   @Input() visible = false;
@@ -68,10 +75,7 @@ export class ScorePredictionPopupComponent {
   diamondAsyncValidator(
     control: AbstractControl
   ): Observable<ValidationErrors | null> {
-    if (!control.value || control.value < 1 || control.pristine) {
-      return of(null);
-    }
-
+    if (!this.visible) return of(null);
     const matchId = control.parent?.get('matchId')?.value || this.matchId;
 
     return this.matchesService

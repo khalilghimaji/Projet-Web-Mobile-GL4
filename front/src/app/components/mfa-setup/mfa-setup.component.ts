@@ -1,4 +1,11 @@
-import { Component, OnInit, signal, computed, inject } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  signal,
+  computed,
+  inject,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -19,10 +26,11 @@ import { toSignal } from '@angular/core/rxjs-interop';
     ButtonModule,
     InputTextModule,
     ProgressSpinnerModule,
-    MessageModule
-],
+    MessageModule,
+  ],
   templateUrl: './mfa-setup.component.html',
   styleUrls: ['./mfa-setup.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MfaSetupComponent implements OnInit {
   private readonly authService = inject(AuthService);

@@ -1,4 +1,10 @@
-import { Component, signal, OnInit, OnDestroy } from '@angular/core';
+import {
+  Component,
+  signal,
+  OnInit,
+  OnDestroy,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { AsyncPipe, CommonModule, NgOptimizedImage } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { DrawerModule } from 'primeng/drawer';
@@ -30,6 +36,7 @@ interface MenuItem {
     ImageDefaultPipe,
   ],
   templateUrl: './side-menu.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./side-menu.component.css'],
 })
 export class SideMenuComponent implements OnInit, OnDestroy {
@@ -73,6 +80,11 @@ export class SideMenuComponent implements OnInit, OnDestroy {
       route: '/diamond-store',
     },
     {
+      icon: 'pi pi-trophy',
+      label: 'Rankings',
+      route: '/rankings',
+    },
+    {
       icon: 'pi pi-shield',
       label: 'Security Settings',
       route: '/mfa-setup',
@@ -88,7 +100,6 @@ export class SideMenuComponent implements OnInit, OnDestroy {
     private notificationsApi: NotificationsApiService
   ) {
     this.authService.currentUser$.subscribe((user) => {
-      console.log('User updated in SideMenuComponent:', user);
       if (user && 'diamonds' in user) {
         this.diamonds.set(user.diamonds ?? 0);
       }
@@ -122,7 +133,7 @@ export class SideMenuComponent implements OnInit, OnDestroy {
             this.diamonds.set(notification.data?.newDiamonds);
           }
           if (notification.type === 'DIAMOND_UPDATE') {
-            this.gainedDiamonds.set(notification.data?.gain || 0);
+            this.gainedDiamonds.set(Number(notification.data?.gain) || 0);
           }
         },
         error: (error) => {

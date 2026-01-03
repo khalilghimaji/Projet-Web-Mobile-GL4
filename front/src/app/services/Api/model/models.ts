@@ -1,5 +1,4 @@
 export * from './canPredictMatchDto';
-export * from './dataMessage';
 export * from './disableMfaDto';
 export * from './forgotPasswordDto';
 export * from './forgotPasswordResponseDto';
@@ -14,6 +13,10 @@ export * from './mfaGenerateResponseDto';
 export * from './mfaVerifyDto';
 export * from './mfaVerifyResponseDto';
 export * from './notification';
+export * from './notificationData';
+export * from './notificationDataAnyOf';
+export * from './notificationDataAnyOf1';
+export * from './notificationDataAnyOf1RankingsInner';
 export * from './oAuthResponseDto';
 export * from './predictDto';
 export * from './prediction';

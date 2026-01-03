@@ -328,6 +328,7 @@ export class AuthService extends GenericService<User> {
         lastName: user.lastName,
         isMFAEnabled: user.isMFAEnabled,
         imgUrl: user.imageUrl,
+        diamonds: user.diamonds,
       },
     };
   }
@@ -394,6 +395,7 @@ export class AuthService extends GenericService<User> {
         lastName: user.lastName,
         isMFAEnabled: user.isMFAEnabled,
         imgUrl: user.imageUrl,
+        diamonds: user.diamonds,
       },
     };
   }
@@ -610,6 +612,7 @@ export class AuthService extends GenericService<User> {
         lastName: dbUser.lastName,
         isMFAEnabled: dbUser.isMFAEnabled,
         imgUrl: dbUser.imageUrl,
+        diamonds: dbUser.diamonds,
       },
     };
   }
@@ -657,6 +660,7 @@ export class AuthService extends GenericService<User> {
         lastName: dbUser.lastName,
         isMFAEnabled: dbUser.isMFAEnabled,
         imgUrl: dbUser.imageUrl,
+        diamonds: dbUser.diamonds,
       },
     };
   }

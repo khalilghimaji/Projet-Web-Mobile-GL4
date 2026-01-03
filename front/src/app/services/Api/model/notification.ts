@@ -7,14 +7,14 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { DataMessage } from './dataMessage';
+import { NotificationData } from './notificationData';
 
 
 export interface Notification { 
+    data?: NotificationData | null;
     userId: string;
     type: Notification.TypeEnum;
     message: string;
-    data?: DataMessage;
     read: boolean;
     id: string;
     createdAt: string;
@@ -24,7 +24,8 @@ export interface Notification {
 export namespace Notification {
     export const TypeEnum = {
         ChangeOfPossessedGems: 'CHANGE_OF_POSSESSED_GEMS',
-        DiamondUpdate: 'DIAMOND_UPDATE'
+        DiamondUpdate: 'DIAMOND_UPDATE',
+        RankingUpdate: 'RANKING_UPDATE'
     } as const;
     export type TypeEnum = typeof TypeEnum[keyof typeof TypeEnum];
 }
