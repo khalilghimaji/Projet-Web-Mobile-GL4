@@ -4,7 +4,6 @@ import { tokenValidationGuard } from './shared/guards/token-validation.guard';
 export const STANDINGS_ROUTE: Routes = [
   {
     path: ':leagueId',
-    // canActivate: [tokenValidationGuard],
     loadComponent: () =>
       import('./components/league-standings/league-standings.component').then(
         (c) => c.LeagueStandingsComponent
@@ -12,10 +11,9 @@ export const STANDINGS_ROUTE: Routes = [
   },
   {
     path: '',
-    // canActivate: [tokenValidationGuard],
     loadComponent: () =>
-      import('./components/league-standings/league-standings.component').then(
-        (c) => c.LeagueStandingsComponent
+      import('./components/leagues-list/leagues-list.component').then(
+        (c) => c.LeaguesListComponent
       ),
   }
 ];

@@ -1,10 +1,9 @@
 import { Component, OnInit, OnDestroy, Input, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { StandingsService } from '../../services/standings.service';
 import { StandingsUpdaterService } from '../../services/goal-events.service';
-import { LeaguesService } from '../../services/leagues.service';
 import { StandingEntry, StandingsResponse, League } from '../../models/models';
 import { LoadingComponent } from '../loading/loading.component';
 
@@ -20,37 +19,24 @@ export class LeagueStandingsComponent implements OnInit, OnDestroy {
 
   // League selection view
   leagues: League[] = [];
-  showLeagueSelection = true;
+  showLeagueSelection = false;
 
   // Standings view
   standings: StandingsResponse | null = null;
   selectedView: 'total' | 'home' | 'away' = 'total';
-  selectedLeague: League | null = null;
 
   loading = true;
   error: string | null = null;
 
   private subscription?: Subscription;
-  private route = inject(ActivatedRoute);
   private router = inject(Router);
   private standingsService = inject(StandingsService);
   private standingsUpdater = inject(StandingsUpdaterService);
-  private leaguesService = inject(LeaguesService);
   private cdr = inject(ChangeDetectorRef);
 
   ngOnInit(): void {
-    // Get league ID from route or input
-    const routeLeagueId = this.route.snapshot.paramMap.get('leagueId');
-    const leagueId = this.leagueId || routeLeagueId;
-
-    if (leagueId) {
-      // Show standings for specific league
-      this.showLeagueSelection = false;
-      this.loadStandings(leagueId);
-    } else {
-      // Show league selection
-      this.showLeagueSelection = true;
-      this.loadLeagues();
+    if (this.leagueId) {
+      this.loadStandings(this.leagueId);
     }
   }
 
@@ -59,26 +45,6 @@ export class LeagueStandingsComponent implements OnInit, OnDestroy {
       this.subscription.unsubscribe();
     }
     this.standingsUpdater.stopListening();
-  }
-
-  /**
-   * Load featured leagues for selection
-   */
-  private loadLeagues(): void {
-    this.loading = true;
-    this.leaguesService.getFeaturedLeagues().subscribe({
-      next: (leagues) => {
-        this.leagues = leagues;
-        this.loading = false;
-        this.cdr.markForCheck();
-      },
-      error: (err) => {
-        this.error = 'Failed to load leagues. Please try again later.';
-        this.loading = false;
-        this.cdr.markForCheck();
-        console.error('Leagues error:', err);
-      }
-    });
   }
 
   /**
@@ -108,13 +74,7 @@ export class LeagueStandingsComponent implements OnInit, OnDestroy {
     });
   }
 
-  /**
-   * Navigate to league standings
-   */
-  selectLeague(league: League): void {
-    this.selectedLeague = league;
-    this.router.navigate(['/standings', league.league_key]);
-  }
+
 
   /**
    * Go back to league selection
