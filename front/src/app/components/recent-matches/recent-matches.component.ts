@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, input } from '@angular/core';
+import { Component, ChangeDetectionStrategy, input , computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Fixture } from '../../models/models';
 import { LucideAngularModule, TrendingUp } from 'lucide-angular';
@@ -14,6 +14,10 @@ export class RecentMatchesComponent {
   // Input signals
   matches = input.required<Fixture[]>();
   teamKey = input.required<number>();
+
+
+
+
 
   /**
    * Check if match is a win for the team
