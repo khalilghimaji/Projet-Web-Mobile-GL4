@@ -26,7 +26,7 @@
       </button>
       <span class="current-team-id">Current Team ID: {{ teamId() }}</span>
       <button class="nav-btn next-btn" (click)="incrementTeamId()">
-        Next Team ({{ teamId() + 1 }}) →
+        Next Team ({{ teamId() + 1}}) →
       </button>
     </div>
 
@@ -39,8 +39,8 @@
     }
 
     <!-- Recent Matches Section -->
-    @if (cachedMatches().length > 0;) {
-    <app-recent-matches [matches]="cachedMatches()" [teamKey]="team.team_key" />
+    @if (accumulatedMatches().length > 0;) {
+    <app-recent-matches [matches]="accumulatedMatches()" [teamKey]="team.team_key" />
 
     <!-- Load More Button -->
     @if (hasMoreToLoad()) {
@@ -55,7 +55,7 @@
     </div>
     } @else {
     <p class="no-more-matches">
-      No more matches available (showing last {{ (realDaysOffset$ | async)! + 15 }} days)
+      No more matches available (showing last {{ realDaysOffset() + 15 }} days)
     </p>
     } } @else {
     <p class="no-matches">No recent matches found</p>

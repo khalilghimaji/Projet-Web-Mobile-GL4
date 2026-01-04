@@ -48,28 +48,6 @@ export class TeamService {
   }
 
  
-  fetchMatchesByRange(
-    teamId: number,
-    fromDaysAgo: number,
-    toDaysAgo: number = 0
-  ): Observable<Fixture[]> {
-    const today = new Date();
-    const startDate = new Date();
-    const endDate = new Date();
-    
-    startDate.setDate(today.getDate() - fromDaysAgo);
-    endDate.setDate(today.getDate() - toDaysAgo);
-    
-    const from = this.formatDate(startDate);
-    const to = this.formatDate(endDate);
-
-    return this.http.get<ApiResponse<Fixture>>(
-      `${this.apiUrl}?met=Fixtures&teamId=${teamId}&from=${from}&to=${to}&APIkey=${this.apiKey}`
-    ).pipe(
-      map(response => this.transformFixturesResponse(response))
-    );
-  }
-
  
   private transformNextMatchResponse(response: ApiResponse<Fixture>): Fixture | null {
     if (response.success === 1 && response.result && response.result.length > 0) {
