@@ -1,41 +1,29 @@
 <div class="standings-container">
-
-    <!-- Standings Table View -->
     <div class="standings-header">
         <div class="header-left">
             <button class="back-button" (click)="backToLeagues()">
-                <i class="pi pi-arrow-left"></i>
-                Back to Leagues
+                <i class="pi pi-arrow-left"></i> Back to Leagues
             </button>
             <h2>League Standings</h2>
         </div>
 
-        <!-- View Toggle -->
         <div class="view-toggle">
-            <button [class.active]="selectedView === 'total'" (click)="setView('total')">
-                Overall
-            </button>
-            <button [class.active]="selectedView === 'home'" (click)="setView('home')">
-                Home
-            </button>
-            <button [class.active]="selectedView === 'away'" (click)="setView('away')">
-                Away
-            </button>
+            <button [class.active]="selectedView() === 'total'" (click)="setView('total')">Overall</button>
+            <button [class.active]="selectedView() === 'home'" (click)="setView('home')">Home</button>
+            <button [class.active]="selectedView() === 'away'" (click)="setView('away')">Away</button>
         </div>
     </div>
 
-    <!-- Loading State -->
-    <div *ngIf="loading" class="loading-state">
-        <app-loading></app-loading>
+    @if (standingsRes.isLoading()) {
+    <div class="loading-state">
+        <app-loading />
     </div>
-
-    <!-- Error State -->
-    <div *ngIf="error" class="error-state">
-        <p>{{ error }}</p>
+    } @else if (standingsRes.error()) {
+    <div class="error-state">
+        <p>Failed to load standings. Please try again later.</p>
     </div>
-
-    <!-- Standings Table -->
-    <div *ngIf="!loading && !error && standings" class="standings-table">
+    } @else if (standingsRes.value()) {
+    <div class="standings-table">
         <table>
             <thead>
                 <tr>
@@ -52,13 +40,14 @@
                 </tr>
             </thead>
             <tbody>
-                <tr *ngFor="let standing of currentStandings" [class]="getPlaceTypeClass(standing.standing_place_type)">
+                @for (standing of currentStandings(); track standing.standing_team) {
+                <tr [class]="">
                     <td class="position">{{ standing.standing_place }}</td>
                     <td class="team">
                         <span class="team-name">{{ standing.standing_team }}</span>
-                        <span *ngIf="standing.standing_place_type" class="place-type-badge">
-                            {{ standing.standing_place_type }}
-                        </span>
+                        @if (standing.standing_place_type) {
+                        <span class="place-type-badge">{{ standing.standing_place_type }}</span>
+                        }
                     </td>
                     <td>{{ standing.standing_P }}</td>
                     <td>{{ standing.standing_W }}</td>
@@ -72,12 +61,15 @@
                     </td>
                     <td class="points">{{ standing.standing_PTS }}</td>
                 </tr>
+                }
             </tbody>
         </table>
 
-        <!-- Last Updated -->
-        <div *ngIf="currentStandings[0]?.standing_updated" class="last-updated">
-            Last updated: {{ currentStandings[0].standing_updated | date:'short' }}
+        @if (currentStandings()[0]?.standing_updated; as updated) {
+        <div class="last-updated">
+            Last updated: {{ updated | date:'short' }}
         </div>
+        }
     </div>
+    }
 </div>
