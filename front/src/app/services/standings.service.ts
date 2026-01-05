@@ -9,10 +9,9 @@ import { environment } from '../../environments/environment';
 export class StandingsService {
   private readonly API_BASE_URL = environment.allSportsApi.baseUrl;
 
-  getStandingsResource(leagueId: () => string | undefined) {
+  getStandingsResource(leagueId: () => string) {
     return httpResource<StandingsResponse>(() => {
       const id = leagueId();
-      if (!id) return undefined;
 
       return {
         url: this.API_BASE_URL,
