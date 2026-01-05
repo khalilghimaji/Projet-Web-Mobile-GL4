@@ -41,7 +41,7 @@
             </thead>
             <tbody>
                 @for (standing of currentStandings(); track standing.standing_team) {
-                <tr [class]="">
+                <tr [class]="" (click)="goToTeam(standing.team_key)">
                     <td class="position">{{ standing.standing_place }}</td>
                     <td class="team">
                         <span class="team-name">{{ standing.standing_team }}</span>

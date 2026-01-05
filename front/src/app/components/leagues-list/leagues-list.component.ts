@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { League } from '../../models/models';
 import { LeaguesService } from '../../services/leagues.service';
@@ -9,6 +9,7 @@ import { LoadingComponent } from "../loading/loading.component";
   imports: [LoadingComponent],
   templateUrl: './leagues-list.component.html',
   styleUrl: './leagues-list.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LeaguesListComponent {
 

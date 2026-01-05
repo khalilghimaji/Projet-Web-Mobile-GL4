@@ -1,4 +1,4 @@
-import { Component, Input, inject, computed, signal, input } from '@angular/core';
+import { Component, Input, inject, computed, signal, input, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { StandingsService } from '../../services/standings.service';
 import { StandingEntry } from '../../models/models';
@@ -12,6 +12,8 @@ import { Router } from '@angular/router';
   imports: [CommonModule, LoadingComponent, DatePipe],
   templateUrl: './league-standings.component.html',
   styleUrl: './league-standings.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+
 })
 export class LeagueStandingsComponent {
 
@@ -36,6 +38,10 @@ export class LeagueStandingsComponent {
 
   backToLeagues() {
     this.router.navigate(['/standings']);
+  }
+
+  goToTeam(teamId: string) {
+    this.router.navigate(['/team', teamId]);
   }
 
   isPositive = (val: string) => parseInt(val) > 0;
