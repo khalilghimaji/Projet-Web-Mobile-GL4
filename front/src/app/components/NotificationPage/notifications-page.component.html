@@ -1,7 +1,7 @@
 <div class="notifications-container">
   <h2>Your Notifications</h2>
   <div class="notifications-list">
-    @for (item of notifications.value(); track $index) {
+    @for (item of notifications.value(); track item.id) {
     <app-notification-element
       [notification]="item"
       [isRealTime]="item.isRealTime"
