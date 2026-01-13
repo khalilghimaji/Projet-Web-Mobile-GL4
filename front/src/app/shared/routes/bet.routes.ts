@@ -24,7 +24,7 @@ export const betRoutes: Routes = [
     canActivate: [tokenValidationGuard],
     data: { preload: true },
     loadComponent: () =>
-      import('../../components/ranking-page/ranking-page.component').then(
+      import('../../pages/ranking-page/ranking-page.component').then(
         (c) => c.RankingPageComponent
       ),
   },
