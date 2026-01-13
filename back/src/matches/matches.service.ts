@@ -15,6 +15,7 @@ import {
 } from './prediction-calculator.service';
 import { NotificationType } from 'src/Enums/notification-type.enum';
 import { NotificationsService } from 'src/notifications/notifications.service';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class MatchesService {
@@ -27,30 +28,45 @@ export class MatchesService {
     private readonly userRepository: Repository<User>,
     private readonly predictionCalculator: PredictionCalculatorService,
     private readonly notificationsService: NotificationsService,
+    private readonly configService: ConfigService,
   ) {}
 
-  async activateMatch(id: string): Promise<Match> {
-    let match = await this.matchRepository.findOne({ where: { id } });
-    if (!match) {
-      match = this.matchRepository.create({ id, status: MatchStatus.ONGOING });
-    } else {
-      if (match.status !== MatchStatus.INACTIVE)
-        throw new BadRequestException('Match is not inactive');
-      match.status = MatchStatus.ONGOING;
+  async verifyMatchBegan(id: string): Promise<boolean> {
+    // fetch from api the match status using all sports api
+    const apiKey = this.configService.get<string>('ALL_SPORTS_API_KEY');
+    //also need the timezone of the server to send to the api
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const response = await fetch(
+      `https://apiv2.allsportsapi.com/football?met=Fixtures&APIkey=${apiKey}&matchId=${id}&timezone=${timezone}`,
+    );
+    const data = await response.json();
+    const success = data.success;
+    if (success !== 1) {
+      throw new NotFoundException('Match not found in external API');
     }
-    return this.matchRepository.save(match);
+    if (data.result && data.result.length > 0) {
+      const matchData = data.result[0];
+      const eventDate = matchData.event_date;
+      const eventTime = matchData.event_time;
+      // the time is in format HH:MM so we need to combine date and time
+      const eventDateTimeString = `${eventDate}T${eventTime}:00`;
+      const eventDateTime = new Date(eventDateTimeString);
+      const currentDate = new Date();
+      if (eventDateTime < currentDate) {
+        return true;
+      }
+    }
+    return false;
   }
   async canPredict(
     userId: string,
     matchId: string,
     numberOfDiamondsBet: number,
   ) {
-    const match = await this.matchRepository.findOne({
-      where: { id: matchId },
-    });
-    if (!match) return false;
-    if (match.status !== MatchStatus.ONGOING) return false;
-
+    const began = await this.verifyMatchBegan(matchId);
+    if (began) {
+      return false;
+    }
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) return false;
     if (user.diamonds < numberOfDiamondsBet) return false;
@@ -85,14 +101,6 @@ export class MatchesService {
       this.userRepository,
       this.notificationsService,
     );
-  }
-  async disableMatch(id: string): Promise<Match> {
-    const match = await this.matchRepository.findOne({ where: { id } });
-    if (!match) throw new NotFoundException('Match not found');
-    if (match.status !== MatchStatus.ONGOING)
-      throw new BadRequestException('Match is not ongoing');
-    match.status = MatchStatus.INACTIVE;
-    return this.matchRepository.save(match);
   }
 
   async terminateMatch(

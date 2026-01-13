@@ -11,17 +11,6 @@ import { CanPredictMatchDto } from './dto/can-predict-match.dto';
 export class MatchesController {
   constructor(private readonly matchesService: MatchesService) {}
 
-  //cet endpoint sera supprimé
-  @Post(':id/activate')
-  async activateMatch(@Param('id') id: string) {
-    return this.matchesService.activateMatch(id);
-  }
-
-  //cet endpoint sera supprimé
-  @Post(':id/disable')
-  async disableMatch(@Param('id') id: string) {
-    return this.matchesService.disableMatch(id);
-  }
 
   @Post('can-predict/:id')
   async canPredict(
