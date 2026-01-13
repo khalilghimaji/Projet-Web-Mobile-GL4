@@ -1,4 +1,4 @@
-import { Controller, Post, Param, Body, UseGuards, Get } from '@nestjs/common';
+import { Controller, Post, Param, Body, UseGuards } from '@nestjs/common';
 import { MatchesService } from './matches.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { User } from '../Decorator/user.decorator';
@@ -32,29 +32,6 @@ export class MatchesController {
     boy: CanPredictMatchDto,
   ) {
     return this.matchesService.addDiamond(userId, boy.numberOfDiamondsBet);
-  }
-
-  //cet endpoint sera supprimé
-  @Post(':id/terminate')
-  async terminateMatch(
-    @Param('id') id: string,
-    @Body() body: TerminateMatchDto,
-  ) {
-    return this.matchesService.terminateMatch(
-      id,
-      body.scoreFirst,
-      body.scoreSecond,
-    );
-  }
-
-  // cet endpoint sera supprimé
-  @Post(':id/update')
-  async updateMatch(@Param('id') id: string, @Body() body: TerminateMatchDto) {
-    return this.matchesService.updateMatch(
-      id,
-      body.scoreFirst,
-      body.scoreSecond,
-    );
   }
 
   @Post(':id/predict')

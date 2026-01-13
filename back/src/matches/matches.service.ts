@@ -5,10 +5,8 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Match } from './entities/match.entity';
 import { Prediction } from './entities/prediction.entity';
 import { User } from '../auth/entities/user.entity';
-import { MatchStatus } from '../Enums/matchstatus.enum';
 import {
   notifyUsersAboutRankingUpdate,
   PredictionCalculatorService,
@@ -20,8 +18,6 @@ import { ConfigService } from '@nestjs/config';
 @Injectable()
 export class MatchesService {
   constructor(
-    @InjectRepository(Match)
-    private readonly matchRepository: Repository<Match>,
     @InjectRepository(Prediction)
     private readonly predictionRepository: Repository<Prediction>,
     @InjectRepository(User)
@@ -103,60 +99,59 @@ export class MatchesService {
     );
   }
 
+  async getMatchPredictions(matchId: string): Promise<Prediction[]> {
+    return this.predictionRepository.find({
+      where: { matchId },
+    });
+  }
+
   async terminateMatch(
     id: string,
     actualScoreFirst: number,
     actualScoreSecond: number,
-  ): Promise<Match> {
-    const match = await this.matchRepository.findOne({
-      where: { id },
-      relations: ['predictions', 'predictions.user'],
-    });
-    if (!match) throw new NotFoundException('Match not found');
-    if (match.status !== MatchStatus.ONGOING)
-      throw new BadRequestException('Match is not ongoing');
-    match.status = MatchStatus.COMPLETED;
-    match.scoreFirstTeam = actualScoreFirst;
-    match.scoreSecondTeam = actualScoreSecond;
+  ): Promise<void> {
+    console.log(
+      'Terminating match : ' +
+        id +
+        ' with scores ' +
+        actualScoreFirst +
+        ' - ' +
+        actualScoreSecond,
+    );
 
     // Calculate gains
     await this.predictionCalculator.calculateAndApplyGainsAtMatchEnd(
-      match.predictions,
+      await this.getMatchPredictions(id),
       actualScoreFirst,
       actualScoreSecond,
       this.userRepository,
       this.predictionRepository,
     );
-
-    return this.matchRepository.save(match);
   }
 
   async updateMatch(
     id: string,
     actualScoreFirst: number,
     actualScoreSecond: number,
-  ): Promise<Match> {
+  ): Promise<void> {
     if (actualScoreFirst > 0 || actualScoreSecond > 0) {
-      const match = await this.matchRepository.findOne({
-        where: { id },
-        relations: ['predictions', 'predictions.user'],
-      });
-      if (!match) throw new NotFoundException('Match not found');
-      if (match.status !== MatchStatus.ONGOING)
-        throw new BadRequestException('Match is not ongoing');
-      match.scoreFirstTeam = actualScoreFirst;
-      match.scoreSecondTeam = actualScoreSecond;
+      console.log(
+        'Updating match : ' +
+          id +
+          ' with scores ' +
+          actualScoreFirst +
+          ' - ' +
+          actualScoreSecond,
+      );
 
       // Calculate gains
       await this.predictionCalculator.calculateAndApplyGainsAtMatchUpdate(
-        match.predictions,
+        await this.getMatchPredictions(id),
         actualScoreFirst,
         actualScoreSecond,
         this.predictionRepository,
         this.userRepository,
       );
-
-      return this.matchRepository.save(match);
     }
     throw new BadRequestException('No score update provided');
   }
@@ -168,13 +163,6 @@ export class MatchesService {
     scoreSecond: number,
     diamondsBet: number,
   ): Promise<Prediction> {
-    const match = await this.matchRepository.findOne({
-      where: { id: matchId },
-    });
-    if (!match) throw new NotFoundException('Match not found');
-    if (match.status !== MatchStatus.ONGOING)
-      throw new BadRequestException('Match is not active');
-
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
     if (user.diamonds < diamondsBet)
