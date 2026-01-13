@@ -4,7 +4,11 @@ import {
   inject,
   provideZonelessChangeDetection,
 } from '@angular/core';
-import { provideRouter, withComponentInputBinding  } from '@angular/router';
+import {
+  provideRouter,
+  withComponentInputBinding,
+  withPreloading,
+} from '@angular/router';
 import { routes } from './app.routes';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { MessageService } from 'primeng/api';
@@ -20,6 +24,7 @@ import { AuthInterceptor } from './shared/interceptors/auth.interceptor';
 import { ApiKeyInterceptor } from './shared/interceptors/apikey.interceptor';
 import { catchError, EMPTY, map, of } from 'rxjs';
 import { AuthService } from './services/auth.service';
+import { CustomPreloadStrategy } from './shared/custom-preload.strategy';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -67,6 +72,10 @@ export const appConfig: ApplicationConfig = {
       },
     }),
 
-    provideRouter(routes, withComponentInputBinding()),
+    provideRouter(
+      routes,
+      withComponentInputBinding(),
+      withPreloading(CustomPreloadStrategy)
+    ),
   ],
 };

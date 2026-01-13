@@ -5,6 +5,7 @@ export const betRoutes: Routes = [
   {
     path: 'notifications',
     canActivate: [tokenValidationGuard],
+    data: { preload: true },
     loadComponent: () =>
       import('../../pages/NotificationPage/notifications-page.component').then(
         (c) => c.NotificationsPageComponent
@@ -21,6 +22,7 @@ export const betRoutes: Routes = [
   {
     path: 'rankings',
     canActivate: [tokenValidationGuard],
+    data: { preload: true },
     loadComponent: () =>
       import('../../components/ranking-page/ranking-page.component').then(
         (c) => c.RankingPageComponent
