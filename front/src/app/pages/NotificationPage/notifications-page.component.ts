@@ -11,8 +11,9 @@ import {
   startWith,
   switchMap,
 } from 'rxjs';
-import { NotificationElementComponent } from './notification-element/notification-element.component';
+
 import { rxResource } from '@angular/core/rxjs-interop';
+import { NotificationElementComponent } from '../../components/notification-element/notification-element.component';
 @Component({
   selector: 'app-notifications-page',
   templateUrl: './notifications-page.component.html',

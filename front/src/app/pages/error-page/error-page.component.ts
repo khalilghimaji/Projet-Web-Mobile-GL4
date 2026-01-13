@@ -13,7 +13,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import {
   ScorePredictionPopupComponent,
   TeamPrediction,
-} from '../score-prediction-popup/score-prediction-popup.component';
+} from '../../components/score-prediction-popup/score-prediction-popup.component';
 @Component({
   selector: 'app-error-page',
   standalone: true,
