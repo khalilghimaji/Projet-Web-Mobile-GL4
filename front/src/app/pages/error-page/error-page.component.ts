@@ -91,16 +91,9 @@ export class ErrorPageComponent {
     this.location.back();
   }
   // ================ score prediction popup methods ==================
-  openPredictionDialog() {
-    this.showPredictionDialog.set(true);
-  }
 
   onPredictionSubmitted(prediction: TeamPrediction) {
     console.log('Prediction submitted:', prediction);
-  }
-
-  onCloseDialog(event: any) {
-    this.showPredictionDialog.set(false);
   }
   // ===============================  end =================================================
 }

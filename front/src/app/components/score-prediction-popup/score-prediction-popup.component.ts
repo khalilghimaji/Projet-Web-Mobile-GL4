@@ -6,6 +6,7 @@ import {
   inject,
   ChangeDetectionStrategy,
   effect,
+  model,
 } from '@angular/core';
 
 import {
@@ -47,16 +48,15 @@ export interface TeamPrediction {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ScorePredictionPopupComponent {
-  @Input() visible = false;
+  visible = model(false);
   team1Name = input('');
   team2Name = input('');
   team1Flag = input<string | undefined>(undefined);
   team2Flag = input<string | undefined>(undefined);
 
-  visibleChange = output<boolean>();
   predictionSubmitted = output<TeamPrediction>();
 
-  @Input() matchId: number = 0;
+  matchId = input(0);
 
   private readonly matchesService = inject(MatchesService);
   private readonly notificationService = inject(NotificationService);
@@ -78,7 +78,7 @@ export class ScorePredictionPopupComponent {
 
   constructor() {
     effect(() => {
-      if (this.visible && this.matchId) {
+      if (this.visible() && this.matchId()) {
         this.fetchExistingPrediction();
       }
     });
@@ -154,8 +154,7 @@ export class ScorePredictionPopupComponent {
   }
 
   onHide(): void {
-    this.visible = false;
-    this.visibleChange.emit(false);
+    this.visible.set(false);
   }
 
   onSubmit(): void {
@@ -202,8 +201,7 @@ export class ScorePredictionPopupComponent {
           );
         },
         complete: () => {
-          this.visible = false;
-          this.visibleChange.emit(false);
+          this.visible.set(false);
         },
       });
       this.predictionSubmitted.emit(prediction);

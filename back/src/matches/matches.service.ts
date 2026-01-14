@@ -66,17 +66,6 @@ export class MatchesService {
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) return false;
     if (user.diamonds < numberOfDiamondsBet) return false;
-
-    const exists = await this.predictionRepository.exists({
-      where: {
-        userId,
-        matchId,
-      },
-    });
-
-    if (exists) {
-      return false;
-    }
     return true;
   }
 
@@ -143,8 +132,9 @@ export class MatchesService {
         this.predictionRepository,
         this.userRepository,
       );
+    } else {
+      throw new BadRequestException('No score update provided');
     }
-    throw new BadRequestException('No score update provided');
   }
 
   async makePrediction(

@@ -8,17 +8,6 @@ import { ConfigService } from '@nestjs/config';
 import * as WebSocket from 'ws';
 import { MatchesService } from './matches.service';
 
-interface ScoreUpdateEvent {
-  type: 'SCORE_UPDATE';
-  match_id: string;
-  home_team: string;
-  away_team: string;
-  score: string; // Format: "2 - 1"
-  status: string;
-  league_id: string;
-  timestamp: string;
-}
-
 interface MatchEndedEvent {
   type: 'MATCH_ENDED';
   match_id: string;
@@ -85,7 +74,6 @@ interface SubstitutionEvent {
 }
 
 type MatchEvent =
-  | ScoreUpdateEvent
   | MatchEndedEvent
   | GoalScoredEvent
   | MatchStartedEvent
@@ -164,9 +152,6 @@ export class WebSocketClientService implements OnModuleInit, OnModuleDestroy {
 
     try {
       switch (event.type) {
-        case 'SCORE_UPDATE':
-          await this.handleScoreUpdate(event);
-          break;
         case 'GOAL_SCORED':
           await this.handleGoalScored(event);
           break;
@@ -185,31 +170,6 @@ export class WebSocketClientService implements OnModuleInit, OnModuleDestroy {
       this.logger.error(
         `❌ Error processing event ${event.type} for match ${event.match_id}:`,
         error,
-      );
-    }
-  }
-
-  private async handleScoreUpdate(event: ScoreUpdateEvent) {
-    this.logger.log(
-      `⚽ Score update for match ${event.match_id}: ${event.score}`,
-    );
-
-    // Parse score "2 - 1" to numbers
-    const [homeScore, awayScore] = this.parseScore(event.score);
-
-    try {
-      await this.matchesService.updateMatch(
-        event.match_id,
-        homeScore,
-        awayScore,
-      );
-      this.logger.log(
-        `✅ Updated match ${event.match_id} with score ${homeScore}-${awayScore}`,
-      );
-    } catch (error) {
-      this.logger.error(
-        `Failed to update match ${event.match_id}:`,
-        error.message,
       );
     }
   }
@@ -239,7 +199,7 @@ export class WebSocketClientService implements OnModuleInit, OnModuleDestroy {
 
   private async handleGoalScored(event: GoalScoredEvent) {
     this.logger.log(
-      `⚽ Goal scored in match ${event.match_id} by ${event.scorer} at ${event.minute}'`,
+      `⚽ Goal scored in match ${event.match_id} by ${event.scorer} at ${event.minute} and the new score is ${event.score}`,
     );
 
     // Parse the current score and update the match

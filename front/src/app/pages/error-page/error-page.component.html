@@ -8,7 +8,7 @@
     <div class="actions">
       <a routerLink="/" class="home-button">Return to Home</a>
       <button class="back-button" (click)="goBack()">Go Back</button>
-      <button class="predict-button" (click)="openPredictionDialog()">
+      <button class="predict-button" (click)="showPredictionDialog.set(true)">
         Make a Score Prediction
       </button>
     </div>
@@ -17,11 +17,10 @@
 
 <!-- Score Prediction Popup -->
 <app-score-prediction-popup
-  [visible]="showPredictionDialog()"
+  [(visible)]="showPredictionDialog"
   [team1Name]="team1Name"
   [team2Name]="team2Name"
   [team1Flag]="team1Flag"
   [team2Flag]="team2Flag"
-  (visibleChange)="onCloseDialog($event)"
   (predictionSubmitted)="onPredictionSubmitted($event)"
 />
