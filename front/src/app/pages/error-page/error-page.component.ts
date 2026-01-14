@@ -5,6 +5,7 @@ import {
   inject,
   signal,
   ChangeDetectionStrategy,
+  NgModule,
 } from '@angular/core';
 
 import { RouterModule, ActivatedRoute } from '@angular/router';
@@ -14,10 +15,11 @@ import {
   ScorePredictionPopupComponent,
   TeamPrediction,
 } from '../../components/score-prediction-popup/score-prediction-popup.component';
+import { FormsModule } from '@angular/forms';
 @Component({
   selector: 'app-error-page',
   standalone: true,
-  imports: [RouterModule, ScorePredictionPopupComponent],
+  imports: [RouterModule, ScorePredictionPopupComponent, FormsModule],
   templateUrl: './error-page.component.html',
   styleUrls: ['./error-page.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -78,6 +80,7 @@ export class ErrorPageComponent {
 
   // Score prediction popup state
   showPredictionDialog = signal(false);
+  matchId = signal(0);
 
   // Demo team data
   team1Name = 'Barcelona';

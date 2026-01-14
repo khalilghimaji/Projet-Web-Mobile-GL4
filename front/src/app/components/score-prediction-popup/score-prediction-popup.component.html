@@ -8,7 +8,7 @@
   (onHide)="onHide()"
 >
   <ng-template pTemplate="header">
-    <h3>{{ isUpdating ? "Update Prediction" : "Score Prediction" }}</h3>
+    <h3>{{ isUpdating() ? "Update Prediction" : "Score Prediction" }}</h3>
   </ng-template>
 
   <form [formGroup]="predictionForm">
@@ -78,23 +78,6 @@
       </div>
     </div>
 
-    <!-- Match ID -->
-    <div class="match-id-section">
-      <label for="match-id-input">Match ID*</label>
-      <p-inputNumber
-        inputId="match-id-input"
-        formControlName="matchId"
-        [min]="1"
-        [showButtons]="true"
-        buttonLayout="horizontal"
-        incrementButtonIcon="pi pi-plus"
-        decrementButtonIcon="pi pi-minus"
-        [step]="1"
-        styleClass="match-id-input"
-      >
-      </p-inputNumber>
-    </div>
-
     <!-- Number of Diamonds -->
     <div class="diamonds-section">
       <label for="diamonds-input">Number of Diamonds</label>
@@ -138,7 +121,7 @@
         severity="secondary"
       />
       <p-button
-        [label]="isUpdating ? 'Update Prediction' : 'Submit Prediction'"
+        [label]="isUpdating() ? 'Update Prediction' : 'Submit Prediction'"
         icon="pi pi-check"
         (onClick)="onSubmit()"
         severity="success"

@@ -7,6 +7,7 @@ import {
   ChangeDetectionStrategy,
   effect,
   model,
+  signal,
 } from '@angular/core';
 
 import {
@@ -22,7 +23,7 @@ import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { Observable, of } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
+import { map, catchError, single } from 'rxjs/operators';
 import { MatchesService, Prediction } from '../../services/Api';
 import { NotificationService } from '../../services/notification.service';
 
@@ -61,14 +62,13 @@ export class ScorePredictionPopupComponent {
   private readonly matchesService = inject(MatchesService);
   private readonly notificationService = inject(NotificationService);
 
-  existingPrediction: Prediction | null = null;
-  originalDiamondsBet: number = 0;
-  isUpdating: boolean = false;
+  existingPrediction = signal<Prediction | null>(null);
+  originalDiamondsBet = signal(0);
+  isUpdating = signal(false);
 
   predictionForm: FormGroup = new FormGroup({
     team1Score: new FormControl(0, [Validators.min(0)]),
     team2Score: new FormControl(0, [Validators.min(0)]),
-    matchId: new FormControl(this.matchId, [Validators.required]),
     numberOfDiamonds: new FormControl(1, {
       validators: [Validators.min(1)],
       asyncValidators: [this.diamondAsyncValidator.bind(this)],
@@ -86,18 +86,18 @@ export class ScorePredictionPopupComponent {
 
   fetchExistingPrediction(): void {
     this.matchesService
-      .matchesControllerGetUserPrediction(String(this.matchId))
+      .matchesControllerGetUserPrediction(String(this.matchId()))
       .subscribe({
         next: (prediction) => {
           if (prediction) {
             const pred = prediction as Prediction;
-            this.existingPrediction = pred;
-            this.originalDiamondsBet = pred.numberOfDiamondsBet;
-            this.isUpdating = true;
+            console.log('Existing prediction found:', pred);
+            this.existingPrediction.set(pred);
+            this.originalDiamondsBet.set(pred.numberOfDiamondsBet);
+            this.isUpdating.set(true);
             this.predictionForm.patchValue({
               team1Score: pred.scoreFirstEquipe,
               team2Score: pred.scoreSecondEquipe,
-              matchId: pred.matchId,
               numberOfDiamonds: pred.numberOfDiamondsBet,
             });
           } else {
@@ -111,13 +111,12 @@ export class ScorePredictionPopupComponent {
   }
 
   resetForm(): void {
-    this.existingPrediction = null;
-    this.originalDiamondsBet = 0;
-    this.isUpdating = false;
+    this.existingPrediction.set(null);
+    this.originalDiamondsBet.set(0);
+    this.isUpdating.set(false);
     this.predictionForm.patchValue({
       team1Score: 0,
       team2Score: 0,
-      matchId: this.matchId,
       numberOfDiamonds: 1,
     });
   }
@@ -125,13 +124,12 @@ export class ScorePredictionPopupComponent {
   diamondAsyncValidator(
     control: AbstractControl
   ): Observable<ValidationErrors | null> {
-    if (!this.visible) return of(null);
-    const matchId = control.parent?.get('matchId')?.value || this.matchId;
+    if (!this.visible()) return of(null);
     const requestedDiamonds = control.value || 0;
 
     // When updating, check if user has enough diamonds for the difference
-    const diamondsNeeded = this.isUpdating
-      ? requestedDiamonds - this.originalDiamondsBet
+    const diamondsNeeded = this.isUpdating()
+      ? requestedDiamonds - this.originalDiamondsBet()
       : requestedDiamonds;
 
     // If reducing bet or keeping same, no validation needed
@@ -140,7 +138,7 @@ export class ScorePredictionPopupComponent {
     }
 
     return this.matchesService
-      .matchesControllerCanPredict(matchId, {
+      .matchesControllerCanPredict(String(this.matchId()), {
         numberOfDiamondsBet: diamondsNeeded,
       })
       .pipe(
@@ -162,11 +160,11 @@ export class ScorePredictionPopupComponent {
       const prediction: TeamPrediction = {
         team1Score: this.predictionForm.value.team1Score,
         team2Score: this.predictionForm.value.team2Score,
-        matchId: this.predictionForm.value.matchId,
+        matchId: this.matchId(),
         numberOfDiamonds: this.predictionForm.value.numberOfDiamonds,
       };
 
-      const operation$ = this.isUpdating
+      const operation$ = this.isUpdating()
         ? this.matchesService.matchesControllerUpdatePrediction(
             String(prediction.matchId) || '0',
             {
@@ -187,7 +185,7 @@ export class ScorePredictionPopupComponent {
       operation$.subscribe({
         next: () => {
           this.notificationService.showSuccess(
-            this.isUpdating
+            this.isUpdating()
               ? 'Your prediction has been updated successfully!'
               : 'Your prediction has been saved successfully!'
           );
@@ -196,7 +194,7 @@ export class ScorePredictionPopupComponent {
           console.error('Error saving prediction:', e);
           this.notificationService.showError(
             `There was an error ${
-              this.isUpdating ? 'updating' : 'saving'
+              this.isUpdating() ? 'updating' : 'saving'
             } your prediction. Please try again.`
           );
         },
