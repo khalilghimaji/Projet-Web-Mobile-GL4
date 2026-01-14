@@ -2,6 +2,8 @@
 
 A high-performance, real-time football (soccer) data service built with Rust and Actix-Web. This backend continuously polls live match data from AllSportsAPI and broadcasts events to connected WebSocket clients in real-time.
 
+**Version:** 1.0.0 | **Edition:** Rust 2021
+
 ## 📋 Table of Contents
 
 - [Overview](#overview)
@@ -83,14 +85,16 @@ The system is designed to handle thousands of concurrent WebSocket connections e
 
 3. **Event Detection** (`services/event_detector.rs`):
 
-   - Compares old vs new match data
+   - Compares old vs new match data structure
    - Detects:
-     - New matches (first time seen)
+     - New matches (first time seen in live data)
      - Goals (new entries in goalscorers array)
-     - Cards (new entries in cards array - yellow/red)
+     - Cards (new entries in cards array - yellow/red cards)
      - Substitutions (new entries in substitutes array)
-     - Score updates (changes in final_result)
-     - Match ended (match removed from live matches)
+     - Score updates (changes in match score)
+     - Match ended (match removed from live matches list)
+   - Creates `MatchEvent` enums with detailed information
+   - All events include timestamps for chronological ordering
 
 4. **Broadcasting** (`actors/broadcaster.rs`):
 
@@ -102,15 +106,20 @@ The system is designed to handle thousands of concurrent WebSocket connections e
 5. **WebSocket Handling** (`actors/websocket.rs`):
 
    - One actor instance per WebSocket connection
-   - Implements heartbeat mechanism (ping/pong) to detect dead connections
-   - Registers itself with Broadcaster on connect
-   - Unregisters on disconnect
-   - Handles client messages (subscriptions, ping)
-   - Sends events as JSON text messages
+   - Implements heartbeat mechanism (ping/pong every 5s, timeout after 10s)
+   - Automatically registers itself with Broadcaster on connect
+   - Unregisters from Broadcaster on disconnect
+   - Handles client messages:
+     - `subscribe_all` - Subscribe to all match events
+     - `ping` - Manual ping request
+   - Sends events as JSON text messages to clients
+   - Automatic cleanup of dead connections via heartbeat monitoring
 
 6. **HTTP Server** (`handlers/websocket_handler.rs`):
-   - `/ws` - WebSocket upgrade endpoint
-   - `/health` - Health check endpoint (returns JSON status)
+   - `/ws` - WebSocket upgrade endpoint (GET request)
+   - `/health` - Health check endpoint (returns JSON with status and timestamp)
+   - Middleware for request logging
+   - CORS support via actix-cors
 
 ### Data Flow
 
@@ -120,20 +129,23 @@ API Response → Poller → EventDetector → MatchEvent → Broadcaster → Web
 
 ## ✨ Features
 
-- ⚡ **Real-time Updates**: Instant event broadcasting via WebSocket
-- 🔄 **Automatic Polling**: Configurable interval polling from AllSportsAPI
-- 📊 **Event Detection**: Intelligent change detection for:
-  - Match start/end
-  - Goals scored
-  - Cards issued (yellow/red)
+- ⚡ **Real-time Updates**: Instant event broadcasting via WebSocket protocol
+- 🔄 **Automatic Polling**: Configurable interval polling with retry logic and exponential backoff
+- 📊 **Comprehensive Event Detection**: Intelligent change detection for:
+  - Match start/end events
+  - Goals scored with scorer details
+  - Cards issued (yellow/red) with player information
   - Player substitutions
-  - Score updates
-- 🚀 **High Performance**: Built with Rust for memory safety and speed
-- 🔌 **WebSocket Support**: Full WebSocket protocol with heartbeat monitoring
-- 🐳 **Docker Ready**: Complete Docker setup for easy deployment
-- 📝 **Structured Logging**: Comprehensive logging with tracing
-- 🏥 **Health Checks**: Built-in health check endpoint
-- 💾 **In-Memory Caching**: Efficient match state caching with DashMap
+  - Score updates throughout the match
+- 🚀 **High Performance**: Built with Rust for memory safety, zero-cost abstractions, and blazing speed
+- 🔌 **WebSocket Support**: Full WebSocket protocol with automatic heartbeat monitoring (5s interval, 10s timeout)
+- 🐳 **Docker Ready**: Production-ready Docker setup with multi-stage builds
+- 📝 **Structured Logging**: Comprehensive tracing with configurable log levels
+- 🏥 **Health Checks**: Built-in `/health` endpoint for monitoring and load balancers
+- 💾 **Efficient Caching**: Lock-free in-memory caching with DashMap for concurrent access
+- 🔒 **TLS Support**: HTTPS-ready with rustls-tls for secure API communication
+- ♻️ **Automatic Retry**: Smart retry logic for transient network errors with exponential backoff
+- 🧹 **Connection Management**: Automatic cleanup of stale/dead WebSocket connections
 
 ## 📦 Prerequisites
 
@@ -141,12 +153,26 @@ API Response → Poller → EventDetector → MatchEvent → Broadcaster → Web
 - **AllSportsAPI Key** - Get your API key from [AllSportsAPI](https://allsportsapi.com/)
 - **Docker** (optional) - For containerized deployment
 
+### Key Dependencies
+
+This project uses the following major dependencies:
+
+- **actix-web** 4.4 - Web framework
+- **actix-web-actors** 4.2 - WebSocket support
+- **actix** 0.13 - Actor system
+- **tokio** 1.35 - Async runtime
+- **reqwest** 0.11 - HTTP client with rustls-tls
+- **serde** 1.0 - Serialization/deserialization
+- **chrono** 0.4 - Date/time handling
+- **dashmap** 5.5 - Concurrent hash map
+- **tracing** 0.1 - Structured logging
+
 ## 🚀 Installation
 
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/AchrefHemissi/football-streaming-core.git
+git clone https://github.com/yourusername/football-streaming-core.git
 cd football-streaming-core
 ```
 
@@ -154,7 +180,7 @@ cd football-streaming-core
 
 Create a `.env` file in the project root:
 
-```bash
+```env
 ALLSPORTS_API_KEY=your_api_key_here
 BIND_ADDRESS=0.0.0.0:8080
 POLL_INTERVAL_SECS=15
@@ -163,27 +189,31 @@ RUST_LOG=info
 
 **Environment Variables:**
 
-- `ALLSPORTS_API_KEY` (required): Your AllSportsAPI key
-- `BIND_ADDRESS` (optional): Server bind address (default: `0.0.0.0:8080`)
-- `POLL_INTERVAL_SECS` (optional): Polling interval in seconds (default: `15`)
-- `RUST_LOG` (optional): Logging level (default: `info`)
+- `ALLSPORTS_API_KEY` (required): Your AllSportsAPI authentication key
+- `BIND_ADDRESS` (optional): Server bind address and port (default: `0.0.0.0:8080`)
+- `POLL_INTERVAL_SECS` (optional): API polling interval in seconds (default: `15`)
+- `RUST_LOG` (optional): Logging level - `trace`, `debug`, `info`, `warn`, `error` (default: `info`)
 
 ### 3. Build and Run
 
 ```bash
-# Development mode
+# Development mode with hot-reload logging
 cargo run
 
-# Release mode (optimized)
+# Release mode (optimized for production)
 cargo build --release
 ./target/release/football-backend
 ```
 
-The server will start and you'll see:
+The server will start and display:
 
 ```
-🚀 Server running on http://0.0.0.0:8080
-📡 WebSocket endpoint: ws://0.0.0.0:8080/ws
+INFO  Starting Football Backend Service
+INFO  Bind address: 0.0.0.0:8080
+INFO  🚀 Server running on http://0.0.0.0:8080
+INFO  📡 WebSocket endpoint: ws://0.0.0.0:8080/ws
+INFO  📡 Broadcaster actor started
+INFO  🔄 Polling service started (interval: 15s)
 ```
 
 ## 🔧 Configuration
@@ -199,11 +229,13 @@ The server will start and you'll see:
 
 ### Polling Interval
 
-The `POLL_INTERVAL_SECS` determines how frequently the service polls AllSportsAPI:
+The `POLL_INTERVAL_SECS` determines how frequently the service polls AllSportsAPI. Consider the following:
 
-- **Lower values** (5-10s): More real-time updates, higher API usage
-- **Higher values** (30-60s): Less API usage, slightly delayed updates
-- **Recommended**: 15-30 seconds for most use cases
+- **Lower values** (5-10s): More real-time updates, higher API usage, may hit rate limits
+- **Higher values** (30-60s): Reduced API usage, slightly delayed updates, more API-friendly
+- **Recommended**: 15-20 seconds for optimal balance between responsiveness and API efficiency
+
+**Note**: The polling service includes automatic retry logic with exponential backoff (1s, 2s, 4s) for transient network errors.
 
 ## 📖 Usage
 
@@ -248,6 +280,7 @@ Once subscribed, you'll receive real-time events as JSON messages:
   "score": "1-0",
   "home_team": "Barcelona",
   "away_team": "Real Madrid",
+  "league_id": "302",
   "timestamp": "2024-01-15T14:23:45Z"
 }
 ```
@@ -465,9 +498,22 @@ docker run -d \
   -e BIND_ADDRESS=0.0.0.0:8080 \
   -e POLL_INTERVAL_SECS=15 \
   -e RUST_LOG=info \
-  --name football-streaming-core \
+  --name football-backend \
   football-streaming-core
+
+# View logs
+docker logs -f football-backend
+
+# Stop container
+docker stop football-backend
+docker rm football-backend
 ```
+
+**Docker Image Details:**
+- Base: `rust:1.75` (builder), `debian:bookworm-slim` (runtime)
+- Multi-stage build for minimal image size
+- Includes CA certificates for HTTPS requests
+- Exposes port 8080
 
 ## 📁 Project Structure
 
@@ -501,13 +547,16 @@ football-streaming-core/
 
 ### Key Modules
 
-- **`main.rs`**: Orchestrates all components, starts server
-- **`config.rs`**: Loads and validates environment configuration
-- **`poller.rs`**: Fetches data from API, manages cache, triggers events
-- **`event_detector.rs`**: Compares match states, detects changes
-- **`broadcaster.rs`**: Actor that manages client registry and broadcasting
-- **`websocket.rs`**: Individual WebSocket connection actor with heartbeat
-- **`websocket_handler.rs`**: HTTP route handlers for WebSocket upgrade
+- **`main.rs`**: Application entry point - orchestrates all components, starts HTTP server and actor system
+- **`config.rs`**: Environment configuration management with validation
+- **`poller.rs`**: API polling service with retry logic, HTTP client management, and cache handling
+- **`event_detector.rs`**: Match state comparison and event detection logic
+- **`broadcaster.rs`**: Central actor that manages client registry and event broadcasting
+- **`websocket.rs`**: Individual WebSocket connection actor with heartbeat and message handling
+- **`websocket_handler.rs`**: HTTP route handlers for WebSocket upgrade and health checks
+- **`events.rs`**: Event type definitions with Serde serialization
+- **`match_data.rs`**: Match data structures for API responses
+- **`api_response.rs`**: AllSportsAPI response models
 
 ## 🛠️ Development
 
@@ -540,26 +589,47 @@ Use the included `test-client.html`:
 
 ### Code Structure
 
-- **Actors**: Use Actix actor model for concurrent message handling
-- **Services**: Background tasks for polling and processing
-- **Models**: Data structures with Serde for JSON serialization
-- **Handlers**: HTTP/WebSocket request handlers
+- **Actors**: Actix actor model for concurrent message handling with supervision
+- **Services**: Background async tasks for polling and event processing
+- **Models**: Strongly-typed data structures with Serde for JSON serialization/deserialization
+- **Handlers**: HTTP/WebSocket request handlers integrated with Actix-Web
+- **Configuration**: Environment-based configuration with sensible defaults
+
+### Monitoring and Debugging
+
+```bash
+# Enable detailed logging
+RUST_LOG=debug cargo run
+
+# Enable trace-level logging (very verbose, includes message contents)
+RUST_LOG=trace cargo run
+
+# Filter logs by module
+RUST_LOG=football_backend::services::poller=debug cargo run
+
+# Production logging (info level)
+RUST_LOG=info cargo run
+```
 
 ## ⚡ Performance
 
 ### Capabilities
 
-- **Concurrent Connections**: Designed to handle 100k+ WebSocket connections
-- **Memory Efficiency**: Rust's zero-cost abstractions and efficient data structures
-- **Low Latency**: Event broadcasting happens in microseconds
-- **Resource Usage**: Minimal CPU and memory footprint
+- **Concurrent Connections**: Designed to handle 100k+ WebSocket connections efficiently
+- **Memory Efficiency**: Rust's zero-cost abstractions and lock-free data structures (DashMap)
+- **Low Latency**: Event broadcasting happens in microseconds using Actix actor system
+- **Resource Usage**: Minimal CPU and memory footprint (~20MB baseline)
+- **Actor Model**: Leverages Actix's efficient actor system for concurrent message passing
+- **Async I/O**: Tokio-based async runtime for non-blocking network operations
 
-### Optimization Tips
+### Optimization Features
 
-1. **Polling Interval**: Balance between real-time updates and API rate limits
-2. **Logging Level**: Use `info` or `warn` in production (avoid `trace`/`debug`)
-3. **Connection Management**: Heartbeat mechanism automatically cleans up dead connections
-4. **Caching**: In-memory cache prevents redundant event detection
+1. **HTTP Client Pool**: Persistent connections with configurable keep-alive (60s TCP, 90s pool idle)
+2. **Efficient Caching**: Lock-free concurrent hash map (DashMap) for match state
+3. **Heartbeat Monitoring**: Automatic cleanup of dead connections (5s ping, 10s timeout)
+4. **Structured Logging**: Configurable log levels to reduce overhead in production
+5. **Retry Logic**: Exponential backoff for failed API requests to prevent cascading failures
+6. **Connection Timeouts**: 30s request timeout, 10s connect timeout for reliability
 
 ## 🔍 Troubleshooting
 
@@ -573,35 +643,99 @@ Use the included `test-client.html`:
 
 #### No events received
 
-- Check that matches are actually live on AllSportsAPI
-- Verify API key is valid and has access
-- Check server logs for polling errors
-- Ensure you've sent `subscribe_all` message after connecting
+**Possible causes:**
+- Matches might not be live on AllSportsAPI at the moment
+- API key may be invalid or expired
+- Polling service may be experiencing errors
+- Client not subscribed to events
+
+**Solutions:**
+1. Check server logs for polling errors: `docker logs -f football-backend`
+2. Verify API key validity at AllSportsAPI dashboard
+3. Ensure you've sent `{"action": "subscribe_all"}` after connecting
+4. Check that live matches exist: Visit AllSportsAPI or check response in logs
+5. Increase logging level: `RUST_LOG=debug` to see detailed polling information
 
 #### WebSocket connection fails
 
-- Verify server is running: `curl http://localhost:8080/health`
-- Check firewall settings
-- Ensure correct WebSocket URL: `ws://localhost:8080/ws` (not `http://`)
+**Possible causes:**
+- Server not running or crashed
+- Firewall blocking connections
+- Incorrect WebSocket URL format
+- Network connectivity issues
+
+**Solutions:**
+1. Verify server is running: `curl http://localhost:8080/health`
+2. Check firewall settings (allow port 8080)
+3. Ensure correct WebSocket URL: `ws://localhost:8080/ws` (not `http://` or `wss://`)
+4. Check server logs for startup errors
+5. Verify no other service is using port 8080: `netstat -ano | findstr :8080` (Windows)
+
+#### API Connection Issues
+
+**Symptoms:** Errors like "connection closed", "timeout", or "connection refused"
+
+**Solutions:**
+- The service has built-in retry logic with exponential backoff
+- Check your internet connection
+- Verify AllSportsAPI is accessible: `curl https://apiv2.allsportsapi.com/`
+- Check for proxy or firewall restrictions
+- Review server logs for detailed error messages
 
 #### High API usage
 
-- Increase `POLL_INTERVAL_SECS` to poll less frequently
-- Check AllSportsAPI rate limits
+**Symptoms:** Hitting rate limits or excessive API calls
 
-### Debugging
+**Solutions:**
+1. Increase `POLL_INTERVAL_SECS` to poll less frequently (e.g., 30-60 seconds)
+2. Check AllSportsAPI rate limits in your account dashboard
+3. Monitor the number of API calls in logs
+4. Consider implementing caching strategies for your use case
 
-Enable debug logging:
+### Advanced Debugging
+
+#### Enable Debug Logging
 
 ```bash
 RUST_LOG=debug cargo run
 ```
 
-Check WebSocket connection:
+#### Check WebSocket Connection
+
+Using `wscat` (install: `npm install -g wscat`):
 
 ```bash
-# Use wscat or similar tool
+# Connect to WebSocket
 wscat -c ws://localhost:8080/ws
+
+# Send subscription
+> {"action": "subscribe_all"}
+
+# You should receive:
+< {"type":"SUBSCRIBED","subscription":"all_matches"}
+```
+
+#### Monitor Health Endpoint
+
+```bash
+# Check health status
+curl http://localhost:8080/health
+
+# Expected response:
+{"status":"healthy","timestamp":"2026-01-14T12:00:00.000Z"}
+```
+
+#### View Docker Logs
+
+```bash
+# Real-time logs
+docker-compose logs -f
+
+# Last 100 lines
+docker-compose logs --tail=100
+
+# Specific service logs
+docker logs football-backend
 ```
 
 ## 📝 License
@@ -612,15 +746,33 @@ MIT License - see LICENSE file for details
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
+### Development Guidelines
+
+1. Follow Rust best practices and idioms
+2. Maintain existing code style
+3. Add tests for new features
+4. Update documentation for API changes
+5. Ensure all tests pass before submitting PR
+
 ## 📞 Support
 
 For issues and questions:
 
-- Check the troubleshooting section
-- Review server logs
+- Open an issue on GitHub
+- Check the [Troubleshooting](#troubleshooting) section
+- Review server logs with debug logging enabled
 - Ensure all prerequisites are met
-- Verify API key validity
+- Verify API key validity and AllSportsAPI service status
+
+## 🔗 Related Links
+
+- [AllSportsAPI Documentation](https://allsportsapi.com/documentation)
+- [Actix-Web Documentation](https://actix.rs/docs/)
+- [Rust Programming Language](https://www.rust-lang.org/)
+- [WebSocket Protocol RFC 6455](https://tools.ietf.org/html/rfc6455)
 
 ---
 
 **Built with ❤️ using Rust and Actix-Web**
+
+**Last Updated:** January 2026 | **Version:** 1.0.0
