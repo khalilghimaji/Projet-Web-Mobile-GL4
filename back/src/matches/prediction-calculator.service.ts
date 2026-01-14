@@ -20,6 +20,7 @@ export class PredictionCalculatorService {
     predictionRepository: Repository<Prediction>,
   ): Promise<void> {
     const processes: Promise<void>[] = [];
+    console.log('Calculating gains for these predictions : ', predictions);
     for (const prediction of predictions) {
       processes.push(
         (async () => {
@@ -69,6 +70,7 @@ export class PredictionCalculatorService {
     predictionRepository: Repository<Prediction>,
     userRepository: Repository<User>,
   ): Promise<void> {
+    console.log('Calculating gains for these predictions : ', predictions);
     const users = new Set<{ id: string; gain: number }>();
     for (const prediction of predictions) {
       const gain = this.calculateGain(
@@ -183,11 +185,14 @@ export async function notifyUsersAboutRankingUpdate(
   );
   for (const user of usersWithRankingsWithIds) {
     const rank = usersWithRankingsWithIds.indexOf(user) + 1;
-    await notificationsService.notify({
-      userId: user.id,
-      type: NotificationType.RANKING_UPDATE,
-      message: `You are now at rank ${rank}.`,
-      data: { rankings: usersWithRankings },
-    });
+    await notificationsService.notify(
+      {
+        userId: user.id,
+        type: NotificationType.RANKING_UPDATE,
+        message: `You are now at rank ${rank}.`,
+        data: { rankings: usersWithRankings },
+      },
+      false,
+    );
   }
 }

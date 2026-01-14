@@ -23,7 +23,8 @@ import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { Observable, of } from 'rxjs';
-import { map, catchError, single } from 'rxjs/operators';
+import { map, catchError, single, tap } from 'rxjs/operators';
+import { rxResource } from '@angular/core/rxjs-interop';
 import { MatchesService, Prediction } from '../../services/Api';
 import { NotificationService } from '../../services/notification.service';
 
@@ -62,7 +63,6 @@ export class ScorePredictionPopupComponent {
   private readonly matchesService = inject(MatchesService);
   private readonly notificationService = inject(NotificationService);
 
-  existingPrediction = signal<Prediction | null>(null);
   originalDiamondsBet = signal(0);
   isUpdating = signal(false);
 
@@ -76,42 +76,35 @@ export class ScorePredictionPopupComponent {
     }),
   });
 
-  constructor() {
-    effect(() => {
-      if (this.visible() && this.matchId()) {
-        this.fetchExistingPrediction();
+  existingPrediction = rxResource({
+    params: () => ({ visible: this.visible(), matchId: this.matchId() }),
+    stream: ({ params }) => {
+      if (!params.visible || !params.matchId) {
+        return of(null);
       }
-    });
-  }
-
-  fetchExistingPrediction(): void {
-    this.matchesService
-      .matchesControllerGetUserPrediction(String(this.matchId()))
-      .subscribe({
-        next: (prediction) => {
-          if (prediction) {
-            const pred = prediction as Prediction;
-            console.log('Existing prediction found:', pred);
-            this.existingPrediction.set(pred);
-            this.originalDiamondsBet.set(pred.numberOfDiamondsBet);
-            this.isUpdating.set(true);
-            this.predictionForm.patchValue({
-              team1Score: pred.scoreFirstEquipe,
-              team2Score: pred.scoreSecondEquipe,
-              numberOfDiamonds: pred.numberOfDiamondsBet,
-            });
-          } else {
-            this.resetForm();
-          }
-        },
-        error: () => {
-          this.resetForm();
-        },
-      });
-  }
+      return this.matchesService
+        .matchesControllerGetUserPrediction(String(params.matchId))
+        .pipe(
+          map((prediction) => (prediction as Prediction) || null),
+          tap((pred) => {
+            if (pred) {
+              this.originalDiamondsBet.set(pred.numberOfDiamondsBet);
+              this.isUpdating.set(true);
+              this.predictionForm.patchValue({
+                team1Score: pred.scoreFirstEquipe,
+                team2Score: pred.scoreSecondEquipe,
+                numberOfDiamonds: pred.numberOfDiamondsBet,
+              });
+            } else {
+              this.resetForm();
+            }
+          }),
+          catchError(() => of(null))
+        );
+    },
+  });
 
   resetForm(): void {
-    this.existingPrediction.set(null);
     this.originalDiamondsBet.set(0);
     this.isUpdating.set(false);
     this.predictionForm.patchValue({
