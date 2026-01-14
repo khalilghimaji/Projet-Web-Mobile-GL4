@@ -12,6 +12,7 @@ import {
   timeout,
 } from 'rxjs';
 import { AuthenticationService, UserDto } from './Api';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 @Injectable({
   providedIn: 'root',
@@ -20,6 +21,7 @@ export class AuthService {
   // Track authentication state
   private authState = new BehaviorSubject<boolean>(false);
   public authState$ = this.authState.asObservable();
+  public authStateSignal = toSignal(this.authState$);
   private currentUser = new BehaviorSubject<UserDto | null>(null);
   public currentUser$ = this.currentUser.asObservable();
 

@@ -1,94 +1,260 @@
+<!-- Reusable Templates -->
+
+<!-- Logo Template -->
+<ng-template #logoTemplate>
+  <div class="menu-logo">
+    <img
+      ngSrc="/images/logo.png"
+      alt="Logo"
+      width="40"
+      height="40"
+      [style]="{ 'border-radius': '8px' }"
+    />
+    <span class="logo-text font-bold">KickStream</span>
+  </div>
+</ng-template>
+
+<!-- Menu Items Template -->
+<ng-template #menuItemsTemplate>
+  @for (item of topMenuItems; track item) {
+  <div
+    class="nav-item"
+    [routerLink]="item.route"
+    routerLinkActive="active"
+    [class.has-submenu]="item.hasChildren"
+  >
+    <div class="content">
+      <i [class]="item.icon"></i>
+      <span class="label">{{ item.label }}</span>
+      @if (item.hasChildren) {
+      <i
+        class="pi angle-icon"
+        [class.pi-angle-down]="!item.active"
+        [class.pi-angle-up]="item.active"
+        (click)="$event.stopPropagation(); item.active = !item.active"
+      ></i>
+      } @if (item.badge) {
+      <div class="badge">{{ item.badge }}</div>
+      }
+    </div>
+    @if (item.hasChildren && item.active) {
+    <div class="submenu">
+      @for (child of item.children; track child) {
+      <div
+        class="nav-item"
+        [routerLink]="child.route"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+      >
+        <div class="content">
+          <i [class]="child.icon"></i>
+          <span class="label">{{ child.label }}</span>
+          @if (child.badge) {
+          <div class="badge">{{ child.badge }}</div>
+          }
+        </div>
+      </div>
+      }
+    </div>
+    }
+  </div>
+  }
+</ng-template>
+
+<!-- Bottom Menu Items Template -->
+<ng-template #bottomMenuItemsTemplate>
+  @for (item of bottomMenuItems; track $index) {
+  <div class="nav-item" [routerLink]="item.route" routerLinkActive="active">
+    <div class="content">
+      <i [class]="item.icon"></i>
+      <span class="label">{{ item.label }}</span>
+      @if (item.badge) {
+      <div class="badge">{{ item.badge }}</div>
+      }
+    </div>
+  </div>
+  }
+</ng-template>
+
+<!-- Auth Buttons Template -->
+<ng-template #authButtonsTemplate>
+  @for (item of authMenuItems; track item) {
+  <div
+    class="nav-item auth-item"
+    [routerLink]="item.route"
+    routerLinkActive="active"
+  >
+    <div class="content">
+      <i [class]="item.icon"></i>
+      <span class="label">{{ item.label }}</span>
+    </div>
+  </div>
+  }
+</ng-template>
+
+<!-- Diamonds Display Template -->
+<ng-template #diamondsTemplate>
+  <div class="diamonds-display-wrapper">
+    <i class="pi pi-diamond"></i>
+    <span class="diamonds-count">{{ diamonds() }}</span>
+    @if (gainedDiamonds() !== 0) {
+    <span
+      class="diamonds-change"
+      [class.positive]="gainedDiamonds() > 0"
+      [class.negative]="gainedDiamonds() < 0"
+    >
+      <i
+        class="pi"
+        [class.pi-arrow-up]="gainedDiamonds() > 0"
+        [class.pi-arrow-down]="gainedDiamonds() < 0"
+      ></i>
+      {{ gainedDiamonds() > 0 ? "+" : "" }}{{ gainedDiamonds() }}
+    </span>
+    }
+  </div>
+</ng-template>
+
+<!-- User Profile Template -->
+<ng-template #userProfileTemplate let-profile="profile">
+  <div class="user-profile-wrapper">
+    <img
+      class="profile-avatar"
+      [src]="profile?.imgUrl | imageDefault"
+      alt="Profile"
+    />
+    <div class="profile-info-text">
+      <div class="profile-name">
+        {{ profile?.firstName }} {{ profile?.lastName }}
+      </div>
+      <div class="profile-email">{{ profile?.email }}</div>
+    </div>
+  </div>
+</ng-template>
+
+<!-- Logout Button Template -->
+<ng-template #logoutTemplate>
+  <div class="nav-item logout-item" (click)="onLogout()">
+    <div class="content">
+      <i class="pi pi-sign-out"></i>
+      <span class="label">Sign Out</span>
+    </div>
+  </div>
+</ng-template>
+
+<!-- Mobile Menu Toggle Button -->
 <button
   [class.menu-open]="isMenuOpen()"
-  class="toggle-menu-btn"
+  class="toggle-menu-btn mobile-only"
   (click)="toggleMenu()"
 >
   <i class="pi pi-bars"></i>
 </button>
 
-<p-drawer
-  [(visible)]="isMenuOpen"
-  position="left"
-  [modal]="true"
-  [style]="{ width: '280px' }"
->
-  <div class="drawer-header">
-    <img
-      ngSrc="/images/logo.png"
-      alt="Logo"
-      width="64"
-      height="64"
-      [style]="{
-        'border-radius': '12px'
-      }"
-    />
-    <span class="logo-text font-bold">KickStream</span>
-  </div>
+<!-- Desktop Top Menubar (visible on large screens) -->
+<div class="desktop-menubar">
+  <div class="menubar-container">
+    <div class="menubar-start">
+      <ng-container *ngTemplateOutlet="logoTemplate"></ng-container>
+    </div>
 
-  <div class="top-section">
-    <div class="top-items">
-      <!-- Regular menu items -->
-      @for (item of topMenuItems; track item) {
-      <div
-        class="nav-item"
-        [routerLink]="item.route"
-        routerLinkActive="active"
-        [class.has-submenu]="item.hasChildren"
-      >
-        <div class="content">
-          <i [class]="item.icon"></i>
-          <span class="label">{{ item.label }}</span>
-          @if (item.hasChildren) {
-          <i
-            class="pi angle-icon"
-            [class.pi-angle-down]="!item.active"
-            [class.pi-angle-up]="item.active"
-            (click)="$event.stopPropagation(); item.active = !item.active"
-          ></i>
-          } @if (item.badge) {
-          <div class="badge">{{ item.badge }}</div>
+    <div class="menubar-center">
+      <div class="menubar-items">
+        <!-- Menu Group -->
+        <div class="menu-group" [class.expanded]="isTopMenuExpanded()">
+          <div class="menu-group-trigger" (click)="toggleTopMenu()">
+            <i class="pi pi-th-large"></i>
+            <span class="label">Menu</span>
+            <i class="pi pi-angle-down expand-icon"></i>
+          </div>
+          @if (isTopMenuExpanded()) {
+          <div class="menu-dropdown">
+            <ng-container *ngTemplateOutlet="menuItemsTemplate"></ng-container>
+          </div>
           }
         </div>
-        @if (item.hasChildren && item.active) {
-        <div class="submenu">
-          @for (child of item.children; track child) {
-          <div
-            class="nav-item"
-            [routerLink]="child.route"
-            routerLinkActive="active"
-            [routerLinkActiveOptions]="{ exact: true }"
-          >
-            <div class="content">
-              <i [class]="child.icon"></i>
-              <span class="label">{{ child.label }}</span>
-              @if (child.badge) {
-              <div class="badge">{{ child.badge }}</div>
-              }
-            </div>
+
+        @if (isAuthenticated | async) {
+        <!-- More Group -->
+        <div class="menu-group" [class.expanded]="isBottomMenuExpanded()">
+          <div class="menu-group-trigger" (click)="toggleBottomMenu()">
+            <i class="pi pi-ellipsis-h"></i>
+            <span class="label">More</span>
+            <i class="pi pi-angle-down expand-icon"></i>
+          </div>
+          @if (isBottomMenuExpanded()) {
+          <div class="menu-dropdown">
+            <ng-container
+              *ngTemplateOutlet="bottomMenuItemsTemplate"
+            ></ng-container>
           </div>
           }
         </div>
         }
       </div>
+    </div>
+
+    <div class="menubar-end">
+      @if (!(isAuthenticated | async)) {
+      <div
+        class="menu-group auth-menu-group"
+        [class.expanded]="isAuthMenuExpanded()"
+      >
+        <div class="menu-group-trigger" (click)="toggleAuthMenu()">
+          <i class="pi pi-user"></i>
+          <span class="label">Account</span>
+          <i class="pi pi-angle-down expand-icon"></i>
+        </div>
+        @if (isAuthMenuExpanded()) {
+        <div class="menu-dropdown">
+          <ng-container *ngTemplateOutlet="authButtonsTemplate"></ng-container>
+        </div>
+        }
+      </div>
+      } @else { @let userProfile = authService.currentUser$ | async;
+      <div class="menubar-user-section">
+        <div class="menubar-diamonds">
+          <ng-container *ngTemplateOutlet="diamondsTemplate"></ng-container>
+        </div>
+        <div class="menubar-profile">
+          <ng-container
+            *ngTemplateOutlet="
+              userProfileTemplate;
+              context: { profile: userProfile }
+            "
+          ></ng-container>
+        </div>
+        <button class="menubar-logout-btn" (click)="onLogout()">
+          <i class="pi pi-sign-out"></i>
+        </button>
+      </div>
       }
+    </div>
+  </div>
+</div>
+
+<!-- Mobile Drawer (visible on small screens) -->
+<p-drawer
+  [(visible)]="isMenuOpen"
+  position="left"
+  [modal]="true"
+  [style]="{ width: '280px' }"
+  styleClass="mobile-drawer"
+>
+  <div class="drawer-header">
+    <ng-container *ngTemplateOutlet="logoTemplate"></ng-container>
+  </div>
+
+  <div class="top-section">
+    <div class="top-items">
+      <!-- Regular menu items -->
+      <ng-container *ngTemplateOutlet="menuItemsTemplate"></ng-container>
 
       <!-- Auth menu items for non-authenticated users -->
-      @if (!(isAuthenticated|async)) { @for (item of authMenuItems; track
-      $index) {
-      <div class="nav-item" [routerLink]="item.route" routerLinkActive="active">
-        <div class="content">
-          <i [class]="item.icon"></i>
-          <span class="label">{{ item.label }}</span>
-        </div>
-      </div>
-      } } @else {
+      @if (!(isAuthenticated|async)) {
+      <ng-container *ngTemplateOutlet="authButtonsTemplate"></ng-container>
+      } @else {
       <!-- Logout option for authenticated users -->
-      <div class="nav-item" (click)="onLogout()">
-        <div class="content">
-          <i class="pi pi-sign-out"></i>
-          <span class="label">Sign Out</span>
-        </div>
-      </div>
+      <ng-container *ngTemplateOutlet="logoutTemplate"></ng-container>
       }
     </div>
   </div>
@@ -96,57 +262,21 @@
   @if (isAuthenticated|async) {
   <div class="bottom-section">
     <div class="bottom-items">
-      @for (item of bottomMenuItems; track $index) {
-      <div class="nav-item" [routerLink]="item.route" routerLinkActive="active">
-        <div class="content">
-          <i [class]="item.icon"></i>
-          <span class="label">{{ item.label }}</span>
-          @if (item.badge) {
-          <div class="badge">{{ item.badge }}</div>
-          }
-        </div>
-      </div>
-      }
+      <ng-container *ngTemplateOutlet="bottomMenuItemsTemplate"></ng-container>
     </div>
     @let userProfile = authService.currentUser$ | async;
     <!-- Profile section only for authenticated users -->
     @if (userProfile) {
     <div class="profile">
       <div class="profile-info">
-        <img
-          class="profile-picture"
-          [src]="userProfile.imgUrl | imageDefault"
-          alt="Profile Picture"
-        />
-        <div class="profile-details">
-          <div class="profile-name">
-            {{ userProfile.firstName }} {{ userProfile.lastName }}
-          </div>
-          <div class="profile-email">{{ userProfile.email }}</div>
-          <div class="diamonds-container">
-            <div class="diamonds-display">
-              <i class="pi pi-diamond"></i>
-              <span class="diamonds-count">{{ diamonds() }}</span>
-              <span class="diamonds-label">Diamonds</span>
-            </div>
-            @if (gainedDiamonds() !== 0) {
-            <div
-              class="diamonds-badge"
-              [class.positive]="gainedDiamonds() > 0"
-              [class.negative]="gainedDiamonds() < 0"
-            >
-              <i
-                class="pi"
-                [class.pi-arrow-up]="gainedDiamonds() > 0"
-                [class.pi-arrow-down]="gainedDiamonds() < 0"
-              ></i>
-              <span
-                >{{ gainedDiamonds() > 0 ? "+" : ""
-                }}{{ gainedDiamonds() }}</span
-              >
-            </div>
-            }
-          </div>
+        <ng-container
+          *ngTemplateOutlet="
+            userProfileTemplate;
+            context: { profile: userProfile }
+          "
+        ></ng-container>
+        <div class="diamonds-container">
+          <ng-container *ngTemplateOutlet="diamondsTemplate"></ng-container>
         </div>
       </div>
     </div>
