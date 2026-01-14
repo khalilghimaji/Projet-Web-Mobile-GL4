@@ -105,20 +105,20 @@ export class MatchesService {
     });
   }
 
+  async getUserPrediction(
+    userId: string,
+    matchId: string,
+  ): Promise<Prediction | null> {
+    return this.predictionRepository.findOne({
+      where: { userId, matchId },
+    });
+  }
+
   async terminateMatch(
     id: string,
     actualScoreFirst: number,
     actualScoreSecond: number,
   ): Promise<void> {
-    console.log(
-      'Terminating match : ' +
-        id +
-        ' with scores ' +
-        actualScoreFirst +
-        ' - ' +
-        actualScoreSecond,
-    );
-
     // Calculate gains
     await this.predictionCalculator.calculateAndApplyGainsAtMatchEnd(
       await this.getMatchPredictions(id),
@@ -135,15 +135,6 @@ export class MatchesService {
     actualScoreSecond: number,
   ): Promise<void> {
     if (actualScoreFirst > 0 || actualScoreSecond > 0) {
-      console.log(
-        'Updating match : ' +
-          id +
-          ' with scores ' +
-          actualScoreFirst +
-          ' - ' +
-          actualScoreSecond,
-      );
-
       // Calculate gains
       await this.predictionCalculator.calculateAndApplyGainsAtMatchUpdate(
         await this.getMatchPredictions(id),
@@ -206,6 +197,84 @@ export class MatchesService {
       numberOfDiamondsBet: diamondsBet,
       pointsEarned: 0,
     });
+    await this.predictionRepository.save(prediction);
+    return prediction;
+  }
+
+  async updatePrediction(
+    userId: string,
+    matchId: string,
+    scoreFirst?: number,
+    scoreSecond?: number,
+    newDiamondsBet?: number,
+  ): Promise<Prediction> {
+    // Check if match has begun
+    const began = await this.verifyMatchBegan(matchId);
+    if (began) {
+      throw new BadRequestException(
+        'Cannot update prediction after match has started',
+      );
+    }
+
+    const prediction = await this.predictionRepository.findOne({
+      where: { userId, matchId },
+    });
+
+    if (!prediction) {
+      throw new NotFoundException('Prediction not found');
+    }
+
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User not found');
+
+    // Handle diamond bet change
+    if (
+      newDiamondsBet !== undefined &&
+      newDiamondsBet !== prediction.numberOfDiamondsBet
+    ) {
+      const oldBet = prediction.numberOfDiamondsBet;
+      const diamondDifference = newDiamondsBet - oldBet;
+
+      if (diamondDifference > 0) {
+        // User is betting more diamonds
+        if (user.diamonds < diamondDifference) {
+          throw new BadRequestException('Not enough diamonds');
+        }
+      }
+
+      user.diamonds -= diamondDifference;
+      user.score -= diamondDifference;
+
+      await this.userRepository.save(user);
+
+      if (diamondDifference !== 0) {
+        await this.notificationsService.notify({
+          userId: user.id,
+          type: NotificationType.CHANGE_OF_POSSESSED_GEMS,
+          message:
+            diamondDifference > 0
+              ? `You spent ${diamondDifference} more diamonds for your updated prediction! You now have ${user.diamonds} diamonds.`
+              : `You got ${Math.abs(diamondDifference)} diamonds back from your updated prediction! You now have ${user.diamonds} diamonds.`,
+          data: { gain: -diamondDifference, newDiamonds: user.diamonds },
+        });
+
+        await notifyUsersAboutRankingUpdate(
+          this.userRepository,
+          this.notificationsService,
+        );
+      }
+
+      prediction.numberOfDiamondsBet = newDiamondsBet;
+    }
+
+    // Update scores
+    if (scoreFirst !== undefined) {
+      prediction.scoreFirstEquipe = scoreFirst;
+    }
+    if (scoreSecond !== undefined) {
+      prediction.scoreSecondEquipe = scoreSecond;
+    }
+
     await this.predictionRepository.save(prediction);
     return prediction;
   }

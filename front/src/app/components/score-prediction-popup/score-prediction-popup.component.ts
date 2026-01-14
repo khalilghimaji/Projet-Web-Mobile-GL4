@@ -5,6 +5,7 @@ import {
   input,
   inject,
   ChangeDetectionStrategy,
+  effect,
 } from '@angular/core';
 
 import {
@@ -21,7 +22,7 @@ import { ButtonModule } from 'primeng/button';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
-import { MatchesService } from '../../services/Api';
+import { MatchesService, Prediction } from '../../services/Api';
 import { NotificationService } from '../../services/notification.service';
 
 export interface TeamPrediction {
@@ -60,6 +61,10 @@ export class ScorePredictionPopupComponent {
   private readonly matchesService = inject(MatchesService);
   private readonly notificationService = inject(NotificationService);
 
+  existingPrediction: Prediction | null = null;
+  originalDiamondsBet: number = 0;
+  isUpdating: boolean = false;
+
   predictionForm: FormGroup = new FormGroup({
     team1Score: new FormControl(0, [Validators.min(0)]),
     team2Score: new FormControl(0, [Validators.min(0)]),
@@ -71,16 +76,72 @@ export class ScorePredictionPopupComponent {
     }),
   });
 
-  constructor() {}
+  constructor() {
+    effect(() => {
+      if (this.visible && this.matchId) {
+        this.fetchExistingPrediction();
+      }
+    });
+  }
+
+  fetchExistingPrediction(): void {
+    this.matchesService
+      .matchesControllerGetUserPrediction(String(this.matchId))
+      .subscribe({
+        next: (prediction) => {
+          if (prediction) {
+            const pred = prediction as Prediction;
+            this.existingPrediction = pred;
+            this.originalDiamondsBet = pred.numberOfDiamondsBet;
+            this.isUpdating = true;
+            this.predictionForm.patchValue({
+              team1Score: pred.scoreFirstEquipe,
+              team2Score: pred.scoreSecondEquipe,
+              matchId: pred.matchId,
+              numberOfDiamonds: pred.numberOfDiamondsBet,
+            });
+          } else {
+            this.resetForm();
+          }
+        },
+        error: () => {
+          this.resetForm();
+        },
+      });
+  }
+
+  resetForm(): void {
+    this.existingPrediction = null;
+    this.originalDiamondsBet = 0;
+    this.isUpdating = false;
+    this.predictionForm.patchValue({
+      team1Score: 0,
+      team2Score: 0,
+      matchId: this.matchId,
+      numberOfDiamonds: 1,
+    });
+  }
+
   diamondAsyncValidator(
     control: AbstractControl
   ): Observable<ValidationErrors | null> {
     if (!this.visible) return of(null);
     const matchId = control.parent?.get('matchId')?.value || this.matchId;
+    const requestedDiamonds = control.value || 0;
+
+    // When updating, check if user has enough diamonds for the difference
+    const diamondsNeeded = this.isUpdating
+      ? requestedDiamonds - this.originalDiamondsBet
+      : requestedDiamonds;
+
+    // If reducing bet or keeping same, no validation needed
+    if (diamondsNeeded <= 0) {
+      return of(null);
+    }
 
     return this.matchesService
       .matchesControllerCanPredict(matchId, {
-        numberOfDiamondsBet: control.value,
+        numberOfDiamondsBet: diamondsNeeded,
       })
       .pipe(
         map((canPredict) => {
@@ -105,29 +166,46 @@ export class ScorePredictionPopupComponent {
         matchId: this.predictionForm.value.matchId,
         numberOfDiamonds: this.predictionForm.value.numberOfDiamonds,
       };
-      this.matchesService
-        .matchesControllerMakePrediction(String(prediction.matchId) || '0', {
-          scoreFirst: prediction.team1Score || 0,
-          scoreSecond: prediction.team2Score || 0,
-          numberOfDiamondsBet: prediction.numberOfDiamonds || 1,
-        })
-        .subscribe({
-          next: () => {
-            this.notificationService.showSuccess(
-              'Your prediction has been saved successfully!'
-            );
-          },
-          error: (e) => {
-            console.error('Error saving prediction:', e);
-            this.notificationService.showError(
-              'There was an error saving your prediction. Please try again.'
-            );
-          },
-          complete: () => {
-            this.visible = false;
-            this.visibleChange.emit(false);
-          },
-        });
+
+      const operation$ = this.isUpdating
+        ? this.matchesService.matchesControllerUpdatePrediction(
+            String(prediction.matchId) || '0',
+            {
+              scoreFirst: prediction.team1Score,
+              scoreSecond: prediction.team2Score,
+              numberOfDiamondsBet: prediction.numberOfDiamonds,
+            }
+          )
+        : this.matchesService.matchesControllerMakePrediction(
+            String(prediction.matchId) || '0',
+            {
+              scoreFirst: prediction.team1Score || 0,
+              scoreSecond: prediction.team2Score || 0,
+              numberOfDiamondsBet: prediction.numberOfDiamonds || 1,
+            }
+          );
+
+      operation$.subscribe({
+        next: () => {
+          this.notificationService.showSuccess(
+            this.isUpdating
+              ? 'Your prediction has been updated successfully!'
+              : 'Your prediction has been saved successfully!'
+          );
+        },
+        error: (e) => {
+          console.error('Error saving prediction:', e);
+          this.notificationService.showError(
+            `There was an error ${
+              this.isUpdating ? 'updating' : 'saving'
+            } your prediction. Please try again.`
+          );
+        },
+        complete: () => {
+          this.visible = false;
+          this.visibleChange.emit(false);
+        },
+      });
       this.predictionSubmitted.emit(prediction);
       this.onHide();
     }
