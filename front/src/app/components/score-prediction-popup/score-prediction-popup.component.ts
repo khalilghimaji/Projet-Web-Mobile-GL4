@@ -1,11 +1,9 @@
 import {
   Component,
-  Input,
   output,
   input,
   inject,
   ChangeDetectionStrategy,
-  effect,
   model,
   signal,
 } from '@angular/core';
@@ -23,7 +21,7 @@ import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { Observable, of } from 'rxjs';
-import { map, catchError, single, tap } from 'rxjs/operators';
+import { map, catchError, tap } from 'rxjs/operators';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { MatchesService, Prediction } from '../../services/Api';
 import { NotificationService } from '../../services/notification.service';
@@ -51,14 +49,14 @@ export interface TeamPrediction {
 })
 export class ScorePredictionPopupComponent {
   visible = model(false);
+  
   team1Name = input('');
   team2Name = input('');
+  matchId = input(0);
   team1Flag = input<string | undefined>(undefined);
   team2Flag = input<string | undefined>(undefined);
 
   predictionSubmitted = output<TeamPrediction>();
-
-  matchId = input(0);
 
   private readonly matchesService = inject(MatchesService);
   private readonly notificationService = inject(NotificationService);
