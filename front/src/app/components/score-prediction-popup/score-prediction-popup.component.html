@@ -11,7 +11,7 @@
     <h3>{{ isUpdating() ? "Update Prediction" : "Score Prediction" }}</h3>
   </ng-template>
 
-  <form [formGroup]="predictionForm">
+  <form [formGroup]="predictionForm" (ngSubmit)="onSubmit()">
     <div class="prediction-container">
       <!-- Team 1 -->
       <div class="team-section">
@@ -25,20 +25,19 @@
           <h4 class="team-name">{{ team1Name() }}</h4>
         </div>
         <div class="score-input-container">
-          <label [for]="'team1-score'">Score</label>
-          <p-inputNumber
-            [inputId]="'team1-score'"
-            formControlName="team1Score"
-            [min]="0"
-            [max]="99"
-            [showButtons]="true"
-            buttonLayout="horizontal"
-            incrementButtonIcon="pi pi-plus"
-            decrementButtonIcon="pi pi-minus"
-            [step]="1"
-            styleClass="score-input"
-          >
-          </p-inputNumber>
+          <p-floatLabel>
+            <input
+              id="team1-score"
+              type="number"
+              pInputText
+              formControlName="team1Score"
+              [value]="predictionForm.get('team1Score')?.value"
+              min="0"
+              max="99"
+              class="w-full"
+            />
+            <label for="team1-score">Score</label>
+          </p-floatLabel>
         </div>
       </div>
 
@@ -60,39 +59,40 @@
           <h4 class="team-name">{{ team2Name() }}</h4>
         </div>
         <div class="score-input-container">
-          <label [for]="'team2-score'">Score</label>
-          <p-inputNumber
-            [inputId]="'team2-score'"
-            formControlName="team2Score"
-            [min]="0"
-            [max]="99"
-            [showButtons]="true"
-            buttonLayout="horizontal"
-            incrementButtonIcon="pi pi-plus"
-            decrementButtonIcon="pi pi-minus"
-            [step]="1"
-            styleClass="score-input"
-          >
-          </p-inputNumber>
+          <p-floatLabel>
+            <input
+              id="team2-score"
+              type="number"
+              pInputText
+              formControlName="team2Score"
+              [value]="predictionForm.get('team2Score')?.value"
+              min="0"
+              max="99"
+              class="w-full"
+            />
+            <label for="team2-score">Score</label>
+          </p-floatLabel>
         </div>
       </div>
     </div>
 
     <!-- Number of Diamonds -->
     <div class="diamonds-section">
-      <label for="diamonds-input">Number of Diamonds</label>
-      <p-inputNumber
-        inputId="diamonds-input"
-        formControlName="numberOfDiamonds"
-        [min]="1"
-        [showButtons]="true"
-        buttonLayout="horizontal"
-        incrementButtonIcon="pi pi-plus"
-        decrementButtonIcon="pi pi-minus"
-        [step]="1"
-        styleClass="diamonds-input"
-      >
-      </p-inputNumber>
+      <p-floatLabel>
+        <p-iconField iconPosition="left">
+          <p-inputIcon styleClass="pi pi-diamond" />
+          <input
+            id="diamonds-input"
+            type="number"
+            pInputText
+            formControlName="numberOfDiamonds"
+            [value]="predictionForm.get('numberOfDiamonds')?.value"
+            min="1"
+            class="w-full"
+          />
+        </p-iconField>
+        <label for="diamonds-input">Number of Diamonds</label>
+      </p-floatLabel>
       @if
       (predictionForm.get('numberOfDiamonds')?.hasError('insufficientDiamonds')
       && predictionForm.get('numberOfDiamonds')?.touched) {
@@ -109,9 +109,23 @@
       <small class="validating-message">Validating...</small>
     }-->
     </div>
-  </form>
 
-  <ng-template pTemplate="footer">
+    <!-- Match Validation Errors -->
+    @if (predictionForm.hasError('matchNotAvailableForBet')) {
+    <div class="match-error-section">
+      <small class="error-message">
+        <i class="pi pi-exclamation-triangle"></i>
+        This match has already begun. Predictions are no longer available.
+      </small>
+    </div>
+    } @if (predictionForm.hasError('invalidMatch')) {
+    <div class="match-error-section">
+      <small class="error-message">
+        <i class="pi pi-exclamation-triangle"></i>
+        Unable to verify match status. Please try again.
+      </small>
+    </div>
+    }
     <div class="dialog-footer">
       <p-button
         label="Cancel"
@@ -123,10 +137,10 @@
       <p-button
         [label]="isUpdating() ? 'Update Prediction' : 'Submit Prediction'"
         icon="pi pi-check"
-        (onClick)="onSubmit()"
+        type="submit"
         severity="success"
         [disabled]="predictionForm.invalid || predictionForm.pending"
       />
     </div>
-  </ng-template>
+  </form>
 </p-dialog>

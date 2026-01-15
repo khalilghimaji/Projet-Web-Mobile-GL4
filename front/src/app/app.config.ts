@@ -28,7 +28,6 @@ import { CustomPreloadStrategy } from './shared/custom-preload.strategy';
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideRouter(routes),
     provideAnimationsAsync(),
     provideZonelessChangeDetection(),
     MessageService,

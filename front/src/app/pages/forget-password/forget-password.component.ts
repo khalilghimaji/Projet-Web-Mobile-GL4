@@ -1,4 +1,11 @@
-import { Component, signal, effect, inject, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  signal,
+  inject,
+  ChangeDetectionStrategy,
+  input,
+  computed,
+} from '@angular/core';
 
 import {
   AbstractControl,
@@ -8,12 +15,11 @@ import {
   ValidatorFn,
   Validators,
 } from '@angular/forms';
-import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { AuthService } from '../../services/auth.service';
-import { toSignal } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-forget-password',
@@ -33,35 +39,23 @@ export class ForgetPasswordComponent {
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
   private readonly authService = inject(AuthService);
-  private readonly route = inject(ActivatedRoute);
-  private readonly queryParams = toSignal(this.route.queryParams);
 
-  currentStep = signal<'email' | 'reset'>('email');
   isLoading = signal(false);
   errorMessage = signal('');
-  resetToken = signal('');
+  token = input<string | null>(null);
+  currentStep = computed<'email' | 'reset'>(() => {
+    return this.token() ? 'reset' : 'email';
+  });
   successMessage = signal('');
 
   forgetPasswordForm = this.fb.group(
     {
       email: ['', [Validators.required, Validators.email]],
-      token: [''],
       newPassword: ['', [Validators.required, Validators.minLength(8)]],
       confirmPassword: ['', Validators.required],
     },
     { validators: this.passwordMatchValidator() }
   );
-
-  constructor() {
-    effect(() => {
-      const params = this.queryParams();
-      if (params?.['token']) {
-        this.resetToken.set(params['token']);
-        this.currentStep.set('reset');
-        this.forgetPasswordForm.patchValue({ token: params['token'] });
-      }
-    });
-  }
 
   private passwordMatchValidator(): ValidatorFn {
     return (group: AbstractControl): ValidationErrors | null => {
@@ -78,8 +72,7 @@ export class ForgetPasswordComponent {
   }
 
   private isResetStepValid(): boolean {
-    const tokenValid =
-      this.resetToken() || this.forgetPasswordForm.get('token')?.valid;
+    const tokenValid = !!this.token();
     const passwordValid = this.forgetPasswordForm.get('newPassword')?.valid;
     const confirmValid = this.forgetPasswordForm.get('confirmPassword')?.valid;
     const noMismatch = !this.forgetPasswordForm.hasError('passwordMismatch');
@@ -122,8 +115,7 @@ export class ForgetPasswordComponent {
 
   private handleResetSubmit() {
     this.isLoading.set(true);
-    const token =
-      this.resetToken() || this.forgetPasswordForm.get('token')?.value;
+    const token = this.token();
     const password = this.forgetPasswordForm.get('newPassword')?.value;
 
     this.authService.resetPassword(token!, password!).subscribe({

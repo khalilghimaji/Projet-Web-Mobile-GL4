@@ -59,10 +59,6 @@ export class MatchesService {
     matchId: string,
     numberOfDiamondsBet: number,
   ) {
-    const began = await this.verifyMatchBegan(matchId);
-    if (began) {
-      return false;
-    }
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) return false;
     if (user.diamonds < numberOfDiamondsBet) return false;
@@ -124,6 +120,10 @@ export class MatchesService {
     scoreSecond: number,
     diamondsBet: number,
   ): Promise<Prediction> {
+    const began = await this.verifyMatchBegan(matchId);
+    if (began) {
+      throw new BadRequestException('Cannot predict after match has started');
+    }
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
     if (user.diamonds < diamondsBet)
