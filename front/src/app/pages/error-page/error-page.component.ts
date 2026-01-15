@@ -6,6 +6,9 @@ import {
   signal,
   ChangeDetectionStrategy,
   NgModule,
+  viewChild,
+  ElementRef,
+  AfterViewInit,
 } from '@angular/core';
 
 import { RouterModule, ActivatedRoute } from '@angular/router';
@@ -16,6 +19,7 @@ import {
   TeamPrediction,
 } from '../../components/score-prediction-popup/score-prediction-popup.component';
 import { FormsModule } from '@angular/forms';
+import { fromEvent } from 'rxjs';
 @Component({
   selector: 'app-error-page',
   standalone: true,
@@ -24,7 +28,7 @@ import { FormsModule } from '@angular/forms';
   styleUrls: ['./error-page.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ErrorPageComponent {
+export class ErrorPageComponent implements AfterViewInit {
   // Input signals for direct component usage
   errorCodeInput = input<number | null>(null, { alias: 'errorCode' });
   errorMessageInput = input<string>('', { alias: 'errorMessage' });
@@ -82,6 +86,9 @@ export class ErrorPageComponent {
   showPredictionDialog = signal(false);
   matchId = signal(0);
 
+  backButtonRef = viewChild<ElementRef>('backButton');
+  predictButtonRef = viewChild<ElementRef>('predictButton');
+
   // Demo team data
   team1Name = 'Barcelona';
   team2Name = 'Real Madrid';
@@ -89,6 +96,20 @@ export class ErrorPageComponent {
   team2Flag = 'https://flagcdn.com/w320/es.png';
   // ====================================  end ============================================
   constructor(private location: Location) {}
+
+  ngAfterViewInit(): void {
+    const backButton = this.backButtonRef()?.nativeElement;
+    if (backButton) {
+      fromEvent(backButton, 'click').subscribe(() => this.goBack());
+    }
+
+    const predictButton = this.predictButtonRef()?.nativeElement;
+    if (predictButton) {
+      fromEvent(predictButton, 'click').subscribe(() =>
+        this.showPredictionDialog.set(true)
+      );
+    }
+  }
 
   goBack() {
     this.location.back();

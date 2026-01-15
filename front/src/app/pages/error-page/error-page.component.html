@@ -17,8 +17,8 @@
         />
       </div>
       <a routerLink="/" class="home-button">Return to Home</a>
-      <button class="back-button" (click)="goBack()">Go Back</button>
-      <button class="predict-button" (click)="showPredictionDialog.set(true)">
+      <button #backButton class="back-button">Go Back</button>
+      <button #predictButton class="predict-button">
         Make a Score Prediction
       </button>
     </div>

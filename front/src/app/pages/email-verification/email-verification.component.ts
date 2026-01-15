@@ -1,10 +1,19 @@
-import { ChangeDetectionStrategy, Component, OnInit, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  signal,
+  viewChild,
+  ElementRef,
+  AfterViewInit,
+} from '@angular/core';
 
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
+import { fromEvent } from 'rxjs';
 
 @Component({
   selector: 'app-email-verification',
@@ -14,12 +23,13 @@ import { MessageModule } from 'primeng/message';
   styleUrl: './email-verification.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class EmailVerificationComponent implements OnInit {
+export class EmailVerificationComponent implements OnInit, AfterViewInit {
   token = signal<string | null>(null);
   isLoading = signal(true);
   isVerified = signal(false);
   errorMessage = signal('');
-
+  loginButtonRef = viewChild<ElementRef>('loginButton');
+  retryButtonRef = viewChild<ElementRef>('retryButton');
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -35,6 +45,18 @@ export class EmailVerificationComponent implements OnInit {
     } else {
       this.isLoading.set(false);
       this.errorMessage.set('Verification token is missing.');
+    }
+  }
+
+  ngAfterViewInit(): void {
+    const loginButton = this.loginButtonRef()?.nativeElement;
+    if (loginButton) {
+      fromEvent(loginButton, 'click').subscribe(() => this.goToLogin());
+    }
+
+    const retryButton = this.retryButtonRef()?.nativeElement;
+    if (retryButton) {
+      fromEvent(retryButton, 'click').subscribe(() => this.verifyEmailToken());
     }
   }
 

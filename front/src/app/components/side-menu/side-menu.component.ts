@@ -4,13 +4,17 @@ import {
   OnInit,
   OnDestroy,
   ChangeDetectionStrategy,
+  viewChild,
+  ElementRef,
+  AfterViewInit,
+  viewChildren,
 } from '@angular/core';
 import { AsyncPipe, CommonModule, NgOptimizedImage } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { DrawerModule } from 'primeng/drawer';
 import { AuthService } from '../../services/auth.service';
 import { NotificationsApiService } from '../../services/notifications-api.service';
-import { filter, Subscription } from 'rxjs';
+import { filter, fromEvent, Subscription } from 'rxjs';
 import { ImageDefaultPipe } from '../../shared/pipes/image-default.pipe';
 import { MenuItem } from 'primeng/api';
 
@@ -40,7 +44,7 @@ interface CustomMenuItem {
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./side-menu.component.css'],
 })
-export class SideMenuComponent implements OnInit, OnDestroy {
+export class SideMenuComponent implements OnInit, OnDestroy, AfterViewInit {
   isMenuOpen = signal(false);
 
   // Desktop menubar expanded states
@@ -101,7 +105,49 @@ export class SideMenuComponent implements OnInit, OnDestroy {
   gainedDiamonds = signal(0);
   private sseSubscription: Subscription | null = null;
 
-  // Combined menu items for desktop menubar
+  toggleButtonsRef = viewChildren<ElementRef<HTMLElement>>('toggleMenuButtons');
+  logoutButtonsRef = viewChildren<ElementRef<HTMLElement>>('logOutButtons');
+  toggleAuthButtonRef = viewChild<ElementRef<HTMLElement>>(
+    'toggleAuthMenuButton'
+  );
+
+  toggleBottomMenuRef = viewChild<ElementRef<HTMLElement>>(
+    'toggleBottomMenuButton'
+  );
+
+  toggleTopMenuRef = viewChild<ElementRef<HTMLElement>>('toggleTopMenuButton');
+  ngAfterViewInit(): void {
+    for (const buttonRef of this.toggleButtonsRef()) {
+      const button = buttonRef?.nativeElement;
+      if (button) {
+        fromEvent(button, 'click').subscribe(() => this.toggleMenu());
+      }
+    }
+
+    for (const logoutButtonRef of this.logoutButtonsRef()) {
+      const button = logoutButtonRef?.nativeElement;
+      if (button) {
+        fromEvent(button, 'click').subscribe(() => this.toggleMenu());
+      }
+    }
+
+    const authButton = this.toggleAuthButtonRef()?.nativeElement;
+    if (authButton) {
+      fromEvent(authButton, 'click').subscribe(() => this.toggleAuthMenu());
+    }
+
+    const bottomMenuButton = this.toggleBottomMenuRef()?.nativeElement;
+    if (bottomMenuButton) {
+      fromEvent(bottomMenuButton, 'click').subscribe(() =>
+        this.toggleBottomMenu()
+      );
+    }
+
+    const topMenuButton = this.toggleTopMenuRef()?.nativeElement;
+    if (topMenuButton) {
+      fromEvent(topMenuButton, 'click').subscribe(() => this.toggleTopMenu());
+    }
+  }
   get menubarItems(): MenuItem[] {
     const items = [...this.topMenuItems];
     if (this.authService.authStateSignal()) {

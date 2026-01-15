@@ -26,44 +26,17 @@
     <div class="content">
       <i [class]="item.icon"></i>
       <span class="label">{{ item.label }}</span>
-      @if (item.hasChildren) {
-      <i
-        class="pi angle-icon"
-        [class.pi-angle-down]="!item.active"
-        [class.pi-angle-up]="item.active"
-        (click)="$event.stopPropagation(); item.active = !item.active"
-      ></i>
-      } @if (item.badge) {
+      @if (item.badge) {
       <div class="badge">{{ item.badge }}</div>
       }
     </div>
-    @if (item.hasChildren && item.active) {
-    <div class="submenu">
-      @for (child of item.children; track child) {
-      <div
-        class="nav-item"
-        [routerLink]="child.route"
-        routerLinkActive="active"
-        [routerLinkActiveOptions]="{ exact: true }"
-      >
-        <div class="content">
-          <i [class]="child.icon"></i>
-          <span class="label">{{ child.label }}</span>
-          @if (child.badge) {
-          <div class="badge">{{ child.badge }}</div>
-          }
-        </div>
-      </div>
-      }
-    </div>
-    }
   </div>
   }
 </ng-template>
 
 <!-- Bottom Menu Items Template -->
 <ng-template #bottomMenuItemsTemplate>
-  @for (item of bottomMenuItems; track $index) {
+  @for (item of bottomMenuItems; track item) {
   <div class="nav-item" [routerLink]="item.route" routerLinkActive="active">
     <div class="content">
       <i [class]="item.icon"></i>
@@ -133,7 +106,7 @@
 
 <!-- Logout Button Template -->
 <ng-template #logoutTemplate>
-  <div class="nav-item logout-item" (click)="onLogout()">
+  <div class="nav-item logout-item" #logOutButtons>
     <div class="content">
       <i class="pi pi-sign-out"></i>
       <span class="label">Sign Out</span>
@@ -145,7 +118,7 @@
 <button
   [class.menu-open]="isMenuOpen()"
   class="toggle-menu-btn mobile-only"
-  (click)="toggleMenu()"
+  #toggleMenuButtons
 >
   <i class="pi pi-bars"></i>
 </button>
@@ -161,7 +134,7 @@
       <div class="menubar-items">
         <!-- Menu Group -->
         <div class="menu-group" [class.expanded]="isTopMenuExpanded()">
-          <div class="menu-group-trigger" (click)="toggleTopMenu()">
+          <div class="menu-group-trigger" #toggleTopMenuButton>
             <i class="pi pi-th-large"></i>
             <span class="label">Menu</span>
             <i class="pi pi-angle-down expand-icon"></i>
@@ -176,7 +149,7 @@
         @if (isAuthenticated | async) {
         <!-- More Group -->
         <div class="menu-group" [class.expanded]="isBottomMenuExpanded()">
-          <div class="menu-group-trigger" (click)="toggleBottomMenu()">
+          <div class="menu-group-trigger" #toggleBottomMenuButton>
             <i class="pi pi-ellipsis-h"></i>
             <span class="label">More</span>
             <i class="pi pi-angle-down expand-icon"></i>
@@ -199,7 +172,7 @@
         class="menu-group auth-menu-group"
         [class.expanded]="isAuthMenuExpanded()"
       >
-        <div class="menu-group-trigger" (click)="toggleAuthMenu()">
+        <div class="menu-group-trigger" #toggleAuthMenuButton>
           <i class="pi pi-user"></i>
           <span class="label">Account</span>
           <i class="pi pi-angle-down expand-icon"></i>
@@ -223,7 +196,7 @@
             "
           ></ng-container>
         </div>
-        <button class="menubar-logout-btn" (click)="onLogout()">
+        <button class="menubar-logout-btn" #logOutButtons>
           <i class="pi pi-sign-out"></i>
         </button>
       </div>
@@ -285,4 +258,4 @@
   }
 </p-drawer>
 
-<div class="overlay" [class.active]="isMenuOpen()" (click)="toggleMenu()"></div>
+<div class="overlay" [class.active]="isMenuOpen()" #toggleMenuButtons></div>
