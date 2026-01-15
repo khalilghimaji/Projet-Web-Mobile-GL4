@@ -103,12 +103,11 @@ export class MatchesService {
     });
   }
 
-  async terminateMatch(
+  async notifyMatch(
     id: string,
     actualScoreFirst: number,
     actualScoreSecond: number,
   ): Promise<void> {
-    // Calculate gains
     await this.predictionCalculator.calculateAndApplyGainsAtMatchEnd(
       await this.getMatchPredictions(id),
       actualScoreFirst,
@@ -116,25 +115,6 @@ export class MatchesService {
       this.userRepository,
       this.predictionRepository,
     );
-  }
-
-  async updateMatch(
-    id: string,
-    actualScoreFirst: number,
-    actualScoreSecond: number,
-  ): Promise<void> {
-    if (actualScoreFirst > 0 || actualScoreSecond > 0) {
-      // Calculate gains
-      await this.predictionCalculator.calculateAndApplyGainsAtMatchUpdate(
-        await this.getMatchPredictions(id),
-        actualScoreFirst,
-        actualScoreSecond,
-        this.predictionRepository,
-        this.userRepository,
-      );
-    } else {
-      throw new BadRequestException('No score update provided');
-    }
   }
 
   async makePrediction(

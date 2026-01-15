@@ -10,7 +10,6 @@ import {
 import { MatchesService } from './matches.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { User } from '../Decorator/user.decorator';
-import { TerminateMatchDto } from './dto/terminate-match.dto';
 import { PredictDto } from './dto/predict.dto';
 import { CanPredictMatchDto } from './dto/can-predict-match.dto';
 import { UpdatePredictionDto } from './dto/update-prediction.dto';
