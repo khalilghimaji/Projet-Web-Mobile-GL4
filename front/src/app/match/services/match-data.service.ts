@@ -1,3 +1,5 @@
+// obsolete: this was used for mock
+
 import { Injectable, inject, WritableSignal } from '@angular/core';
 import { LiveMatchService } from './live-match.service';
 import { FinishedMatchService } from './finished-match.service';

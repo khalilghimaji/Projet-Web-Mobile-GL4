@@ -4,7 +4,6 @@ import {inject, Injectable, signal} from '@angular/core';
 import {rxResource} from '@angular/core/rxjs-interop';
 import {concat, tap} from 'rxjs';
 import {filter} from 'rxjs/operators';
-import {MatchStatus, Score} from '../types/match.types';
 import {MatchEvent} from '../types/timeline.types';
 import {MatchHeader} from '../sections/match-header/match-header.section';
 import {Lineups} from '../sections/lineups-pitch/lineups-pitch.section';
@@ -30,7 +29,7 @@ export class MatchResourceFactory {
 
           // Live WebSocket updates
           this.live.events$.pipe(
-            filter(e => e.id === matchId),
+            filter(e => e.matchId === matchId),
             tap(e => applyEvent(e, signals))
           )
         ),
@@ -56,15 +55,45 @@ function createMatchSignals() {
 
 type MatchSignals = ReturnType<typeof createMatchSignals>;
 
+// todo
+function getEventStatus(event_live:string, event_status:string){
+  if(event_live == '1'){
+    return 'LIVE';
+  } else if (event_status == 'Finished') {
+    return 'FT';
+  } else {
+    return 'SCHEDULED'
+  }
+}
+
 function hydrateFromSnapshot(
   dto: any,
   s: MatchSignals
 ) {
   s.matchHeaderSignal.set({
-    status:dto.event_status,
-    homeTeam: dto.event_home_team,
-    awayTeam: dto.event_away_team,
-    score: dto.event_ft_result,
+    status:{
+      isLive: dto.event_live != '0',
+      minute: Number.parseInt(dto.event_status),
+      status: getEventStatus(dto.event_live, dto.event_status),
+      competition: dto.league_name,
+    },
+    homeTeam: {
+      id: dto.home_team_key,
+      name: dto.event_home_team,
+      shortName: dto.event_home_team,
+      logo: dto.home_team_logo,
+    },
+    awayTeam: {
+      id: dto.away_team_key,
+      name: dto.event_away_team,
+      shortName: dto.event_away_team,
+      logo: dto.away_team_logo,
+    },
+    score: {
+      home: dto.event_final_result.split('-')[0] ? Number(dto.event_final_result.split('-')[0]) : 0,
+      away: dto.event_final_result.split('-')[1] ? Number(dto.event_final_result.split('-')[1]) : 0,
+      venue: dto.event_stadium,
+    },
   });
   s.timelineSignal.update(t => [...t, dto.goalscorers.map(
     g => ({
@@ -130,19 +159,77 @@ function hydrateFromSnapshot(
 }
 
 function applyEvent(
-  event: MatchEvent,
+  event: any,
   s: MatchSignals
 ) {
   switch (event.type) {
-    case 'GOAL':
-      s.score.set(event.score);
-      s.timeline.update(t => [...t, event]);
+    case 'GOAL_SCORED':
+      s.matchHeaderSignal.update(header => ({
+        ...(header!),
+        score: {
+          ...header!.score,
+          home: event.team === 'home' ? header!.score.home + 1 : header!.score.home,
+          away: event.team === 'away' ? header!.score.away + 1 : header!.score.away,
+        }
+      }))
+      s.timelineSignal.update(t => [...t,{
+        minute: event.minute,
+        type: 'GOAL',
+        team: event.team,
+        player: event.scorer,
+      }]);
       break;
 
-    case 'YELLOW_CARD':
+    case 'CARD_ISSUED':
+      s.timelineSignal.update(t => [...t,{
+        minute: event.minute,
+        type: event.card_type === 'yellow card' ? 'YELLOW_CARD' : 'RED_CARD',
+        team: event.team,
+        player: event.player,
+      }]);
       break;
 
-    case 'RED_CARD':
+    case 'SUBSTITUTION':
+      s.timelineSignal.update(t => [...t,{
+        minute: event.minute,
+        type: 'SUBSTITUTION',
+        team: event.team,
+        player: event.player_in,
+        detail: `OUT: ${event.player_out}`,
+      }]);
+      break;
+    case 'MATCH_ENDED':
+      s.matchHeaderSignal.update(header => ({
+        ...(header!),
+        status: {
+          ...header!.status,
+          isLive: false,
+          status: 'FT'
+        }
+      }))
+      break;
+    case 'MATCH_STARTED':
+      s.matchHeaderSignal.update(header => ({
+        ...(header!),
+        status: {
+          ...header!.status,
+          isLive: true,
+          status: 'LIVE',
+          minute: Math.max(0, Math.floor((Date.now() - new Date(event.start_time).getTime()) / 60000)),
+        }
+      }))
+      break;
+    case 'SCORE_UPDATE':
+      s.matchHeaderSignal.update(t=> ({
+        ...(t!),
+        score: {
+          ...t!.score,
+          home: event.score.split('-')[0],
+          away: event.score.split('-')[1],
+        }
+      }));
+      break;
+    default:
       break;
   }
 }

@@ -15,7 +15,7 @@ export class LiveEventsService {
   private subscribers = 0;
   private closeTimer: any = null;
 
-  readonly events$ = new Observable<MatchEvent>(observer => {
+  readonly events$ = new Observable<any>(observer => {
     this.subscribers++;
 
     if (this.closeTimer) {
