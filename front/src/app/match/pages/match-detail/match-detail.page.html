@@ -33,7 +33,6 @@
   (voteSelected)="onVote($event)"
   [popupOpened]="showPredictionPopup"
 />
-{{ predictionPopupData() | json }}
 <app-score-prediction-popup
   [(visible)]="showPredictionPopup"
   [team1Name]="homeTeamName()"

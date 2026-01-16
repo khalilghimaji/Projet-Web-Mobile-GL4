@@ -87,16 +87,19 @@ export class ScorePredictionPopupComponent {
     // Update form values when predictionDataSignal changes
     effect(() => {
       const predictionData = this.predictionDataSignal();
-      this.predictionForm.patchValue({
-        team1Score: predictionData.team1Score || 0,
-        team2Score: predictionData.team2Score || 0,
-        numberOfDiamonds: predictionData.numberOfDiamonds || 1,
-      }, { emitEvent: false });
+      this.predictionForm.patchValue(
+        {
+          team1Score: predictionData.team1Score || 0,
+          team2Score: predictionData.team2Score || 0,
+          numberOfDiamonds: predictionData.numberOfDiamonds || 1,
+        },
+        { emitEvent: false },
+      );
     });
   }
 
   diamondAsyncValidator(
-    control: AbstractControl
+    control: AbstractControl,
   ): Observable<ValidationErrors | null> {
     if (!this.visible()) return of(null);
     const requestedDiamonds = control.value || 0;
@@ -116,7 +119,7 @@ export class ScorePredictionPopupComponent {
         String(this.predictionDataSignal().matchId),
         {
           numberOfDiamondsBet: diamondsNeeded,
-        }
+        },
       )
       .pipe(
         map((canPredict) => {
@@ -124,7 +127,7 @@ export class ScorePredictionPopupComponent {
         }),
         catchError(() => {
           return of({ invalidDiamond: true });
-        })
+        }),
       );
   }
 
@@ -148,7 +151,7 @@ export class ScorePredictionPopupComponent {
               scoreFirst: prediction.team1Score,
               scoreSecond: prediction.team2Score,
               numberOfDiamondsBet: prediction.numberOfDiamonds,
-            }
+            },
           )
         : this.matchesService.matchesControllerMakePrediction(
             String(prediction.matchId) || '0',
@@ -156,7 +159,7 @@ export class ScorePredictionPopupComponent {
               scoreFirst: prediction.team1Score || 0,
               scoreSecond: prediction.team2Score || 0,
               numberOfDiamondsBet: prediction.numberOfDiamonds || 1,
-            }
+            },
           );
 
       operation$.subscribe({
@@ -164,7 +167,7 @@ export class ScorePredictionPopupComponent {
           this.notificationService.showSuccess(
             this.predictionDataSignal().isUpdating
               ? 'Your prediction has been updated successfully!'
-              : 'Your prediction has been saved successfully!'
+              : 'Your prediction has been saved successfully!',
           );
           this.predictionSubmitted.emit(prediction);
         },
@@ -172,7 +175,7 @@ export class ScorePredictionPopupComponent {
           this.notificationService.showError(
             `There was an error ${
               this.predictionDataSignal().isUpdating ? 'updating' : 'saving'
-            } your prediction. ${e.error.message}. Please try again.`
+            } your prediction. ${e.error.message}. Please try again.`,
           );
         },
         complete: () => {
