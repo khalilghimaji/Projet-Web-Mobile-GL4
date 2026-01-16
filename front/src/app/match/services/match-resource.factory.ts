@@ -1,6 +1,6 @@
 import {MatchApiService} from './match-api.service';
 import {LiveEventsService} from './live-events.service';
-import {inject, Injectable, signal} from '@angular/core';
+import {inject, Injectable, Signal, signal } from '@angular/core';
 import {rxResource} from '@angular/core/rxjs-interop';
 import {concat, tap} from 'rxjs';
 import {filter} from 'rxjs/operators';
@@ -16,12 +16,13 @@ export class MatchResourceFactory {
   private api = inject(MatchApiService);
   private live = inject(LiveEventsService);
 
-  create(matchId: string) {
-    console.log(`creating signals for match id ${matchId}`);
+  create(matchId: Signal<string|undefined>) {
+    console.log(`creating signals for match id ${matchId()}`);
     const signals = createMatchSignals();
 
     const resource = rxResource({
-      stream: () =>
+      params: () => matchId(),
+      stream: ({params: matchId}) =>
         concat(
           // Initial HTTP snapshot
           this.api.getMatch(matchId).pipe(
@@ -111,6 +112,7 @@ function hydrateFromSnapshot(
   dto: any,
   s: MatchSignals
 ) {
+  console.log(dto)
   s.matchHeaderSignal.set({
     status:{
       isLive: dto.event_live != '0',
@@ -136,7 +138,7 @@ function hydrateFromSnapshot(
       venue: dto.event_stadium,
     },
   });
-  s.timelineSignal.update(t => [...t, dto.goalscorers.map(
+  s.timelineSignal.update(t => [...t, ...(dto.goalscorers.map(
     (g:any) => ({
       id: `event-goal-${g.time}-${g.home_scorer || g.away_scorer}`,
       type: 'GOAL' as const,
@@ -145,18 +147,20 @@ function hydrateFromSnapshot(
       player: g.home_scorer || g.away_scorer,
       detail: g.home_assist ? `Assist: ${g.home_assist}` : g.away_assist ? `Assist: ${g.away_assist}`: '',
     })
-  )]);
-  s.timelineSignal.update(t => [...t, dto.substitutions.map(
+  ))]);
+  console.log(`goal scorers ${JSON.stringify(s.timelineSignal())}`)
+  s.timelineSignal.update(t => [...t, ...(dto.substitutes.map(
     (s:any) => ({
       id: `event-substitution-${s.time}-${s.home_scorer?.in || s.away_scorer?.in}`,
       type: 'SUBSTITUTION' as const,
       minute: s.time,
-      team: s.home_scorer ? 'home' : 'away',
-      player: s.home_scorer ? s.home_scorer.in : s.away_scorer.in,
-      detail: `OUT: ${s.home_scorer ? s.home_scorer.out : s.away_scorer.out}`,
+      team: s.home_scorer != '' ? 'home' : 'away',
+      player: s.home_scorer != '' ? s.home_scorer.in : s.away_scorer.in,
+      detail: `OUT: ${s.home_scorer != '' ? s.home_scorer.out : s.away_scorer.out}`,
     })
-  )]);
-  s.timelineSignal.update(t => [...t, dto.cards.map(
+  ))]);
+  console.log(`substitutions ${JSON.stringify(s.timelineSignal())}`)
+  s.timelineSignal.update(t => [...t, ...(dto.cards.map(
     (c:any) => ({
       id: `event-card-${c.time}-${c.home_fault || c.away_fault}`,
       type: c.card === 'yellow card' ? 'YELLOW_CARD' as const : 'RED_CARD' as const,
@@ -165,24 +169,27 @@ function hydrateFromSnapshot(
       player: c.info == 'home' ? c.home_fault : c.away_fault,
       detail: '',
     })
-  )]);
+  ))]);
+  console.log(`cards ${JSON.stringify(s.timelineSignal())}`)
   s.timelineSignal.update(t=> t.sort((a,b) => a.minute - b.minute));
   // todo
   // s.lineupsSignal.set({
   //
   // })
-  s.statsSignal.set(dto.statistics.map((s:any) => (
+  console.log(`sorted ${JSON.stringify(s.timelineSignal())}`)
+  s.statsSignal.set({stats:dto.statistics.map((s:any) => (
     {
       label: s.type,
-      homeValue: s.home,
-      awayValue: s.away,
+      homeValue: Number.parseFloat(s.home),
+      awayValue: Number.parseFloat(s.away),
     })
-  ));
+  )});
+  console.log(`stats set ${JSON.stringify(s.statsSignal())}`)
   s.h2hSignal.set({
     homeTeamLogo: dto.home_team_logo,
     awayTeamLogo: dto.away_team_logo,
-    recentForm: dto.h2h.map((h:any) => {
-      const final_result = h.H2H.event_final_result;
+    recentForm: dto.h2h.H2H.map((h:any) => {
+      const final_result = h.event_final_result;
       let [homeGoals, awayGoals] = final_result.split('-').map(Number);
       let outcome: 'W' | 'D' | 'L';
       if (homeGoals > awayGoals) {
@@ -195,6 +202,7 @@ function hydrateFromSnapshot(
       return outcome;
     }),
   })
+  console.log(`h2h ${JSON.stringify(s.h2hSignal())}`)
   // todo
   s.highlightsSignal.set(dto.highlights.map((h:any) => ({
     title: h.video_title,

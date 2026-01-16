@@ -17,7 +17,7 @@ export interface TeamStats {
         Team Stats
       </h3>
 
-      <div class="space-y-6">
+      <div class="space-y-6 gap-4 flex flex-col">
         @for (stat of statsSignal().stats; track stat.label) {
           <app-stat-bar [statSignal]="stat" />
         }

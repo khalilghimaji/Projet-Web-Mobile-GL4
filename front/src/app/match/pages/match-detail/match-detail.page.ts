@@ -43,9 +43,7 @@ export class MatchDetailPage implements OnInit {
   matchId = input<string>()
   private router = inject(Router);
   private matchResourceFactory = inject(MatchResourceFactory);
-  store = computed(() =>
-    this.matchResourceFactory.create(this.matchId()!)
-  );
+  store = this.matchResourceFactory.create(this.matchId);
   // State signals - owned by this page
 
   predictionSignal = signal<PredictionData>({
@@ -59,7 +57,6 @@ export class MatchDetailPage implements OnInit {
   activeTabSignal = signal<TabType>('OVERVIEW');
 
   ngOnInit(): void {
-
   }
 
   onTabChange(tab: TabType): void {
