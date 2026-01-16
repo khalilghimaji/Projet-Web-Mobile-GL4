@@ -9,7 +9,7 @@ export class LiveEventsService {
 
   private socket$ = defer(() => {
     console.log('WS CONNECT');
-    return webSocket<MatchEvent>('wss://example.com/live');
+    return webSocket<MatchEvent>(process.env['WS_API_URL']!);
   });
 
   private subscribers = 0;

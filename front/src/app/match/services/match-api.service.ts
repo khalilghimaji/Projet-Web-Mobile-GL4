@@ -9,24 +9,26 @@ export class MatchApiService {
   private BASE_URL = 'https://apiv2.allsportsapi.com/football/';
 
   getMatch(matchId: string) {
-    const generalInfo = this.http.get<MatchDto>(this.BASE_URL,{
+    console.log(`match id ${matchId}`);
+    console.log(process.env['APIKEY']!);
+    const generalInfo = this.http.get(this.BASE_URL,{
       params : {
         met:'Fixtures',
-        APIkey:process.env.APIKEY!,
+        APIkey:process.env['APIKEY']!,
         matchId: matchId
       }
     });
-    const videos = this.http.get<VideoHighlight[]>(this.BASE_URL,{
+    const videos = this.http.get(this.BASE_URL,{
       params : {
         met:'Videos',
-        APIkey:process.env.APIKEY!,
+        APIkey:process.env['APIKEY']!,
         eventId: matchId
       }
     });
-    const h2h = this.http.get<HeadToHead>(this.BASE_URL,{
+    const h2h = this.http.get(this.BASE_URL,{
       params : {
         met:'H2H',
-        APIkey:process.env.APIKEY!,
+        APIkey:process.env['APIKEY']!,
         firstTeamId: 'team1',
         secondTeamId: 'team2'
       }

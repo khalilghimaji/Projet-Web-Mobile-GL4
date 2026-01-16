@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, input, output } from '@angular/core';
+import {Component, ChangeDetectionStrategy, input, output, Signal, Input} from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 export type TabType = 'OVERVIEW' | 'LINEUPS' | 'STATS' | 'H2H' | 'MEDIA';
@@ -54,8 +54,7 @@ export interface TabItem {
 })
 export class TabsNavigationSection {
   // Signal reference from parent
-  activeTabSignal = input.required<TabType>();
-
+  @Input({required: true}) activeTabSignal!: Signal<TabType>;
   // Output event for tab change
   tabChanged = output<TabType>();
 

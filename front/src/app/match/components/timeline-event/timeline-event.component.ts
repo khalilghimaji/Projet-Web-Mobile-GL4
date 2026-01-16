@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 export type EventType = 'GOAL' | 'YELLOW_CARD' | 'RED_CARD' | 'SUBSTITUTION';
 
 export interface MatchEvent {
+  id: string;
   minute: number;
   type: EventType;
   team: 'home' | 'away';

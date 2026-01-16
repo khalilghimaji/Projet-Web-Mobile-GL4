@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, input, output } from '@angular/core';
+import {Component, ChangeDetectionStrategy, input, output, Signal, Input} from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 export type VoteOption = 'HOME' | 'DRAW' | 'AWAY';
@@ -125,7 +125,7 @@ export interface PredictionData {
 })
 export class PredictionWidgetSection {
   // Signal reference from parent
-  predictionSignal = input.required<PredictionData>();
+  @Input({ required: true }) predictionSignal!: Signal<PredictionData>;
 
   // Output event for vote action
   voteSelected = output<VoteOption>();

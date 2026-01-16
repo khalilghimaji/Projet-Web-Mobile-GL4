@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, input } from '@angular/core';
+import {Component, ChangeDetectionStrategy, input, Input, Signal} from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 export interface Team {
@@ -35,5 +35,5 @@ export interface Team {
 })
 export class TeamDisplayComponent {
   // Signal reference passed from parent
-  teamSignal = input.required<Team>();
+  @Input({ required: true }) teamSignal!: Signal<Team>
 }

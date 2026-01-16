@@ -17,6 +17,7 @@ export class MatchResourceFactory {
   private live = inject(LiveEventsService);
 
   create(matchId: string) {
+    console.log(`creating signals for match id ${matchId}`);
     const signals = createMatchSignals();
 
     const resource = rxResource({
@@ -28,27 +29,67 @@ export class MatchResourceFactory {
           ),
 
           // Live WebSocket updates
-          this.live.events$.pipe(
-            filter(e => e.matchId === matchId),
-            tap(e => applyEvent(e, signals))
-          )
+          // this.live.events$.pipe(
+          //   filter(e => e.matchId === matchId),
+          //   tap(e => applyEvent(e, signals))
+          // )
         ),
     });
 
     return {
       resource, // lifecycle owner
-      ...signals, // granular signals
+      matchHeaderSignal: signals.matchHeaderSignal.asReadonly(),
+      timelineSignal: signals.timelineSignal.asReadonly(),
+      lineupsSignal: signals.lineupsSignal.asReadonly(),
+      statsSignal: signals.statsSignal.asReadonly(),
+      h2hSignal: signals.h2hSignal.asReadonly(),
+      highlightsSignal: signals.highlightsSignal.asReadonly(),
     };
   }
 }
 
 function createMatchSignals() {
   return {
-    matchHeaderSignal: signal<MatchHeader|null>(null),
+    matchHeaderSignal: signal<MatchHeader>({
+      status: {
+        isLive: false,
+        minute: 0,
+        status: 'SCHEDULED',
+        competition: '',
+      },
+      homeTeam: {
+        id: '',
+        name: '',
+        shortName: '',
+        logo: '',
+      },
+      awayTeam: {
+        id: '',
+        name: '',
+        shortName: '',
+        logo: '',
+      },
+      score: {
+        home: 0,
+        away: 0,
+        venue: '',
+      },
+    }),
     timelineSignal: signal<MatchEvent[]>([]),
-    lineupsSignal: signal<Lineups|null>(null),
-    statsSignal: signal<TeamStats|null>(null),
-    h2hSignal: signal<HeadToHead|null>(null),
+    lineupsSignal: signal<Lineups>({
+      homeFormation:'',
+      awayFormation:'',
+      homePlayers:[],
+      awayPlayers:[],
+    }),
+    statsSignal: signal<TeamStats>({
+      stats: [],
+    }),
+    h2hSignal: signal<HeadToHead>({
+      homeTeamLogo: '',
+      awayTeamLogo: '',
+      recentForm: [],
+    }),
     highlightsSignal: signal<VideoHighlight[]>([]),
   };
 }
@@ -96,7 +137,8 @@ function hydrateFromSnapshot(
     },
   });
   s.timelineSignal.update(t => [...t, dto.goalscorers.map(
-    g => ({
+    (g:any) => ({
+      id: `event-goal-${g.time}-${g.home_scorer || g.away_scorer}`,
       type: 'GOAL' as const,
       minute: g.time,
       team: g.home_scorer ? 'home' : 'away',
@@ -105,7 +147,8 @@ function hydrateFromSnapshot(
     })
   )]);
   s.timelineSignal.update(t => [...t, dto.substitutions.map(
-    s => ({
+    (s:any) => ({
+      id: `event-substitution-${s.time}-${s.home_scorer?.in || s.away_scorer?.in}`,
       type: 'SUBSTITUTION' as const,
       minute: s.time,
       team: s.home_scorer ? 'home' : 'away',
@@ -114,7 +157,8 @@ function hydrateFromSnapshot(
     })
   )]);
   s.timelineSignal.update(t => [...t, dto.cards.map(
-    c => ({
+    (c:any) => ({
+      id: `event-card-${c.time}-${c.home_fault || c.away_fault}`,
       type: c.card === 'yellow card' ? 'YELLOW_CARD' as const : 'RED_CARD' as const,
       minute: c.time,
       team: c.info,
@@ -127,7 +171,7 @@ function hydrateFromSnapshot(
   // s.lineupsSignal.set({
   //
   // })
-  s.statsSignal.set(dto.statistics.map(s => (
+  s.statsSignal.set(dto.statistics.map((s:any) => (
     {
       label: s.type,
       homeValue: s.home,
@@ -137,7 +181,7 @@ function hydrateFromSnapshot(
   s.h2hSignal.set({
     homeTeamLogo: dto.home_team_logo,
     awayTeamLogo: dto.away_team_logo,
-    recentForm: dto.h2h.map(h => {
+    recentForm: dto.h2h.map((h:any) => {
       const final_result = h.H2H.event_final_result;
       let [homeGoals, awayGoals] = final_result.split('-').map(Number);
       let outcome: 'W' | 'D' | 'L';
@@ -152,7 +196,7 @@ function hydrateFromSnapshot(
     }),
   })
   // todo
-  s.highlightsSignal.set(dto.highlights.map(h => ({
+  s.highlightsSignal.set(dto.highlights.map((h:any) => ({
     title: h.video_title,
     url: h.video_url,
   })));
@@ -173,6 +217,7 @@ function applyEvent(
         }
       }))
       s.timelineSignal.update(t => [...t,{
+        id: `event-goal-${event.minute}-${event.scorer}`,
         minute: event.minute,
         type: 'GOAL',
         team: event.team,
@@ -182,6 +227,7 @@ function applyEvent(
 
     case 'CARD_ISSUED':
       s.timelineSignal.update(t => [...t,{
+        id: `event-card-${event.minute}-${event.player}`,
         minute: event.minute,
         type: event.card_type === 'yellow card' ? 'YELLOW_CARD' : 'RED_CARD',
         team: event.team,
@@ -191,6 +237,7 @@ function applyEvent(
 
     case 'SUBSTITUTION':
       s.timelineSignal.update(t => [...t,{
+        id: `event-substitution-${event.minute}-${event.player_in}`,
         minute: event.minute,
         type: 'SUBSTITUTION',
         team: event.team,

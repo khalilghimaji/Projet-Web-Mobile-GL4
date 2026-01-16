@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, input } from '@angular/core';
+import {Component, ChangeDetectionStrategy, input, Signal, Input} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { StatBarComponent, StatItem } from '../../components/stat-bar/stat-bar.component';
 
@@ -38,5 +38,5 @@ export interface TeamStats {
 })
 export class TeamStatsSection {
   // Signal reference from parent
-  statsSignal = input.required<TeamStats>();
+  @Input({required: true}) statsSignal!: Signal<TeamStats>
 }

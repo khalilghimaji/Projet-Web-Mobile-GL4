@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, input } from '@angular/core';
+import {Component, ChangeDetectionStrategy, input, Input, Signal} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TimelineEventComponent, MatchEvent } from '../../components/timeline-event/timeline-event.component';
 
@@ -38,5 +38,5 @@ import { TimelineEventComponent, MatchEvent } from '../../components/timeline-ev
 })
 export class MatchTimelineSection {
   // Signal reference from parent - array of events
-  eventsSignal = input.required<MatchEvent[]>();
+  @Input({required:true}) eventsSignal!: Signal<MatchEvent[]>;
 }

@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, input } from '@angular/core';
+import {Component, ChangeDetectionStrategy, input, Input, Signal} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormIndicatorComponent, FormResult } from '../../components/form-indicator/form-indicator.component';
 
@@ -59,5 +59,5 @@ export interface HeadToHead {
 })
 export class HeadToHeadSection {
   // Signal reference from parent
-  h2hSignal = input.required<HeadToHead>();
+  @Input({required: true}) h2hSignal!: Signal<HeadToHead>
 }

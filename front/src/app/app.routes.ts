@@ -10,7 +10,7 @@ export const routes: Routes = [
       ),
   },
   {
-    path: 'match/:id',
+    path: 'match/:matchId',
     loadComponent: () =>
       import('./match/pages/match-detail/match-detail.page')
         .then(m => m.MatchDetailPage),

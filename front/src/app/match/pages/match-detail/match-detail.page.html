@@ -19,36 +19,36 @@
 </div>
 
 <!-- Match Header & Score -->
-<app-match-header [matchHeaderSignal]="matchHeaderSignal()" />
+<app-match-header [matchHeaderSignal]="store.matchHeaderSignal" />
 
 <!-- Prediction Widget -->
 <app-prediction-widget
-  [predictionSignal]="predictionSignal()"
+  [predictionSignal]="predictionSignal"
   (voteSelected)="onVote($event)"
 />
 
 <!-- Tabs Navigation -->
 <app-tabs-navigation
-  [activeTabSignal]="activeTabSignal()"
+  [activeTabSignal]="activeTabSignal"
   (tabChanged)="onTabChange($event)"
 />
 
 <!-- Main Content Area -->
 <div class="p-4 space-y-6">
   <!-- Timeline / Match Events -->
-  <app-match-timeline [eventsSignal]="timelineSignal()" />
+  <app-match-timeline [eventsSignal]="store.timelineSignal" />
 
   <!-- Lineups Visual Pitch -->
-  <app-lineups-pitch [lineupsSignal]="lineupsSignal()" />
+  <app-lineups-pitch [lineupsSignal]="store.lineupsSignal" />
 
   <!-- Statistics -->
-  <app-team-stats [statsSignal]="statsSignal()" />
+  <app-team-stats [statsSignal]="store.statsSignal" />
 
   <!-- H2H -->
-  <app-head-to-head [h2hSignal]="h2hSignal()" />
+  <app-head-to-head [h2hSignal]="store.h2hSignal" />
 
   <!-- Media/Highlights -->
-  <app-highlights [highlightsSignal]="highlightsSignal()" />
+  <app-highlights [highlightsSignal]="store.highlightsSignal" />
 
   <div class="h-10"></div>
 </div>
