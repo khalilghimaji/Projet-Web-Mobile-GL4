@@ -1,5 +1,5 @@
 <!-- Top App Bar -->
-<div class="sticky top-10 z-50 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-sm border-b border-gray-200 dark:border-white/10">
+<div class="sticky top-0 z-50 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-sm border-b border-gray-200 dark:border-white/10">
   <div class="flex items-center p-4 pb-2 justify-between">
     <button
       (click)="onBack()"
@@ -19,36 +19,43 @@
 </div>
 
 <!-- Match Header & Score -->
-<app-match-header [matchHeaderSignal]="matchHeaderSignal()" />
+<app-match-header [matchHeaderSignal]="store.matchHeaderSignal" />
 
 <!-- Prediction Widget -->
 <app-prediction-widget
-  [predictionSignal]="predictionSignal()"
+  [predictionSignal]="predictionSignal"
   (voteSelected)="onVote($event)"
+  [popupOpened]="showPredictionPopup"
+/>
+<app-score-prediction-popup
+  [visible]="showPredictionPopup"
+  [team1Name]="homeTeamName()"
+  [team1Flag]="homeTeamFlag()"
+  [team2Name]="awayTeamName()"
+  [team2Flag]="awayTeamFlag()"
+
 />
 
 <!-- Tabs Navigation -->
 <app-tabs-navigation
-  [activeTabSignal]="activeTabSignal()"
+  [activeTabSignal]="activeTabSignal"
   (tabChanged)="onTabChange($event)"
 />
 
 <!-- Main Content Area -->
 <div class="p-4 space-y-6">
   <!-- Timeline / Match Events -->
-  <app-match-timeline [eventsSignal]="timelineSignal()" />
-
-  <!-- Lineups Visual Pitch -->
-  <app-lineups-pitch [lineupsSignal]="lineupsSignal()" />
-
-  <!-- Statistics -->
-  <app-team-stats [statsSignal]="statsSignal()" />
-
-  <!-- H2H -->
-  <app-head-to-head [h2hSignal]="h2hSignal()" />
-
-  <!-- Media/Highlights -->
-  <app-highlights [highlightsSignal]="highlightsSignal()" />
+  @if (activeTabSignal() === 'OVERVIEW') {
+    <app-match-timeline [eventsSignal]="store.timelineSignal" />
+  } @else if (activeTabSignal() === 'LINEUPS') {
+    <app-lineups-pitch [lineupsSignal]="store.lineupsSignal" />
+  } @else if (activeTabSignal() === 'STATS') {
+    <app-team-stats [statsSignal]="store.statsSignal" />
+  } @else if (activeTabSignal() === 'H2H') {
+    <app-head-to-head [h2hSignal]="store.h2hSignal" />
+  } @else if (activeTabSignal() === 'MEDIA') {
+    <app-highlights [highlightsSignal]="store.highlightsSignal" />
+  }
 
   <div class="h-10"></div>
 </div>

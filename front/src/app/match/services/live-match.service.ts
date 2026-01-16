@@ -1,3 +1,5 @@
+// obsolete : this was used for mock
+
 import { Injectable, WritableSignal } from '@angular/core';
 import { MatchHeader } from '../sections/match-header/match-header.section';
 import { MatchEvent } from '../components/timeline-event/timeline-event.component';

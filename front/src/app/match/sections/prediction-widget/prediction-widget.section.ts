@@ -1,14 +1,25 @@
-import { Component, ChangeDetectionStrategy, input, output } from '@angular/core';
+import {Component, ChangeDetectionStrategy, input, output, Signal, Input, WritableSignal} from '@angular/core';
 import { CommonModule } from '@angular/common';
+import {
+  ScorePredictionPopupComponent
+} from '../../../components/score-prediction-popup/score-prediction-popup.component';
 
 export type VoteOption = 'HOME' | 'DRAW' | 'AWAY';
+
+export interface Vote {
+  option: VoteOption;
+  home_score:number;
+  away_score:number;
+  diamonds:number;
+}
 
 export interface PredictionData {
   totalVotes: number;
   homePercentage: number;
   drawPercentage: number;
   awayPercentage: number;
-  userVote?: VoteOption;
+  userVote?: Vote;
+  voteEnabled?: boolean;
 }
 
 @Component({
@@ -18,7 +29,10 @@ export interface PredictionData {
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="px-4 py-6">
-      <div class="bg-white dark:bg-card-dark rounded-xl p-4 shadow-sm border border-gray-100 dark:border-white/5">
+      <div
+        class="bg-white dark:bg-card-dark rounded-xl p-4 shadow-sm
+               border border-gray-100 dark:border-white/5"
+      >
         <!-- Header -->
         <div class="flex justify-between items-center mb-3">
           <h3 class="text-sm font-semibold text-slate-700 dark:text-gray-200">
@@ -29,87 +43,71 @@ export interface PredictionData {
           </span>
         </div>
 
-        <!-- Vote Buttons -->
-        <div class="flex gap-2 mb-2">
-          <button
-            class="flex-1 py-2.5 rounded-lg text-sm font-bold transition-all active:scale-95"
-            [class.bg-primary/20]="predictionSignal().userVote === 'HOME'"
-            [class.hover:bg-primary/30]="predictionSignal().userVote === 'HOME'"
-            [class.dark:bg-primary/20]="predictionSignal().userVote === 'HOME'"
-            [class.dark:hover:bg-primary/30]="predictionSignal().userVote === 'HOME'"
-            [class.text-primary]="predictionSignal().userVote === 'HOME'"
-            [class.border]="predictionSignal().userVote === 'HOME'"
-            [class.border-primary/50]="predictionSignal().userVote === 'HOME'"
-            [class.bg-gray-100]="predictionSignal().userVote !== 'HOME'"
-            [class.dark:bg-white/5]="predictionSignal().userVote !== 'HOME'"
-            [class.hover:bg-gray-200]="predictionSignal().userVote !== 'HOME'"
-            [class.dark:hover:bg-white/10]="predictionSignal().userVote !== 'HOME'"
-            [class.text-gray-600]="predictionSignal().userVote !== 'HOME'"
-            [class.dark:text-gray-400]="predictionSignal().userVote !== 'HOME'"
-            (click)="onVote('HOME')"
-          >
-            Home
-          </button>
-
-          <button
-            class="flex-1 py-2.5 rounded-lg text-sm transition-all active:scale-95"
-            [class.bg-primary/20]="predictionSignal().userVote === 'DRAW'"
-            [class.hover:bg-primary/30]="predictionSignal().userVote === 'DRAW'"
-            [class.text-primary]="predictionSignal().userVote === 'DRAW'"
-            [class.font-bold]="predictionSignal().userVote === 'DRAW'"
-            [class.border]="predictionSignal().userVote === 'DRAW'"
-            [class.border-primary/50]="predictionSignal().userVote === 'DRAW'"
-            [class.bg-gray-100]="predictionSignal().userVote !== 'DRAW'"
-            [class.dark:bg-white/5]="predictionSignal().userVote !== 'DRAW'"
-            [class.hover:bg-gray-200]="predictionSignal().userVote !== 'DRAW'"
-            [class.dark:hover:bg-white/10]="predictionSignal().userVote !== 'DRAW'"
-            [class.text-gray-600]="predictionSignal().userVote !== 'DRAW'"
-            [class.dark:text-gray-400]="predictionSignal().userVote !== 'DRAW'"
-            [class.font-medium]="predictionSignal().userVote !== 'DRAW'"
-            (click)="onVote('DRAW')"
-          >
-            Draw
-          </button>
-
-          <button
-            class="flex-1 py-2.5 rounded-lg text-sm transition-all active:scale-95"
-            [class.bg-primary/20]="predictionSignal().userVote === 'AWAY'"
-            [class.hover:bg-primary/30]="predictionSignal().userVote === 'AWAY'"
-            [class.text-primary]="predictionSignal().userVote === 'AWAY'"
-            [class.font-bold]="predictionSignal().userVote === 'AWAY'"
-            [class.border]="predictionSignal().userVote === 'AWAY'"
-            [class.border-primary/50]="predictionSignal().userVote === 'AWAY'"
-            [class.bg-gray-100]="predictionSignal().userVote !== 'AWAY'"
-            [class.dark:bg-white/5]="predictionSignal().userVote !== 'AWAY'"
-            [class.hover:bg-gray-200]="predictionSignal().userVote !== 'AWAY'"
-            [class.dark:hover:bg-white/10]="predictionSignal().userVote !== 'AWAY'"
-            [class.text-gray-600]="predictionSignal().userVote !== 'AWAY'"
-            [class.dark:text-gray-400]="predictionSignal().userVote !== 'AWAY'"
-            [class.font-medium]="predictionSignal().userVote !== 'AWAY'"
-            (click)="onVote('AWAY')"
-          >
-            Away
-          </button>
+        <!-- Predict / Summary -->
+        <div class="mb-3">
+          <!-- User has voted -->
+          @if( predictionSignal().userVote ){
+            <div
+              class="flex items-center justify-between
+                   bg-primary/10 dark:bg-primary/20
+                   border border-primary/30 rounded-lg px-3 py-2"
+            >
+              <div>
+                <div class="text-[11px] text-gray-500 dark:text-gray-400">
+                  Your prediction
+                </div>
+                <div class="text-sm font-semibold text-primary">
+                  {{ formatOption(predictionSignal().userVote!.option) }}
+                  {{ predictionSignal().userVote!.home_score }} -
+                  {{ predictionSignal().userVote!.away_score }}
+                  • {{ predictionSignal().userVote!.diamonds }} 💎
+                </div>
+              </div>
+              @if (predictionSignal().voteEnabled){
+                <button
+                  class="text-xs font-medium text-primary hover:underline"
+                  (click)="onOpenPopup()"
+                >
+                  Change
+                </button>
+              }
+            </div>
+          } @else if (predictionSignal().voteEnabled){
+            <!-- Predict button -->
+            <button
+              class="w-full h-10 py-2.5 rounded-lg text-sm font-bold
+                     bg-primary text-white transition-all
+                     hover:bg-primary/90 active:scale-95
+                     disabled:opacity-50"
+              [disabled]="!predictionSignal().voteEnabled"
+              (click)="onOpenPopup()"
+            >
+              Predict & Bet 💎
+            </button>
+          }
         </div>
 
         <!-- Sentiment Bars -->
         <div class="flex h-1.5 w-full rounded-full overflow-hidden gap-0.5 mt-2">
           <div
-            class="bg-primary h-full transition-all duration-300"
+            class="bg-primary h-full transition-all"
             [style.width.%]="predictionSignal().homePercentage"
           ></div>
           <div
-            class="bg-gray-300 dark:bg-gray-600 h-full transition-all duration-300"
+            class="bg-gray-300 dark:bg-gray-600 h-full transition-all"
             [style.width.%]="predictionSignal().drawPercentage"
           ></div>
           <div
-            class="bg-gray-400 dark:bg-gray-500 h-full transition-all duration-300"
+            class="bg-gray-400 dark:bg-gray-500 h-full transition-all"
             [style.width.%]="predictionSignal().awayPercentage"
           ></div>
         </div>
 
         <!-- Percentages -->
-        <div class="flex justify-between text-[10px] text-gray-500 mt-1 font-medium">
+        <div
+          class="flex justify-between text-[10px]
+                 text-gray-500 mt-1 font-medium"
+        >
           <span>{{ predictionSignal().homePercentage }}%</span>
           <span>{{ predictionSignal().drawPercentage }}%</span>
           <span>{{ predictionSignal().awayPercentage }}%</span>
@@ -117,27 +115,41 @@ export interface PredictionData {
       </div>
     </div>
   `,
-  styles: [`
-    :host {
-      display: block;
-    }
-  `]
+  styles: [
+    `
+      :host {
+        display: block;
+      }
+    `
+  ]
 })
 export class PredictionWidgetSection {
   // Signal reference from parent
-  predictionSignal = input.required<PredictionData>();
+  @Input({ required: true }) predictionSignal!: Signal<PredictionData>;
+  @Input({ required: true }) popupOpened!: WritableSignal<boolean>;
 
   // Output event for vote action
   voteSelected = output<VoteOption>();
 
-  onVote(option: VoteOption): void {
-    this.voteSelected.emit(option);
-  }
+  onOpenPopup(): void {
+    this.popupOpened.set(true);
+}
 
   formatVotes(votes: number): string {
     if (votes >= 1000) {
       return `${(votes / 1000).toFixed(1)}k`;
     }
     return votes.toString();
+  }
+
+  formatOption(option: VoteOption): string {
+    switch (option) {
+      case 'HOME':
+        return 'Home Win';
+      case 'DRAW':
+        return 'Draw';
+      case 'AWAY':
+        return 'Away Win';
+    }
   }
 }

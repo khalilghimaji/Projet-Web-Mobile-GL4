@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, input } from '@angular/core';
+import {Component, ChangeDetectionStrategy, input, effect} from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 export type EventType = 'GOAL' | 'YELLOW_CARD' | 'RED_CARD' | 'SUBSTITUTION' | 'GOAL_SCORED';
@@ -83,6 +83,7 @@ export interface MatchEvent {
 export class TimelineEventComponent {
   // Signal reference passed from parent
   eventSignal = input.required<MatchEvent>();
+  private readonly _log = effect(() => console.log(this.eventSignal()));
 
   getPlayerText(): string {
     const event = this.eventSignal();

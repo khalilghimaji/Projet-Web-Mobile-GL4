@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, input } from '@angular/core';
+import {Component, ChangeDetectionStrategy, input, Signal, Input} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { VideoCardComponent, VideoHighlight } from '../../components/video-card/video-card.component';
 
@@ -50,5 +50,5 @@ import { VideoCardComponent, VideoHighlight } from '../../components/video-card/
 })
 export class HighlightsSection {
   // Signal reference from parent
-  highlightsSignal = input.required<VideoHighlight[]>();
+  @Input({required:true}) highlightsSignal!: Signal<VideoHighlight[]>
 }

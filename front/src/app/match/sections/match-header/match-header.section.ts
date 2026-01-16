@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, input, computed } from '@angular/core';
+import {Component, ChangeDetectionStrategy, input, computed, Input, Signal} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { StatusBadgeComponent, MatchStatus } from '../../components/status-badge/status-badge.component';
 import { TeamDisplayComponent, Team } from '../../components/team-display/team-display.component';
@@ -26,19 +26,19 @@ export interface MatchHeader {
       <div class="flex flex-col items-center">
         <!-- Status Badge -->
         <div class="mb-4">
-          <app-status-badge [statusSignal]="statusSignal()" />
+          <app-status-badge [statusSignal]="statusSignal" />
         </div>
 
         <!-- Teams and Score -->
         <div class="flex items-center justify-between w-full max-w-sm px-4">
           <!-- Home Team -->
-          <app-team-display [teamSignal]="homeTeamSignal()" />
+          <app-team-display [teamSignal]="homeTeamSignal" />
 
           <!-- Score -->
-          <app-score-display [scoreSignal]="scoreSignal()" />
+          <app-score-display [scoreSignal]="scoreSignal" />
 
           <!-- Away Team -->
-          <app-team-display [teamSignal]="awayTeamSignal()" />
+          <app-team-display [teamSignal]="awayTeamSignal" />
         </div>
       </div>
     </div>
@@ -51,7 +51,7 @@ export interface MatchHeader {
 })
 export class MatchHeaderSection {
   // Signal reference from parent (page)
-  matchHeaderSignal = input.required<MatchHeader>();
+  @Input({required:true}) matchHeaderSignal!: Signal<MatchHeader>;
 
   // Derived signals for child components
   statusSignal = computed(() => this.matchHeaderSignal().status);

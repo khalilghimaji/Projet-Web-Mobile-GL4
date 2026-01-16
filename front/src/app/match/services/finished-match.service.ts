@@ -1,3 +1,5 @@
+// obsolete: this was used for mock
+
 import { Injectable, inject, WritableSignal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
