@@ -1,24 +1,22 @@
-import {Component, ChangeDetectionStrategy, signal, inject, OnInit, OnDestroy, input, computed} from '@angular/core';
+import {Component, ChangeDetectionStrategy, signal, inject, input, computed} from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 
-// Services
-import { MatchDataService } from '../../services/match-data.service';
 
 // Sections
-import { MatchHeaderSection, MatchHeader } from '../../sections/match-header/match-header.section';
+import { MatchHeaderSection } from '../../sections/match-header/match-header.section';
 import { PredictionWidgetSection, PredictionData, VoteOption } from '../../sections/prediction-widget/prediction-widget.section';
 import { TabsNavigationSection, TabType } from '../../sections/tabs-navigation/tabs-navigation.section';
 import { MatchTimelineSection } from '../../sections/match-timeline/match-timeline.section';
-import { LineupsPitchSection, Lineups } from '../../sections/lineups-pitch/lineups-pitch.section';
-import { TeamStatsSection, TeamStats } from '../../sections/team-stats/team-stats.section';
-import { HeadToHeadSection, HeadToHead } from '../../sections/head-to-head/head-to-head.section';
+import { LineupsPitchSection } from '../../sections/lineups-pitch/lineups-pitch.section';
+import { TeamStatsSection } from '../../sections/team-stats/team-stats.section';
+import { HeadToHeadSection } from '../../sections/head-to-head/head-to-head.section';
 import { HighlightsSection } from '../../sections/highlights/highlights.section';
 
-// Types
-import { MatchEvent } from '../../components/timeline-event/timeline-event.component';
-import { VideoHighlight } from '../../components/video-card/video-card.component';
 import {MatchResourceFactory} from '../../services/match-resource.factory';
+import {
+  ScorePredictionPopupComponent
+} from '../../../components/score-prediction-popup/score-prediction-popup.component';
 
 @Component({
   selector: 'app-match-detail',
@@ -32,14 +30,14 @@ import {MatchResourceFactory} from '../../services/match-resource.factory';
     LineupsPitchSection,
     TeamStatsSection,
     HeadToHeadSection,
-    HighlightsSection
+    HighlightsSection,
+    ScorePredictionPopupComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './match-detail.page.html',
   styleUrls: ['./match-detail.page.css']
 })
-export class MatchDetailPage implements OnInit {
-  // Injected dependencies
+export class MatchDetailPage {
   matchId = input<string>()
   private router = inject(Router);
   private matchResourceFactory = inject(MatchResourceFactory);
@@ -51,14 +49,24 @@ export class MatchDetailPage implements OnInit {
     homePercentage: 45,
     drawPercentage: 20,
     awayPercentage: 35,
-    userVote: 'HOME',
+    // userVote: {
+    //   option:'HOME',
+    //   home_score:2,
+    //   away_score:1,
+    //   diamonds:100
+    // },
     voteEnabled: true
   });
 
   activeTabSignal = signal<TabType>('OVERVIEW');
 
-  ngOnInit(): void {
-  }
+  homeTeamName = computed(() => this.store.matchHeaderSignal().homeTeam.name)
+  awayTeamName = computed(() => this.store.matchHeaderSignal().awayTeam.name)
+  homeTeamFlag = computed(() => this.store.matchHeaderSignal().homeTeam.logo)
+  awayTeamFlag = computed(() => this.store.matchHeaderSignal().awayTeam.logo)
+
+  showPredictionPopup = signal(false);
+
 
   onTabChange(tab: TabType): void {
     console.log('Tab changed to:', tab);
@@ -67,7 +75,12 @@ export class MatchDetailPage implements OnInit {
 
   onVote(option: VoteOption): void {
     console.log('Vote selected:', option);
-    this.predictionSignal.update((prev => ({...prev, userVote: option})));
+    this.predictionSignal.update((prev => ({...prev, userVote: {
+      home_score: prev.userVote?.home_score || 0,
+      away_score: prev.userVote?.away_score || 0,
+      diamonds: prev.userVote?.diamonds || 0,
+      option: option
+      }})));
     // Update prediction via service
     // this.matchDataService.submitVote(option, this.predictionSignal);
   }

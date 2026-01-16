@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, output, input, inject } from '@angular/core';
+import {Component, Input, output, input, inject, signal, WritableSignal} from '@angular/core';
 
 import {
   FormsModule,
@@ -14,7 +14,7 @@ import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { Observable, of } from 'rxjs';
-import { debounceTime, map, catchError } from 'rxjs/operators';
+import { map, catchError } from 'rxjs/operators';
 import { MatchesService } from '../../services/Api';
 import { NotificationService } from '../../services/notification.service';
 
@@ -39,7 +39,7 @@ export interface TeamPrediction {
   styleUrls: ['./score-prediction-popup.component.css'],
 })
 export class ScorePredictionPopupComponent {
-  @Input() visible = false;
+  @Input() visible: WritableSignal<boolean> = signal(false);
   team1Name = input('');
   team2Name = input('');
   team1Flag = input<string | undefined>(undefined);
@@ -89,7 +89,7 @@ export class ScorePredictionPopupComponent {
   }
 
   onHide(): void {
-    this.visible = false;
+    this.visible.set(false);
     this.visibleChange.emit(false);
   }
 
@@ -120,7 +120,7 @@ export class ScorePredictionPopupComponent {
             );
           },
           complete: () => {
-            this.visible = false;
+            this.visible.set(false);
             this.visibleChange.emit(false);
           },
         });

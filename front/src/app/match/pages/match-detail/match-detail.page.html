@@ -25,6 +25,15 @@
 <app-prediction-widget
   [predictionSignal]="predictionSignal"
   (voteSelected)="onVote($event)"
+  [popupOpened]="showPredictionPopup"
+/>
+<app-score-prediction-popup
+  [visible]="showPredictionPopup"
+  [team1Name]="homeTeamName()"
+  [team1Flag]="homeTeamFlag()"
+  [team2Name]="awayTeamName()"
+  [team2Flag]="awayTeamFlag()"
+
 />
 
 <!-- Tabs Navigation -->
