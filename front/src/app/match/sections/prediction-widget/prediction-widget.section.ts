@@ -9,6 +9,7 @@ export interface PredictionData {
   drawPercentage: number;
   awayPercentage: number;
   userVote?: VoteOption;
+  voteEnabled?: boolean;
 }
 
 @Component({
@@ -46,6 +47,7 @@ export interface PredictionData {
             [class.dark:hover:bg-white/10]="predictionSignal().userVote !== 'HOME'"
             [class.text-gray-600]="predictionSignal().userVote !== 'HOME'"
             [class.dark:text-gray-400]="predictionSignal().userVote !== 'HOME'"
+            [disabled]="!predictionSignal().voteEnabled"
             (click)="onVote('HOME')"
           >
             Home
@@ -66,6 +68,7 @@ export interface PredictionData {
             [class.text-gray-600]="predictionSignal().userVote !== 'DRAW'"
             [class.dark:text-gray-400]="predictionSignal().userVote !== 'DRAW'"
             [class.font-medium]="predictionSignal().userVote !== 'DRAW'"
+            [disabled]="!predictionSignal().voteEnabled"
             (click)="onVote('DRAW')"
           >
             Draw
@@ -86,6 +89,7 @@ export interface PredictionData {
             [class.text-gray-600]="predictionSignal().userVote !== 'AWAY'"
             [class.dark:text-gray-400]="predictionSignal().userVote !== 'AWAY'"
             [class.font-medium]="predictionSignal().userVote !== 'AWAY'"
+            [disabled]="!predictionSignal().voteEnabled"
             (click)="onVote('AWAY')"
           >
             Away

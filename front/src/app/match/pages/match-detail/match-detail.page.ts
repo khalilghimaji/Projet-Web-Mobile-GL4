@@ -51,7 +51,8 @@ export class MatchDetailPage implements OnInit {
     homePercentage: 45,
     drawPercentage: 20,
     awayPercentage: 35,
-    userVote: 'HOME'
+    userVote: 'HOME',
+    voteEnabled: true
   });
 
   activeTabSignal = signal<TabType>('OVERVIEW');
@@ -60,11 +61,13 @@ export class MatchDetailPage implements OnInit {
   }
 
   onTabChange(tab: TabType): void {
+    console.log('Tab changed to:', tab);
     this.activeTabSignal.set(tab);
   }
 
   onVote(option: VoteOption): void {
     console.log('Vote selected:', option);
+    this.predictionSignal.update((prev => ({...prev, userVote: option})));
     // Update prediction via service
     // this.matchDataService.submitVote(option, this.predictionSignal);
   }

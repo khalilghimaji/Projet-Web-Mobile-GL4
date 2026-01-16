@@ -15,7 +15,7 @@ export interface TabItem {
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="sticky top-[68px] z-40 bg-background-light dark:bg-background-dark pt-2 pb-2 px-4 overflow-x-auto no-scrollbar border-b border-gray-200 dark:border-white/5">
-      <div class="flex space-x-6 min-w-max">
+      <div class="flex flex-row gap-4 min-w-max">
         @for (tab of tabs; track tab.id) {
           <button
             class="pb-2 text-sm transition-colors"
