@@ -108,9 +108,9 @@ export interface PredictionData {
           class="flex justify-between text-[10px]
                  text-gray-500 mt-1 font-medium"
         >
-          <span>{{ predictionSignal().homePercentage }}%</span>
-          <span>{{ predictionSignal().drawPercentage }}%</span>
-          <span>{{ predictionSignal().awayPercentage }}%</span>
+          <span>{{ predictionSignal().homePercentage | number:'1.0-0' }}%</span>
+          <span>{{ predictionSignal().drawPercentage | number:'1.0-0' }}%</span>
+          <span>{{ predictionSignal().awayPercentage | number:'1.0-0' }}%</span>
         </div>
       </div>
     </div>
