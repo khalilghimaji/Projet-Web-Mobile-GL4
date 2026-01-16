@@ -97,12 +97,13 @@ function createMatchSignals() {
 
 type MatchSignals = ReturnType<typeof createMatchSignals>;
 
-// todo
 function getEventStatus(event_live:string, event_status:string){
   if(event_live == '1'){
     return 'LIVE';
   } else if (event_status == 'Finished') {
     return 'FT';
+  } else if (event_status == 'Half Time') {
+    return 'HT';
   } else {
     return 'SCHEDULED'
   }
@@ -165,8 +166,8 @@ function hydrateFromSnapshot(
       id: `event-card-${c.time}-${c.home_fault || c.away_fault}`,
       type: c.card === 'yellow card' ? 'YELLOW_CARD' as const : 'RED_CARD' as const,
       minute: c.time,
-      team: c.info,
-      player: c.info == 'home' ? c.home_fault : c.away_fault,
+      team: c.home_fault ? 'home' : 'away',
+      player: c.home_fault || c.away_fault,
       detail: '',
     })
   ))]);

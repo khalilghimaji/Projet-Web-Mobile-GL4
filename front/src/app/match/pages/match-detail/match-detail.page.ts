@@ -4,7 +4,7 @@ import {
   signal,
   inject,
   input,
-  computed,
+  computed, linkedSignal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
@@ -32,7 +32,7 @@ import {
   TeamPrediction,
 } from '../../../components/score-prediction-popup/score-prediction-popup.component';
 import { catchError, forkJoin, map, of, tap } from 'rxjs';
-import { MatchesService, Prediction } from '../../../services/Api';
+import {MatchesService, MatchStat, Prediction} from '../../../services/Api';
 import { rxResource } from '@angular/core/rxjs-interop';
 
 @Component({
@@ -62,36 +62,12 @@ export class MatchDetailPage {
   store = this.matchResourceFactory.create(this.matchId);
   // State signals - owned by this page
 
-  predictionSignal = signal<PredictionData>({
-    totalVotes: 10,
-    homePercentage: 50,
-    drawPercentage: 20,
-    awayPercentage: 30,
-    // userVote: {
-    //   option:'HOME',
-    //   home_score:2,
-    //   away_score:1,
-    //   diamonds:100
-    // },
-    voteEnabled: true,
-  });
-
   activeTabSignal = signal<TabType>('OVERVIEW');
 
   homeTeamName = computed(() => this.store.matchHeaderSignal().homeTeam.name);
   awayTeamName = computed(() => this.store.matchHeaderSignal().awayTeam.name);
   homeTeamFlag = computed(() => this.store.matchHeaderSignal().homeTeam.logo);
   awayTeamFlag = computed(() => this.store.matchHeaderSignal().awayTeam.logo);
-
-  showPredictionPopup = signal(false);
-
-  predictionPopupData = computed<TeamPrediction>(() => ({
-    team1Score: this.predictionSignal().userVote?.home_score || 0,
-    team2Score: this.predictionSignal().userVote?.away_score || 0,
-    matchId: Number(this.matchId()),
-    numberOfDiamonds: this.predictionSignal().userVote?.diamonds || 1,
-    isUpdating: this.predictionSignal().userVote ? true : false,
-  }));
 
   existingPrediction = rxResource({
     params: () => ({ matchId: this.matchId() }),
@@ -103,43 +79,80 @@ export class MatchDetailPage {
         this.matchesService
           .matchesControllerGetUserPrediction(String(params.matchId))
           .pipe(
-            map((prediction) => (prediction as Prediction) || null),
             catchError(() => of(null))
           ),
         this.matchesService
           .matchesControllerGetPredictionsStatsForMatch(String(params.matchId))
           .pipe(catchError(() => of(null))),
       ]).pipe(
-        tap(([userPrediction, matchStats]) => {
-          if (matchStats) {
-            this.predictionSignal.set({
-              totalVotes: matchStats.totalVotes,
-              homePercentage: matchStats.homePercentage,
-              drawPercentage: matchStats.drawPercentage,
-              awayPercentage: matchStats.awayPercentage,
-              voteEnabled: matchStats.voteEnabled,
-              userVote: userPrediction
-                ? {
-                    option:
-                      userPrediction.scoreFirstEquipe >
-                      userPrediction.scoreSecondEquipe
-                        ? 'HOME'
-                        : userPrediction.scoreFirstEquipe <
-                          userPrediction.scoreSecondEquipe
-                        ? 'AWAY'
-                        : 'DRAW',
-
-                    home_score: userPrediction?.scoreFirstEquipe || 0,
-                    away_score: userPrediction?.scoreSecondEquipe || 0,
-                    diamonds: userPrediction?.numberOfDiamondsBet || 1,
-                  }
-                : undefined,
-            });
-          }
-        })
+        map(([userPrediction, matchStats]) => ({
+          userPrediction: (userPrediction as Prediction) || null,
+          matchStats: matchStats || null,
+        }))
       );
     },
   });
+
+  showPredictionPopup = signal(false);
+
+  predictionSignal = linkedSignal<{userPrediction:Prediction,matchStats:MatchStat|null}|null|undefined,PredictionData>(
+    {
+      source: () => this.existingPrediction.value(),
+      computation: (source, previous) => {
+        if (source === null || source === undefined) {
+          return previous?.value || {
+            totalVotes: 0,
+            homePercentage: 0,
+            drawPercentage: 0,
+            awayPercentage: 0,
+            voteEnabled: false,
+            userVote: undefined,
+          };
+        }
+        if (source.matchStats) {
+          return ({
+            totalVotes: source.matchStats.totalVotes,
+            homePercentage: source.matchStats.homePercentage,
+            drawPercentage: source.matchStats.drawPercentage,
+            awayPercentage: source.matchStats.awayPercentage,
+            voteEnabled: source.matchStats.voteEnabled,
+            userVote: source.userPrediction
+              ? {
+                option:
+                  source.userPrediction.scoreFirstEquipe >
+                  source.userPrediction.scoreSecondEquipe
+                    ? 'HOME'
+                    : source.userPrediction.scoreFirstEquipe <
+                    source.userPrediction.scoreSecondEquipe
+                      ? 'AWAY'
+                      : 'DRAW',
+
+                home_score: source.userPrediction?.scoreFirstEquipe || 0,
+                away_score: source.userPrediction?.scoreSecondEquipe || 0,
+                diamonds: source.userPrediction?.numberOfDiamondsBet || 1,
+              }
+              : undefined,
+          });
+        } else {
+          return previous?.value || {
+            totalVotes: 0,
+            homePercentage: 0,
+            drawPercentage: 0,
+            awayPercentage: 0,
+            voteEnabled: false,
+            userVote: undefined,
+          };
+        }
+      },
+    },
+  );
+  predictionPopupData = computed<TeamPrediction>(() => ({
+    team1Score: this.predictionSignal().userVote?.home_score || 0,
+    team2Score: this.predictionSignal().userVote?.away_score || 0,
+    matchId: Number(this.matchId()),
+    numberOfDiamonds: this.predictionSignal().userVote?.diamonds || 1,
+    isUpdating: !!this.predictionSignal().userVote,
+  }));
 
   onTabChange(tab: TabType): void {
     console.log('Tab changed to:', tab);

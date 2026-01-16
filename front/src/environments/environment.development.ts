@@ -3,6 +3,6 @@ export const environment = {
   apiUrl: 'http://localhost:3003',
   allSportsApi: {
     baseUrl: 'https://apiv2.allsportsapi.com/football/',
-    apiKey: '16436c2c52456379013dd8484ec936bec2cf877192a3b885f697d71086c5f0b7'
+    apiKey: '625ba428769c85807020a50dc942b212f705520a0543249b9b7ef0e533c03cbb'
   }
 };
