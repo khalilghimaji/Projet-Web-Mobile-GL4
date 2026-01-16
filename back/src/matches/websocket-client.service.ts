@@ -179,7 +179,7 @@ export class WebSocketClientService implements OnModuleInit, OnModuleDestroy {
     this.logger.log(`🏁 Match started ${event.match_id}: ${event.start_time}`);
 
     try {
-      await this.matchesService.notifyMatch(event.match_id, 0, 0);
+      await this.matchesService.updateMatch(event.match_id, 0, 0);
     } catch (error) {
       this.logger.error(
         `Failed to start match ${event.match_id}:`,
@@ -194,11 +194,7 @@ export class WebSocketClientService implements OnModuleInit, OnModuleDestroy {
     const [homeScore, awayScore] = this.parseScore(event.final_score);
 
     try {
-      await this.matchesService.notifyMatch(
-        event.match_id,
-        homeScore,
-        awayScore,
-      );
+      await this.matchesService.endMatch(event.match_id, homeScore, awayScore);
       this.logger.log(
         `✅ Terminated match ${event.match_id} with final score ${homeScore}-${awayScore}`,
       );
@@ -219,7 +215,7 @@ export class WebSocketClientService implements OnModuleInit, OnModuleDestroy {
     const [homeScore, awayScore] = this.parseScore(event.score);
 
     try {
-      await this.matchesService.notifyMatch(
+      await this.matchesService.updateMatch(
         event.match_id,
         homeScore,
         awayScore,

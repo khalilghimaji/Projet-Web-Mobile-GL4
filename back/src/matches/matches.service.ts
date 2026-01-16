@@ -85,9 +85,13 @@ export class MatchesService {
     );
   }
 
-  async getMatchPredictions(matchId: string): Promise<Prediction[]> {
+  async getMatchPredictions(
+    matchId: string,
+    includUser = false,
+  ): Promise<Prediction[]> {
     return this.predictionRepository.find({
       where: { matchId },
+      relations: includUser ? ['user'] : [],
     });
   }
 
@@ -100,17 +104,31 @@ export class MatchesService {
     });
   }
 
-  async notifyMatch(
+  async endMatch(
     id: string,
     actualScoreFirst: number,
     actualScoreSecond: number,
   ): Promise<void> {
     await this.predictionCalculator.calculateAndApplyGainsAtMatchEnd(
-      await this.getMatchPredictions(id),
+      await this.getMatchPredictions(id, true),
       actualScoreFirst,
       actualScoreSecond,
       this.userRepository,
       this.predictionRepository,
+    );
+  }
+
+  async updateMatch(
+    id: string,
+    actualScoreFirst: number,
+    actualScoreSecond: number,
+  ): Promise<void> {
+    await this.predictionCalculator.calculateAndApplyGainsAtMatchUpdate(
+      await this.getMatchPredictions(id, true),
+      actualScoreFirst,
+      actualScoreSecond,
+      this.predictionRepository,
+      this.userRepository,
     );
   }
 

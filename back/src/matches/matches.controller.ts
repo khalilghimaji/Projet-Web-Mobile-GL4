@@ -15,6 +15,7 @@ import { CanPredictMatchDto } from './dto/can-predict-match.dto';
 import { UpdatePredictionDto } from './dto/update-prediction.dto';
 import { Prediction } from './entities/prediction.entity';
 import { MatchStat } from './dto/get-match-stats-info.dto';
+import { TerminateMatchDto } from './dto/terminate-match.dto';
 
 @Controller('matches')
 @UseGuards(JwtAuthGuard)
@@ -87,5 +88,27 @@ export class MatchesController {
       body.scoreSecond,
       body.numberOfDiamondsBet,
     );
+  }
+
+  @Post(':id/update-match')
+  async updateMatch(
+    @Param('id') id: string,
+    @Body()
+    body: TerminateMatchDto,
+  ): Promise<void> {
+    return this.matchesService.updateMatch(
+      id,
+      body.scoreFirst,
+      body.scoreSecond,
+    );
+  }
+
+  @Post(':id/end-match')
+  async endMatch(
+    @Param('id') id: string,
+    @Body()
+    body: TerminateMatchDto,
+  ): Promise<void> {
+    return this.matchesService.endMatch(id, body.scoreFirst, body.scoreSecond);
   }
 }
