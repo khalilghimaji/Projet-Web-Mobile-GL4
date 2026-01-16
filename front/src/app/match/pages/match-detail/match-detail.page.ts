@@ -1,22 +1,39 @@
-import {Component, ChangeDetectionStrategy, signal, inject, input, computed} from '@angular/core';
+import {
+  Component,
+  ChangeDetectionStrategy,
+  signal,
+  inject,
+  input,
+  computed,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 
-
 // Sections
 import { MatchHeaderSection } from '../../sections/match-header/match-header.section';
-import { PredictionWidgetSection, PredictionData, VoteOption } from '../../sections/prediction-widget/prediction-widget.section';
-import { TabsNavigationSection, TabType } from '../../sections/tabs-navigation/tabs-navigation.section';
+import {
+  PredictionWidgetSection,
+  PredictionData,
+  VoteOption,
+} from '../../sections/prediction-widget/prediction-widget.section';
+import {
+  TabsNavigationSection,
+  TabType,
+} from '../../sections/tabs-navigation/tabs-navigation.section';
 import { MatchTimelineSection } from '../../sections/match-timeline/match-timeline.section';
 import { LineupsPitchSection } from '../../sections/lineups-pitch/lineups-pitch.section';
 import { TeamStatsSection } from '../../sections/team-stats/team-stats.section';
 import { HeadToHeadSection } from '../../sections/head-to-head/head-to-head.section';
 import { HighlightsSection } from '../../sections/highlights/highlights.section';
 
-import {MatchResourceFactory} from '../../services/match-resource.factory';
+import { MatchResourceFactory } from '../../services/match-resource.factory';
 import {
-  ScorePredictionPopupComponent, TeamPrediction
+  ScorePredictionPopupComponent,
+  TeamPrediction,
 } from '../../../components/score-prediction-popup/score-prediction-popup.component';
+import { catchError, forkJoin, map, of, tap } from 'rxjs';
+import { MatchesService, Prediction } from '../../../services/Api';
+import { rxResource } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-match-detail',
@@ -31,15 +48,16 @@ import {
     TeamStatsSection,
     HeadToHeadSection,
     HighlightsSection,
-    ScorePredictionPopupComponent
+    ScorePredictionPopupComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './match-detail.page.html',
-  styleUrls: ['./match-detail.page.css']
+  styleUrls: ['./match-detail.page.css'],
 })
 export class MatchDetailPage {
-  matchId = input<string>()
+  matchId = input<string>();
   private router = inject(Router);
+  private readonly matchesService = inject(MatchesService);
   private matchResourceFactory = inject(MatchResourceFactory);
   store = this.matchResourceFactory.create(this.matchId);
   // State signals - owned by this page
@@ -55,18 +73,73 @@ export class MatchDetailPage {
     //   away_score:1,
     //   diamonds:100
     // },
-    voteEnabled: true
+    voteEnabled: true,
   });
 
   activeTabSignal = signal<TabType>('OVERVIEW');
 
-  homeTeamName = computed(() => this.store.matchHeaderSignal().homeTeam.name)
-  awayTeamName = computed(() => this.store.matchHeaderSignal().awayTeam.name)
-  homeTeamFlag = computed(() => this.store.matchHeaderSignal().homeTeam.logo)
-  awayTeamFlag = computed(() => this.store.matchHeaderSignal().awayTeam.logo)
+  homeTeamName = computed(() => this.store.matchHeaderSignal().homeTeam.name);
+  awayTeamName = computed(() => this.store.matchHeaderSignal().awayTeam.name);
+  homeTeamFlag = computed(() => this.store.matchHeaderSignal().homeTeam.logo);
+  awayTeamFlag = computed(() => this.store.matchHeaderSignal().awayTeam.logo);
 
   showPredictionPopup = signal(false);
 
+  predictionPopupData = computed<TeamPrediction>(() => ({
+    team1Score: this.predictionSignal().userVote?.home_score || 0,
+    team2Score: this.predictionSignal().userVote?.away_score || 0,
+    matchId: Number(this.matchId()),
+    numberOfDiamonds: this.predictionSignal().userVote?.diamonds || 1,
+    isUpdating: this.predictionSignal().userVote ? true : false,
+  }));
+
+  existingPrediction = rxResource({
+    params: () => ({ matchId: this.matchId() }),
+    stream: ({ params }) => {
+      if (!params.matchId) {
+        return of(null);
+      }
+      return forkJoin([
+        this.matchesService
+          .matchesControllerGetUserPrediction(String(params.matchId))
+          .pipe(
+            map((prediction) => (prediction as Prediction) || null),
+            catchError(() => of(null))
+          ),
+        this.matchesService
+          .matchesControllerGetPredictionsStatsForMatch(String(params.matchId))
+          .pipe(catchError(() => of(null))),
+      ]).pipe(
+        tap(([userPrediction, matchStats]) => {
+          if (matchStats) {
+            this.predictionSignal.set({
+              totalVotes: matchStats.totalVotes,
+              homePercentage: matchStats.homePercentage,
+              drawPercentage: matchStats.drawPercentage,
+              awayPercentage: matchStats.awayPercentage,
+              voteEnabled: matchStats.voteEnabled,
+              userVote: userPrediction
+                ? {
+                    option:
+                      userPrediction.scoreFirstEquipe >
+                      userPrediction.scoreSecondEquipe
+                        ? 'HOME'
+                        : userPrediction.scoreFirstEquipe <
+                          userPrediction.scoreSecondEquipe
+                        ? 'AWAY'
+                        : 'DRAW',
+
+                    home_score: userPrediction?.scoreFirstEquipe || 0,
+                    away_score: userPrediction?.scoreSecondEquipe || 0,
+                    diamonds: userPrediction?.numberOfDiamondsBet || 1,
+                  }
+                : undefined,
+            });
+          }
+        })
+      );
+    },
+  });
 
   onTabChange(tab: TabType): void {
     console.log('Tab changed to:', tab);
@@ -75,12 +148,15 @@ export class MatchDetailPage {
 
   onVote(option: VoteOption): void {
     console.log('Vote selected:', option);
-    this.predictionSignal.update((prev => ({...prev, userVote: {
-      home_score: prev.userVote?.home_score || 0,
-      away_score: prev.userVote?.away_score || 0,
-      diamonds: prev.userVote?.diamonds || 0,
-      option: option
-      }})));
+    this.predictionSignal.update((prev) => ({
+      ...prev,
+      userVote: {
+        home_score: prev.userVote?.home_score || 0,
+        away_score: prev.userVote?.away_score || 0,
+        diamonds: prev.userVote?.diamonds || 0,
+        option: option,
+      },
+    }));
     // Update prediction via service
     // this.matchDataService.submitVote(option, this.predictionSignal);
   }
@@ -90,7 +166,7 @@ export class MatchDetailPage {
   }
 
   onPredict($event: TeamPrediction) {
-    this.predictionSignal.update(p=> ({
+    this.predictionSignal.update((p) => ({
       totalVotes: p.totalVotes + (p.userVote ? 0 : 1),
       ...this.calculateNewPercentage(p, this.computeOption($event)),
       voteEnabled: p.voteEnabled,
@@ -98,16 +174,26 @@ export class MatchDetailPage {
         home_score: $event.team1Score!,
         away_score: $event.team2Score!,
         diamonds: $event.numberOfDiamonds!,
-        option: this.computeOption($event)
-      }
+        option: this.computeOption($event),
+      },
     }));
   }
 
-  private calculateNewPercentage(oldPrediction: PredictionData, newOption: VoteOption) {
-    let totalVotes = oldPrediction.totalVotes + (oldPrediction.userVote ? 0 : 1);
-    let homeVotes = Math.round((oldPrediction.homePercentage / 100) * oldPrediction.totalVotes);
-    let drawVotes = Math.round((oldPrediction.drawPercentage / 100) * oldPrediction.totalVotes);
-    let awayVotes = Math.round((oldPrediction.awayPercentage / 100) * oldPrediction.totalVotes);
+  private calculateNewPercentage(
+    oldPrediction: PredictionData,
+    newOption: VoteOption
+  ) {
+    let totalVotes =
+      oldPrediction.totalVotes + (oldPrediction.userVote ? 0 : 1);
+    let homeVotes = Math.round(
+      (oldPrediction.homePercentage / 100) * oldPrediction.totalVotes
+    );
+    let drawVotes = Math.round(
+      (oldPrediction.drawPercentage / 100) * oldPrediction.totalVotes
+    );
+    let awayVotes = Math.round(
+      (oldPrediction.awayPercentage / 100) * oldPrediction.totalVotes
+    );
 
     // If user had already voted, we don't increase total votes
     if (oldPrediction.userVote) {
@@ -127,8 +213,8 @@ export class MatchDetailPage {
     return {
       homePercentage: (homeVotes / totalVotes) * 100,
       drawPercentage: (drawVotes / totalVotes) * 100,
-      awayPercentage: (awayVotes / totalVotes) * 100
-    }
+      awayPercentage: (awayVotes / totalVotes) * 100,
+    };
   }
 
   private computeOption(event: TeamPrediction): VoteOption {

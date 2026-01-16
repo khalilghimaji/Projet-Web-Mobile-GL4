@@ -14,6 +14,7 @@ import {
 import { NotificationType } from 'src/Enums/notification-type.enum';
 import { NotificationsService } from 'src/notifications/notifications.service';
 import { ConfigService } from '@nestjs/config';
+import { MatchStat } from './dto/get-match-stats-info.dto';
 
 @Injectable()
 export class MatchesService {
@@ -247,5 +248,27 @@ export class MatchesService {
 
     await this.predictionRepository.save(prediction);
     return prediction;
+  }
+
+  async getPredictionsStatsForMatch(matchId: string): Promise<MatchStat> {
+    const predictions = await this.getMatchPredictions(matchId);
+    const totalVotes = predictions.length;
+    const homeVotes = predictions.filter(
+      (p) => p.scoreFirstEquipe > p.scoreSecondEquipe,
+    ).length;
+    const drawVotes = predictions.filter(
+      (p) => p.scoreFirstEquipe === p.scoreSecondEquipe,
+    ).length;
+    const awayVotes = predictions.filter(
+      (p) => p.scoreFirstEquipe < p.scoreSecondEquipe,
+    ).length;
+    const hasbegun = await this.verifyMatchBegan(matchId);
+    return {
+      totalVotes,
+      homePercentage: totalVotes > 0 ? (homeVotes / totalVotes) * 100 : 0,
+      drawPercentage: totalVotes > 0 ? (drawVotes / totalVotes) * 100 : 0,
+      awayPercentage: totalVotes > 0 ? (awayVotes / totalVotes) * 100 : 0,
+      voteEnabled: !hasbegun,
+    };
   }
 }

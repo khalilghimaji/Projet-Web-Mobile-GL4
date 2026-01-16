@@ -8,7 +8,13 @@
   (onHide)="onHide()"
 >
   <ng-template pTemplate="header">
-    <h3>{{ isUpdating() ? "Update Prediction" : "Score Prediction" }}</h3>
+    <h3>
+      {{
+        predictionDataSignal().isUpdating
+          ? "Update Prediction"
+          : "Score Prediction"
+      }}
+    </h3>
   </ng-template>
 
   <form [formGroup]="predictionForm" (ngSubmit)="onSubmit()">
@@ -135,7 +141,11 @@
         severity="secondary"
       />
       <p-button
-        [label]="isUpdating() ? 'Update Prediction' : 'Submit Prediction'"
+        [label]="
+          predictionDataSignal().isUpdating
+            ? 'Update Prediction'
+            : 'Submit Prediction'
+        "
         icon="pi pi-check"
         type="submit"
         severity="success"

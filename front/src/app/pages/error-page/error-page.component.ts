@@ -23,7 +23,7 @@ import { fromEvent } from 'rxjs';
 @Component({
   selector: 'app-error-page',
   standalone: true,
-  imports: [RouterModule, ScorePredictionPopupComponent, FormsModule],
+  imports: [RouterModule, FormsModule],
   templateUrl: './error-page.component.html',
   styleUrls: ['./error-page.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -89,11 +89,6 @@ export class ErrorPageComponent implements AfterViewInit {
   backButtonRef = viewChild<ElementRef>('backButton');
   predictButtonRef = viewChild<ElementRef>('predictButton');
 
-  // Demo team data
-  team1Name = 'Barcelona';
-  team2Name = 'Real Madrid';
-  team1Flag = 'https://flagcdn.com/w320/it.png';
-  team2Flag = 'https://flagcdn.com/w320/es.png';
   // ====================================  end ============================================
   constructor(private location: Location) {}
 
@@ -114,10 +109,4 @@ export class ErrorPageComponent implements AfterViewInit {
   goBack() {
     this.location.back();
   }
-  // ================ score prediction popup methods ==================
-
-  onPredictionSubmitted(prediction: TeamPrediction) {
-    console.log('Prediction submitted:', prediction);
-  }
-  // ===============================  end =================================================
 }

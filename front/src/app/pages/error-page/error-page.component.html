@@ -24,14 +24,3 @@
     </div>
   </div>
 </div>
-
-<!-- Score Prediction Popup -->
-<app-score-prediction-popup
-  [(visible)]="showPredictionDialog"
-  [team1Name]="team1Name"
-  [team2Name]="team2Name"
-  [team1Flag]="team1Flag"
-  [team2Flag]="team2Flag"
-  [matchId]="matchId()"
-  (predictionSubmitted)="onPredictionSubmitted($event)"
-/>

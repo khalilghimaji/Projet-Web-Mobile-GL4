@@ -1,5 +1,7 @@
 <!-- Top App Bar -->
-<div class="sticky top-0 z-50 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-sm border-b border-gray-200 dark:border-white/10">
+<div
+  class="sticky top-0 z-50 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-sm border-b border-gray-200 dark:border-white/10"
+>
   <div class="flex items-center p-4 pb-2 justify-between">
     <button
       (click)="onBack()"
@@ -8,11 +10,15 @@
       <span class="material-symbols-outlined">arrow_back</span>
     </button>
 
-    <h2 class="text-slate-900 dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center">
+    <h2
+      class="text-slate-900 dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center"
+    >
       Match Detail
     </h2>
 
-    <button class="text-slate-900 dark:text-white flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
+    <button
+      class="text-slate-900 dark:text-white flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+    >
       <span class="material-symbols-outlined">more_vert</span>
     </button>
   </div>
@@ -27,14 +33,15 @@
   (voteSelected)="onVote($event)"
   [popupOpened]="showPredictionPopup"
 />
+{{ predictionPopupData() | json }}
 <app-score-prediction-popup
   [(visible)]="showPredictionPopup"
   [team1Name]="homeTeamName()"
   [team1Flag]="homeTeamFlag()"
   [team2Name]="awayTeamName()"
   [team2Flag]="awayTeamFlag()"
+  [predictionDataSignal]="predictionPopupData"
   (predictionSubmitted)="onPredict($event)"
-
 />
 
 <!-- Tabs Navigation -->
@@ -47,15 +54,15 @@
 <div class="p-4 space-y-6">
   <!-- Timeline / Match Events -->
   @if (activeTabSignal() === 'OVERVIEW') {
-    <app-match-timeline [eventsSignal]="store.timelineSignal" />
+  <app-match-timeline [eventsSignal]="store.timelineSignal" />
   } @else if (activeTabSignal() === 'LINEUPS') {
-    <app-lineups-pitch [lineupsSignal]="store.lineupsSignal" />
+  <app-lineups-pitch [lineupsSignal]="store.lineupsSignal" />
   } @else if (activeTabSignal() === 'STATS') {
-    <app-team-stats [statsSignal]="store.statsSignal" />
+  <app-team-stats [statsSignal]="store.statsSignal" />
   } @else if (activeTabSignal() === 'H2H') {
-    <app-head-to-head [h2hSignal]="store.h2hSignal" />
+  <app-head-to-head [h2hSignal]="store.h2hSignal" />
   } @else if (activeTabSignal() === 'MEDIA') {
-    <app-highlights [highlightsSignal]="store.highlightsSignal" />
+  <app-highlights [highlightsSignal]="store.highlightsSignal" />
   }
 
   <div class="h-10"></div>

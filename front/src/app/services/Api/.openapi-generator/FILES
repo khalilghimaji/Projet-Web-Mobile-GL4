@@ -19,6 +19,7 @@ model/forgotPasswordResponseDto.ts
 model/loginDto.ts
 model/loginResponseDto.ts
 model/logoutResponseDto.ts
+model/matchStat.ts
 model/mfaDisableResponseDto.ts
 model/mfaEnableDto.ts
 model/mfaEnableResponseDto.ts

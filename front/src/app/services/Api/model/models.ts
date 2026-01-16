@@ -5,6 +5,7 @@ export * from './forgotPasswordResponseDto';
 export * from './loginDto';
 export * from './loginResponseDto';
 export * from './logoutResponseDto';
+export * from './matchStat';
 export * from './mfaDisableResponseDto';
 export * from './mfaEnableDto';
 export * from './mfaEnableResponseDto';

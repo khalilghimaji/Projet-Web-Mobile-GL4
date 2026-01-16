@@ -14,6 +14,7 @@ import { PredictDto } from './dto/predict.dto';
 import { CanPredictMatchDto } from './dto/can-predict-match.dto';
 import { UpdatePredictionDto } from './dto/update-prediction.dto';
 import { Prediction } from './entities/prediction.entity';
+import { MatchStat } from './dto/get-match-stats-info.dto';
 
 @Controller('matches')
 @UseGuards(JwtAuthGuard)
@@ -32,6 +33,13 @@ export class MatchesController {
       matchId,
       boy.numberOfDiamondsBet,
     );
+  }
+
+  @Get('match-stats-info/:id')
+  async getPredictionsStatsForMatch(
+    @Param('id') matchId: string,
+  ): Promise<MatchStat> {
+    return this.matchesService.getPredictionsStatsForMatch(matchId);
   }
 
   @Get(':id/prediction')
