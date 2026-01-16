@@ -74,23 +74,26 @@ export class ScorePredictionPopupComponent {
   @Input({ required: true }) predictionDataSignal!: Signal<TeamPrediction>;
 
   predictionForm: FormGroup = new FormGroup({
-    team1Score: new FormControl<number | null>(
-      this.predictionDataSignal().team1Score || 0,
-      [Validators.min(0)]
-    ),
-    team2Score: new FormControl<number | null>(
-      this.predictionDataSignal().team2Score || 0,
-      [Validators.min(0)]
-    ),
-    numberOfDiamonds: new FormControl<number | null>(
-      this.predictionDataSignal().numberOfDiamonds || 1,
-      {
-        validators: [Validators.min(1)],
-        asyncValidators: [this.diamondAsyncValidator.bind(this)],
-        updateOn: 'blur',
-      }
-    ),
+    team1Score: new FormControl<number | null>(0, [Validators.min(0)]),
+    team2Score: new FormControl<number | null>(0, [Validators.min(0)]),
+    numberOfDiamonds: new FormControl<number | null>(1, {
+      validators: [Validators.min(1)],
+      asyncValidators: [this.diamondAsyncValidator.bind(this)],
+      updateOn: 'blur',
+    }),
   });
+
+  constructor() {
+    // Update form values when predictionDataSignal changes
+    effect(() => {
+      const predictionData = this.predictionDataSignal();
+      this.predictionForm.patchValue({
+        team1Score: predictionData.team1Score || 0,
+        team2Score: predictionData.team2Score || 0,
+        numberOfDiamonds: predictionData.numberOfDiamonds || 1,
+      }, { emitEvent: false });
+    });
+  }
 
   diamondAsyncValidator(
     control: AbstractControl
