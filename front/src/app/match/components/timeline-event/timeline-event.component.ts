@@ -1,7 +1,7 @@
 import {Component, ChangeDetectionStrategy, input, effect} from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-export type EventType = 'GOAL' | 'YELLOW_CARD' | 'RED_CARD' | 'SUBSTITUTION';
+export type EventType = 'GOAL' | 'YELLOW_CARD' | 'RED_CARD' | 'SUBSTITUTION' | 'GOAL_SCORED';
 
 export interface MatchEvent {
   id: string;

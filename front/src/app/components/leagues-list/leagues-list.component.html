@@ -1,0 +1,50 @@
+<div class="standings-container">
+    <!-- League Selection View -->
+    <div class="league-selection">
+        <div class="selection-header">
+            <h1>Select a League</h1>
+            <p>Choose a league to view its standings</p>
+        </div>
+
+        <!-- Loading State -->
+        @if(leaguesRes.isLoading())
+        {
+        <div class="loading-state">
+            <app-loading></app-loading>
+        </div>
+        }
+        @else if (leaguesRes.error()) {
+        <!-- Error State -->
+        <div class="error-state">
+            <p>{{ leaguesRes.error() }}</p>
+        </div>}
+
+
+        <!-- League Cards Grid -->
+        @else{
+
+        <div class="leagues-grid">
+            @for (league of leaguesRes.value(); track league.league_key) {
+            <div class="league-card" (click)="selectLeague(league)">
+                <div class="league-card-header">
+                    <img [src]="league.league_logo" [alt]="league.league_name" class="league-logo" />
+                </div>
+                <div class="league-card-body">
+                    <h3 class="league-name">{{ league.league_name }}</h3>
+                    <div class="country-info">
+                        <img [src]="league.country_logo" [alt]="league.country_name" class="country-flag" />
+                        <span class="country-name">{{ league.country_name }}</span>
+                    </div>
+                </div>
+                <div class="league-card-footer">
+                    <span class="view-standings-text">View Standings →</span>
+                </div>
+            </div>
+            } @empty {
+            <p>Aucune ligue disponible pour le moment.</p>
+            }
+        </div>
+        }
+
+
+    </div>

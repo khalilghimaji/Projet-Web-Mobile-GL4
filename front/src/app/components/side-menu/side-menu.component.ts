@@ -1,20 +1,27 @@
-import { Component, signal, OnInit, OnDestroy } from '@angular/core';
+import {
+  Component,
+  signal,
+  OnInit,
+  OnDestroy,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { AsyncPipe, CommonModule, NgOptimizedImage } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 import { DrawerModule } from 'primeng/drawer';
 import { AuthService } from '../../services/auth.service';
 import { NotificationsApiService } from '../../services/notifications-api.service';
 import { filter, Subscription } from 'rxjs';
 import { ImageDefaultPipe } from '../../shared/pipes/image-default.pipe';
+import { MenuItem } from 'primeng/api';
 
-interface MenuItem {
+interface CustomMenuItem {
   icon: string;
   label: string;
   route?: string;
   active?: boolean;
   badge?: number;
   hasChildren?: boolean;
-  children?: MenuItem[];
+  children?: CustomMenuItem[];
 }
 
 @Component({
@@ -22,21 +29,34 @@ interface MenuItem {
   standalone: true,
   imports: [
     CommonModule,
-    RouterModule,
+    RouterLink,
+    RouterLinkActive,
     NgOptimizedImage,
     DrawerModule,
     AsyncPipe,
     ImageDefaultPipe,
   ],
   templateUrl: './side-menu.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./side-menu.component.css'],
 })
 export class SideMenuComponent implements OnInit, OnDestroy {
   isMenuOpen = signal(false);
 
-  topMenuItems: MenuItem[] = [];
+  // Desktop menubar expanded states
+  isTopMenuExpanded = signal(false);
+  isBottomMenuExpanded = signal(false);
+  isAuthMenuExpanded = signal(false);
 
-  authMenuItems: MenuItem[] = [
+  topMenuItems: CustomMenuItem[] = [
+    {
+      icon: 'pi pi-chart-bar',
+      label: 'Standings',
+      route: '/standings',
+    },
+  ];
+
+  authMenuItems: CustomMenuItem[] = [
     {
       icon: 'pi pi-user',
       label: 'Login',
@@ -54,7 +74,7 @@ export class SideMenuComponent implements OnInit, OnDestroy {
     },
   ];
 
-  bottomMenuItems: MenuItem[] = [
+  bottomMenuItems: CustomMenuItem[] = [
     {
       icon: 'pi pi-bell',
       label: 'Notifications',
@@ -64,6 +84,11 @@ export class SideMenuComponent implements OnInit, OnDestroy {
       icon: 'pi pi-crown',
       label: 'Diamond Store',
       route: '/diamond-store',
+    },
+    {
+      icon: 'pi pi-trophy',
+      label: 'Rankings',
+      route: '/rankings',
     },
     {
       icon: 'pi pi-shield',
@@ -76,12 +101,30 @@ export class SideMenuComponent implements OnInit, OnDestroy {
   gainedDiamonds = signal(0);
   private sseSubscription: Subscription | null = null;
 
+  // Combined menu items for desktop menubar
+  get menubarItems(): MenuItem[] {
+    const items = [...this.topMenuItems];
+    if (this.authService.authStateSignal()) {
+      items.push(...this.bottomMenuItems);
+    }
+    return items.map((item) => ({
+      label: item.label,
+      icon: item.icon,
+      route: item.route,
+      badge: item.badge?.toString(),
+      items: item.children?.map((child) => ({
+        label: child.label,
+        icon: child.icon,
+        route: child.route,
+        badge: child.badge?.toString(),
+      })),
+    }));
+  }
   constructor(
     public authService: AuthService,
     private notificationsApi: NotificationsApiService
   ) {
     this.authService.currentUser$.subscribe((user) => {
-      console.log('User updated in SideMenuComponent:', user);
       if (user && 'diamonds' in user) {
         this.diamonds.set(user.diamonds ?? 0);
       }
@@ -115,7 +158,7 @@ export class SideMenuComponent implements OnInit, OnDestroy {
             this.diamonds.set(notification.data?.newDiamonds);
           }
           if (notification.type === 'DIAMOND_UPDATE') {
-            this.gainedDiamonds.set(notification.data?.gain || 0);
+            this.gainedDiamonds.set(Number(notification.data?.gain) || 0);
           }
         },
         error: (error) => {
@@ -135,6 +178,24 @@ export class SideMenuComponent implements OnInit, OnDestroy {
 
   toggleMenu() {
     this.isMenuOpen.set(!this.isMenuOpen());
+  }
+
+  toggleTopMenu() {
+    this.isTopMenuExpanded.set(!this.isTopMenuExpanded());
+    this.isBottomMenuExpanded.set(false);
+    this.isAuthMenuExpanded.set(false);
+  }
+
+  toggleBottomMenu() {
+    this.isBottomMenuExpanded.set(!this.isBottomMenuExpanded());
+    this.isTopMenuExpanded.set(false);
+    this.isAuthMenuExpanded.set(false);
+  }
+
+  toggleAuthMenu() {
+    this.isAuthMenuExpanded.set(!this.isAuthMenuExpanded());
+    this.isTopMenuExpanded.set(false);
+    this.isBottomMenuExpanded.set(false);
   }
 
   onLogout() {

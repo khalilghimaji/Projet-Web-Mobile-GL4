@@ -1,3 +1,374 @@
+/* ============================================
+   RESPONSIVE LAYOUT STYLES
+   ============================================ */
+
+/* Desktop Menubar - visible on large screens */
+.desktop-menubar {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .desktop-menubar {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .mobile-only {
+    display: none !important;
+  }
+
+  .mobile-drawer {
+    display: none !important;
+  }
+}
+
+/* Mobile - drawer only */
+@media (max-width: 1023px) {
+  .desktop-menubar {
+    display: none !important;
+  }
+}
+
+/* Menubar Container */
+.menubar-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  min-height: 60px;
+}
+
+.menubar-start,
+.menubar-center,
+.menubar-end {
+  display: flex;
+  align-items: center;
+}
+
+.menubar-center {
+  flex: 1;
+  justify-content: center;
+}
+
+.menubar-items {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Menu Group Styles */
+.menu-group {
+  position: relative;
+}
+
+.menu-group-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  color: #2c3e50;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-radius: 8px;
+  user-select: none;
+}
+
+.menu-group-trigger:hover {
+  background-color: #e8f5e8;
+  color: #4CAF50;
+}
+
+.menu-group.expanded .menu-group-trigger {
+  background-color: #e8f5e8;
+  color: #4CAF50;
+}
+
+.menu-group-trigger i:first-child {
+  font-size: 18px;
+}
+
+.menu-group-trigger .label {
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.menu-group-trigger .expand-icon {
+  font-size: 14px;
+  transition: transform 0.3s ease;
+}
+
+.menu-group.expanded .menu-group-trigger .expand-icon {
+  transform: rotate(180deg);
+}
+
+/* Menu Dropdown */
+.menu-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  min-width: 200px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  padding: 8px;
+  z-index: 1001;
+  animation: slideDown 0.3s ease;
+}
+
+.auth-menu-group .menu-dropdown {
+  left: auto;
+  right: 0;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Menu dropdown items */
+.menu-dropdown .nav-item {
+  margin: 0;
+  border-radius: 6px;
+}
+
+.menu-dropdown .nav-item .content {
+  padding: 10px 12px;
+  border-radius: 6px;
+}
+
+.menu-dropdown .nav-item:hover .content {
+  background-color: #e8f5e8;
+  color: #4CAF50;
+}
+
+.menu-dropdown .nav-item.active .content {
+  background-color: #e8f5e8;
+  color: #4CAF50;
+  font-weight: 600;
+}
+
+/* Desktop menubar nav items */
+.desktop-menubar .nav-item {
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-radius: 8px;
+  padding: 0;
+  margin: 0;
+}
+
+.desktop-menubar .nav-item .content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  color: #2c3e50;
+  transition: all 0.3s ease;
+  border-radius: 8px;
+}
+
+.desktop-menubar .nav-item:hover .content {
+  background-color: #e8f5e8;
+  color: #4CAF50;
+}
+
+.desktop-menubar .nav-item.active .content {
+  background-color: #e8f5e8;
+  color: #4CAF50;
+  font-weight: 600;
+}
+
+.desktop-menubar .nav-item .content i {
+  font-size: 18px;
+}
+
+.desktop-menubar .nav-item .content .label {
+  font-size: 15px;
+}
+
+.desktop-menubar .nav-item .content .badge {
+  background: #f44336;
+  color: white;
+  border-radius: 12px;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  min-width: 20px;
+  text-align: center;
+}
+
+/* Auth items in menubar */
+.desktop-menubar .auth-item .content {
+  border: 1px solid #ddd;
+}
+
+.desktop-menubar .auth-item:hover .content {
+  background-color: #4CAF50;
+  color: white;
+  border-color: #4CAF50;
+}
+
+/* Logo Styles */
+.menu-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.menu-logo .logo-text {
+  font-size: 20px;
+  color: #2c3e50;
+  font-weight: 700;
+}
+
+/* Drawer logo needs larger image */
+.drawer-header .menu-logo img {
+  width: 64px !important;
+  height: 64px !important;
+  border-radius: 12px !important;
+}
+
+/* Menubar Auth Section */
+.menubar-auth-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.menubar-auth-section .nav-item .content {
+  padding: 8px 16px;
+  font-size: 14px;
+}
+
+/* Menubar User Section */
+.menubar-user-section {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.menubar-diamonds {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 20px;
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.menubar-diamonds i {
+  font-size: 16px;
+}
+
+/* Diamonds Display Wrapper (shared) */
+.diamonds-display-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.diamonds-display-wrapper i {
+  font-size: 16px;
+}
+
+.diamonds-count {
+  font-weight: 600;
+}
+
+.diamonds-change {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 4px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.diamonds-change.positive {
+  color: #4ade80;
+}
+
+.diamonds-change.negative {
+  color: #f87171;
+}
+
+.diamonds-change i {
+  font-size: 12px;
+}
+
+/* User Profile Wrapper (shared) */
+.user-profile-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.profile-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #4CAF50;
+}
+
+.profile-info-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.profile-email {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.menubar-logout-btn {
+  padding: 8px 12px;
+  background-color: #f44336;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.menubar-logout-btn:hover {
+  background-color: #d32f2f;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(244, 67, 54, 0.3);
+}
+
+.menubar-logout-btn i {
+  font-size: 16px;
+}
+
+/* ============================================
+   ORIGINAL DRAWER STYLES (for mobile)
+   ============================================ */
+
 /* Side Menu Container */
 .side-menu.open {
   transform: translateX(0);
@@ -233,45 +604,51 @@
 .profile-info {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 12px;
   align-items: center;
+  width: 100%;
 }
 
-.profile-picture {
-  border-radius: 50%;
-  margin-right: 10px;
-  object-fit: cover;
-}
-
-.profile-details {
-  display: flex;
+/* Drawer-specific profile styles */
+.drawer-header+* .profile-info .user-profile-wrapper {
   flex-direction: column;
+  text-align: center;
+  width: 100%;
+}
+
+.drawer-header+* .profile-info .profile-avatar {
+  width: 60px;
+  height: 60px;
+}
+
+.drawer-header+* .profile-info .profile-info-text {
+  align-items: center;
 }
 
 .diamonds-container {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  margin-top: 8px;
+  width: 100%;
 }
 
-.diamonds-display {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+/* Drawer diamonds display */
+.diamonds-container .diamonds-display-wrapper {
   padding: 8px 12px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border-radius: 20px;
   box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  color: white;
 }
 
-.diamonds-display:hover {
+.diamonds-container .diamonds-display-wrapper:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
-.diamonds-display i {
+.diamonds-container .diamonds-display-wrapper i {
   color: #FFD700;
   font-size: 16px;
   filter: drop-shadow(0 0 4px rgba(255, 215, 0, 0.5));

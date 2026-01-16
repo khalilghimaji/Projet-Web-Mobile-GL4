@@ -37,6 +37,6 @@ export interface UserDto {
     /**
      * User diamonds
      */
-    diamonds?: number;
+    diamonds: number;
 }
 

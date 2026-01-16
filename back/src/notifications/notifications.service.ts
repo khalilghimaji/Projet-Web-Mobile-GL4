@@ -9,12 +9,23 @@ interface NotificationPayload {
   userId: string;
   type: NotificationType;
   message: string;
-  data?: DataMessage;
+  data?: DataMessage | UserRankingMessage;
 }
 
 interface DataMessage {
   gain: number;
   newDiamonds: number;
+}
+
+export interface UserRanking {
+  firstName: string;
+  lastName: string;
+  score: number;
+  imageUrl: string;
+}
+
+export interface UserRankingMessage {
+  rankings: UserRanking[];
 }
 @Injectable()
 export class NotificationsService {
@@ -36,8 +47,8 @@ export class NotificationsService {
     return subject.asObservable();
   }
 
-  async notify(payload: NotificationPayload): Promise<void> {
-    const notification = await this.storeNotification(payload);
+  async notify(payload: NotificationPayload, save = true): Promise<void> {
+    const notification = await this.storeNotification(payload, save);
     notification.data = { ...payload.data };
     const client = this.clients.get(payload.userId);
     if (client) {
@@ -51,7 +62,10 @@ export class NotificationsService {
     }
   }
 
-  async storeNotification(payload: NotificationPayload): Promise<Notification> {
+  async storeNotification(
+    payload: NotificationPayload,
+    save,
+  ): Promise<Notification> {
     const notification = this.notificationRepository.create({
       userId: payload.userId,
       type: payload.type,
@@ -59,7 +73,11 @@ export class NotificationsService {
       data: payload.data,
       read: false,
     });
-    return this.notificationRepository.save(notification);
+    if (save) {
+      return this.notificationRepository.save(notification);
+    } else {
+      return notification;
+    }
   }
 
   async getUserNotifications(userId: string): Promise<Notification[]> {

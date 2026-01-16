@@ -10,6 +10,7 @@ import { MailService } from '../Common/Emailing/mail.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { GoogleStrategy } from './strategies/google.strategy';
 import { GithubStrategy } from './strategies/github.strategy';
+import { UserController } from './user.controller';
 
 // Helper function to parse JWT expiry strings to seconds
 function parseExpiryToSeconds(expiry: string): number {
@@ -53,7 +54,7 @@ function parseExpiryToSeconds(expiry: string): number {
       },
     }),
   ],
-  controllers: [AuthController],
+  controllers: [AuthController, UserController],
   providers: [
     AuthService,
     JwtStrategy,
