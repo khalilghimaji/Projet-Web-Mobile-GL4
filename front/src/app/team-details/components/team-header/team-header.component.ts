@@ -1,7 +1,6 @@
 import { Component, ChangeDetectionStrategy, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Team } from '../../models/models';
-
+import { Team } from '../../../models/models';
 
 @Component({
   selector: 'app-team-header',
@@ -11,6 +10,5 @@ import { Team } from '../../models/models';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TeamHeaderComponent {
-  // Input signals
   team = input.required<Team>();
 }

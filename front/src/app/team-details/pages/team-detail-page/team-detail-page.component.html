@@ -24,9 +24,9 @@
       <button class="nav-btn prev-btn" (click)="decrementTeamId()">
         ← Previous Team ({{ teamId() - 1 }})
       </button>
-      <span class="current-team-id">Current Team ID: {{ teamId() }}</span>
+      <span class="current-team-id">Current Team ID: {{ id() }}</span>
       <button class="nav-btn next-btn" (click)="incrementTeamId()">
-        Next Team ({{ teamId() + 1}}) →
+        Next Team ({{ teamId() + 1 }}) →
       </button>
     </div>
 
