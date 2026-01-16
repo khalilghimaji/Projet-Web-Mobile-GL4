@@ -49,7 +49,7 @@ export interface TeamPrediction {
 })
 export class ScorePredictionPopupComponent {
   visible = model(false);
-  
+
   team1Name = input('');
   team2Name = input('');
   matchId = input(0);
@@ -180,6 +180,7 @@ export class ScorePredictionPopupComponent {
               ? 'Your prediction has been updated successfully!'
               : 'Your prediction has been saved successfully!'
           );
+          this.predictionSubmitted.emit(prediction);
         },
         error: (e) => {
           console.error('Error saving prediction:', e);
@@ -193,7 +194,6 @@ export class ScorePredictionPopupComponent {
           this.visible.set(false);
         },
       });
-      this.predictionSubmitted.emit(prediction);
       this.onHide();
     }
   }

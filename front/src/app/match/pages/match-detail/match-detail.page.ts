@@ -15,7 +15,7 @@ import { HighlightsSection } from '../../sections/highlights/highlights.section'
 
 import {MatchResourceFactory} from '../../services/match-resource.factory';
 import {
-  ScorePredictionPopupComponent
+  ScorePredictionPopupComponent, TeamPrediction
 } from '../../../components/score-prediction-popup/score-prediction-popup.component';
 
 @Component({
@@ -45,10 +45,10 @@ export class MatchDetailPage {
   // State signals - owned by this page
 
   predictionSignal = signal<PredictionData>({
-    totalVotes: 12500,
-    homePercentage: 45,
+    totalVotes: 10,
+    homePercentage: 50,
     drawPercentage: 20,
-    awayPercentage: 35,
+    awayPercentage: 30,
     // userVote: {
     //   option:'HOME',
     //   home_score:2,
@@ -87,5 +87,35 @@ export class MatchDetailPage {
 
   onBack(): void {
     this.router.navigate(['/matches']);
+  }
+
+  onPredict($event: TeamPrediction) {
+    this.predictionSignal.update(p=> ({
+      totalVotes: p.totalVotes + (p.userVote ? 0 : 1),
+      homePercentage: p.userVote ? p.homePercentage : this.calculateNewPercentage(p.homePercentage, this.computeOption($event), 'HOME'),
+      drawPercentage: p.userVote ? p.drawPercentage : this.calculateNewPercentage(p.drawPercentage, this.computeOption($event), 'DRAW'),
+      awayPercentage: p.userVote ? p.awayPercentage : this.calculateNewPercentage(p.awayPercentage, this.computeOption($event), 'AWAY'),
+      voteEnabled: p.voteEnabled,
+      userVote: {
+        home_score: $event.team1Score!,
+        away_score: $event.team2Score!,
+        diamonds: $event.numberOfDiamonds!,
+        option: this.computeOption($event)
+      }
+    }));
+  }
+
+  private calculateNewPercentage(percentage: number, option: VoteOption, calculateForOption: VoteOption) {
+    return option === calculateForOption ? percentage + (100 - percentage) / (this.predictionSignal().totalVotes + 1) : percentage - percentage / (this.predictionSignal().totalVotes + 1);
+  }
+
+  private computeOption(event: TeamPrediction): VoteOption {
+    if (event.team1Score! > event.team2Score!) {
+      return 'HOME';
+    } else if (event.team1Score! < event.team2Score!) {
+      return 'AWAY';
+    } else {
+      return 'DRAW';
+    }
   }
 }
