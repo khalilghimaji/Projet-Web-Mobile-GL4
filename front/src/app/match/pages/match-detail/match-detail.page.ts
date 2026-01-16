@@ -92,9 +92,7 @@ export class MatchDetailPage {
   onPredict($event: TeamPrediction) {
     this.predictionSignal.update(p=> ({
       totalVotes: p.totalVotes + (p.userVote ? 0 : 1),
-      homePercentage: p.userVote ? p.homePercentage : this.calculateNewPercentage(p.homePercentage, this.computeOption($event), 'HOME'),
-      drawPercentage: p.userVote ? p.drawPercentage : this.calculateNewPercentage(p.drawPercentage, this.computeOption($event), 'DRAW'),
-      awayPercentage: p.userVote ? p.awayPercentage : this.calculateNewPercentage(p.awayPercentage, this.computeOption($event), 'AWAY'),
+      ...this.calculateNewPercentage(p, this.computeOption($event)),
       voteEnabled: p.voteEnabled,
       userVote: {
         home_score: $event.team1Score!,
@@ -105,8 +103,32 @@ export class MatchDetailPage {
     }));
   }
 
-  private calculateNewPercentage(percentage: number, option: VoteOption, calculateForOption: VoteOption) {
-    return option === calculateForOption ? percentage + (100 - percentage) / (this.predictionSignal().totalVotes + 1) : percentage - percentage / (this.predictionSignal().totalVotes + 1);
+  private calculateNewPercentage(oldPrediction: PredictionData, newOption: VoteOption) {
+    let totalVotes = oldPrediction.totalVotes + (oldPrediction.userVote ? 0 : 1);
+    let homeVotes = Math.round((oldPrediction.homePercentage / 100) * oldPrediction.totalVotes);
+    let drawVotes = Math.round((oldPrediction.drawPercentage / 100) * oldPrediction.totalVotes);
+    let awayVotes = Math.round((oldPrediction.awayPercentage / 100) * oldPrediction.totalVotes);
+
+    // If user had already voted, we don't increase total votes
+    if (oldPrediction.userVote) {
+      // If user is changing vote, adjust counts
+      if (oldPrediction.userVote.option === 'HOME') homeVotes--;
+      else if (oldPrediction.userVote.option === 'DRAW') drawVotes--;
+      else if (oldPrediction.userVote.option === 'AWAY') awayVotes--;
+    }
+    // Add the new vote
+    if (newOption === 'HOME') {
+      homeVotes++;
+    } else if (newOption === 'DRAW') {
+      drawVotes++;
+    } else {
+      awayVotes++;
+    }
+    return {
+      homePercentage: (homeVotes / totalVotes) * 100,
+      drawPercentage: (drawVotes / totalVotes) * 100,
+      awayPercentage: (awayVotes / totalVotes) * 100
+    }
   }
 
   private computeOption(event: TeamPrediction): VoteOption {
