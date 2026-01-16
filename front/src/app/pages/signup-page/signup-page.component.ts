@@ -3,6 +3,9 @@ import {
   signal,
   inject,
   ChangeDetectionStrategy,
+  viewChild,
+  ElementRef,
+  AfterViewInit,
 } from '@angular/core';
 
 import {
@@ -23,6 +26,7 @@ import { NotificationService } from '../../services/notification.service';
 import { MessageModule } from 'primeng/message';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { environment } from '../../../environments/environment';
+import { fromEvent } from 'rxjs';
 
 @Component({
   selector: 'app-signup-page',
@@ -42,7 +46,7 @@ import { environment } from '../../../environments/environment';
   styleUrl: './signup-page.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SignupPageComponent {
+export class SignupPageComponent implements AfterViewInit {
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
   private readonly authService = inject(AuthService);
@@ -53,6 +57,11 @@ export class SignupPageComponent {
   profileImagePreview = signal<string | null>(null);
   selectedProfileImage = signal<File | null>(null);
 
+  profileImagePreviewRef = viewChild<ElementRef>('profileImagePreviewId');
+  profileImageInputRef = viewChild<ElementRef>('profileImageInput');
+  googleButtonRef = viewChild<ElementRef>('googleButton');
+  githubButtonRef = viewChild<ElementRef>('githubButton');
+
   signupForm = this.fb.group({
     firstName: ['', Validators.required],
     lastName: ['', Validators.required],
@@ -61,6 +70,32 @@ export class SignupPageComponent {
     profileImage: [null],
     agreeTerms: [false, Validators.requiredTrue],
   });
+
+  ngAfterViewInit(): void {
+    const profileImagePreview = this.profileImagePreviewRef()?.nativeElement;
+    const profileImageInput = this.profileImageInputRef()?.nativeElement;
+    if (profileImagePreview && profileImageInput) {
+      fromEvent(profileImagePreview, 'click').subscribe(() =>
+        profileImageInput.click()
+      );
+    }
+
+    if (profileImageInput) {
+      fromEvent(profileImageInput, 'change').subscribe((event) =>
+        this.onProfileImageSelected(event as Event)
+      );
+    }
+
+    const googleButton = this.googleButtonRef()?.nativeElement;
+    if (googleButton) {
+      fromEvent(googleButton, 'click').subscribe(() => this.loginWithGoogle());
+    }
+
+    const githubButton = this.githubButtonRef()?.nativeElement;
+    if (githubButton) {
+      fromEvent(githubButton, 'click').subscribe(() => this.loginWithGithub());
+    }
+  }
 
   onProfileImageSelected(event: Event) {
     const fileInput = event.target as HTMLInputElement;

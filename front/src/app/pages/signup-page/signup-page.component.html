@@ -46,6 +46,7 @@
           style="margin-bottom: 20px; text-align: center"
         >
           <div
+            #profileImagePreviewId
             class="profile-image-preview"
             style="
               width: 100px;
@@ -61,7 +62,6 @@
               border: 2px dashed #9c7350;
               cursor: pointer;
             "
-            (click)="profileImageInput.click()"
             [style.background-image]="
               profileImagePreview()
                 ? 'url(' + profileImagePreview() + ')'
@@ -79,7 +79,6 @@
             type="file"
             style="display: none"
             accept="image/*"
-            (change)="onProfileImageSelected($event)"
             formControlName="profileImage"
           />
           <p style="margin-top: 10px; font-size: 12px; color: #525252">
@@ -329,6 +328,7 @@
               (mouseleave)="facebookHovered = false"
             ></p-button>-->
             <p-button
+              #googleButton
               type="button"
               [style]="{
                 backgroundColor: 'white',
@@ -346,10 +346,10 @@
               label="Sign In with Google"
               icon="pi pi-google"
               [outlined]="true"
-              (click)="loginWithGoogle()"
             ></p-button>
 
             <p-button
+              #githubButton
               type="button"
               [style]="{
                 backgroundColor: '#24292e',
@@ -364,7 +364,6 @@
               styleClass="github-btn"
               label="Sign In with GitHub"
               icon="pi pi-github"
-              (click)="loginWithGithub()"
             ></p-button>
           </div>
 

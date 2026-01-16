@@ -109,6 +109,7 @@
               ></p-button>-->
 
               <p-button
+                #googleButton
                 type="button"
                 [style]="{
                   backgroundColor: 'white',
@@ -123,10 +124,10 @@
                 label="Sign In with Google"
                 icon="pi pi-google"
                 [outlined]="true"
-                (click)="loginWithGoogle()"
               ></p-button>
 
               <p-button
+                #githubButton
                 type="button"
                 [style]="{
                   backgroundColor: '#24292e',
@@ -141,7 +142,6 @@
                 styleClass="github-btn"
                 label="Sign In with GitHub"
                 icon="pi pi-github"
-                (click)="loginWithGithub()"
               ></p-button>
             </div>
             <a routerLink="/forget-password" class="forgot-password"
@@ -212,9 +212,9 @@
           </p-button>
 
           <p-button
+            #backToLoginButton
             type="button"
             label="Back to Login"
-            (click)="backToLogin()"
             [disabled]="isLoading()"
             [style]="{
               width: '100%',

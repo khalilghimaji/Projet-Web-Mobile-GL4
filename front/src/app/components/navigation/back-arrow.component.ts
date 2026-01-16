@@ -1,12 +1,13 @@
-import { Component } from '@angular/core';
+import { Component, viewChild, AfterViewInit, ElementRef } from '@angular/core';
 import { Location } from '@angular/common';
+import { fromEvent } from 'rxjs';
 
 @Component({
   selector: 'app-back-arrow',
   standalone: true,
   imports: [],
   template: `
-    <button class="back-arrow" (click)="goBack()">
+    <button #buttonArrow class="back-arrow">
       <img src="/images/img.png" alt="Back" />
     </button>
   `,
@@ -78,8 +79,17 @@ import { Location } from '@angular/common';
     `,
   ],
 })
-export class BackArrowComponent {
+export class BackArrowComponent implements AfterViewInit {
+  buttonArrowRef = viewChild<ElementRef>('buttonArrow');
+
   constructor(private location: Location) {}
+
+  ngAfterViewInit(): void {
+    const button = this.buttonArrowRef()?.nativeElement;
+    if (button) {
+      fromEvent(button, 'click').subscribe(() => this.goBack());
+    }
+  }
 
   goBack(): void {
     this.location.back();

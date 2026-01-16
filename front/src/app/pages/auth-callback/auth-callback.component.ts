@@ -1,10 +1,18 @@
-import { Component, OnInit, signal } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  OnInit,
+  signal,
+  viewChild,
+} from '@angular/core';
 
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { MessageModule } from 'primeng/message';
 import { NotificationService } from '../../services/notification.service';
+import { fromEvent } from 'rxjs';
 
 @Component({
   selector: 'app-auth-callback',
@@ -13,10 +21,12 @@ import { NotificationService } from '../../services/notification.service';
   templateUrl: './auth-callback.component.html',
   styleUrl: './auth-callback.component.css',
 })
-export class AuthCallbackComponent implements OnInit {
+export class AuthCallbackComponent implements OnInit, AfterViewInit {
   loading = signal(true);
   error = signal<string>('');
   provider = signal<string>('');
+
+  tryAgainButtonRef = viewChild<ElementRef<HTMLElement>>('tryAgainButton');
 
   constructor(
     private route: ActivatedRoute,
@@ -24,6 +34,15 @@ export class AuthCallbackComponent implements OnInit {
     private authService: AuthService,
     private notificationService: NotificationService
   ) {}
+
+  ngAfterViewInit(): void {
+    const button = this.tryAgainButtonRef()?.nativeElement;
+    if (button) {
+      fromEvent(button, 'click').subscribe(() => {
+        this.tryAgain();
+      });
+    }
+  }
 
   ngOnInit(): void {
     const params = this.route.snapshot.queryParams;

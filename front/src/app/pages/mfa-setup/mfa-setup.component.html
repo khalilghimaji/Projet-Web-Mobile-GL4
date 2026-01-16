@@ -33,10 +33,10 @@
           </div>
         </div>
         <p-button
+          #startMfaButton
           label="Set Up Two-Factor Authentication"
           icon="pi pi-lock"
           [style]="{ width: '100%' }"
-          (click)="startMfaSetup()"
           styleClass="p-button-primary mfa-button"
         >
         </p-button>
@@ -58,11 +58,11 @@
           <!-- Updated to use our ImagePreloadDirective -->
           @if (qrCodeUrl()) {
           <img
+            #qrCodeImg
             [src]="qrCodeUrl()"
             alt="QR Code for MFA Setup"
             appImagePreload
             fallback="/images/image.png"
-            (loaded)="onQrCodeLoaded($event)"
           />
           } @if (!qrCodeUrl() && isLoading()) {
           <p-progressSpinner></p-progressSpinner>
@@ -73,11 +73,11 @@
           <div class="secret-key">{{ secretKey() }}</div>
         </div>
         <p-button
+          #nextButton
           label="Next"
           icon="pi pi-arrow-right"
           iconPos="right"
           [style]="{ width: '100%' }"
-          (click)="nextStep()"
           [disabled]="!secretKey()"
           styleClass="p-button-primary mfa-button"
         >
@@ -94,8 +94,7 @@
           <input
             type="text"
             pInputText
-            [ngModel]="otpCode()"
-            (ngModelChange)="otpCode.set($event)"
+            [(ngModel)]="otpCode"
             placeholder="Enter 6-digit code"
             maxlength="6"
           />
@@ -107,19 +106,19 @@
         }
         <div class="button-group w-100">
           <p-button
+            #backButton1
             label="Back"
             icon="pi pi-arrow-left"
             [style]="{ width: '100%' }"
-            (click)="previousStep()"
             styleClass="p-button-outlined mfa-button"
           >
           </p-button>
           <p-button
+            #enableMfaButton
             label="{{ isLoading() ? 'Verifying...' : 'Enable 2FA' }}"
             icon="pi pi-check"
             iconPos="right"
             [style]="{ width: '100%' }"
-            (click)="enableMfa()"
             [disabled]="otpCode().length !== 6 || isLoading()"
             styleClass="p-button-primary mfa-button"
           >
@@ -157,19 +156,19 @@
         </p>
         <div class="button-group">
           <p-button
+            #backButton2
             label="Back"
             icon="pi pi-arrow-left"
             [style]="{ width: '100%' }"
-            (click)="previousStep()"
             styleClass="p-button-outlined mfa-button"
           >
           </p-button>
           <p-button
+            #finishSetupButton
             label="Finish Setup"
             icon="pi pi-check"
             iconPos="right"
             [style]="{ width: '100%' }"
-            (click)="finishSetup()"
             styleClass="p-button-primary mfa-button"
           >
           </p-button>
@@ -200,8 +199,7 @@
           <input
             type="password"
             pInputText
-            [ngModel]="password()"
-            (ngModelChange)="password.set($event)"
+            [(ngModel)]="password"
             placeholder="Enter your password"
           />
         </div>
@@ -211,10 +209,10 @@
         </div>
         }
         <p-button
+          #disableMfaButton
           label="{{ isLoading() ? 'Processing...' : 'Disable 2FA' }}"
           icon="pi pi-times"
           [style]="{ width: '100%' }"
-          (click)="disableMfa()"
           [disabled]="password() === '' || isLoading()"
           styleClass="p-button-danger mfa-button"
         >

@@ -3,6 +3,9 @@ import {
   signal,
   inject,
   ChangeDetectionStrategy,
+  viewChild,
+  ElementRef,
+  AfterViewInit,
 } from '@angular/core';
 
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -15,6 +18,7 @@ import { MessageModule } from 'primeng/message';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { environment } from '../../../environments/environment';
 import { CheckboxModule } from 'primeng/checkbox';
+import { fromEvent } from 'rxjs';
 
 @Component({
   selector: 'app-login-page',
@@ -33,7 +37,7 @@ import { CheckboxModule } from 'primeng/checkbox';
   styleUrl: './login-page.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class LoginPageComponent {
+export class LoginPageComponent implements AfterViewInit {
   private readonly fb = inject(FormBuilder);
   private readonly authService = inject(AuthService);
 
@@ -41,6 +45,10 @@ export class LoginPageComponent {
   requiresOtp = signal(false);
   showOtpStep = signal(false);
   errorMessage = signal('');
+
+  googleButtonRef = viewChild<ElementRef>('googleButton');
+  githubButtonRef = viewChild<ElementRef>('githubButton');
+  backToLoginButtonRef = viewChild<ElementRef>('backToLoginButton');
 
   loginForm = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
@@ -59,6 +67,23 @@ export class LoginPageComponent {
       ],
     ],
   });
+
+  ngAfterViewInit(): void {
+    const googleButton = this.googleButtonRef()?.nativeElement;
+    if (googleButton) {
+      fromEvent(googleButton, 'click').subscribe(() => this.loginWithGoogle());
+    }
+
+    const githubButton = this.githubButtonRef()?.nativeElement;
+    if (githubButton) {
+      fromEvent(githubButton, 'click').subscribe(() => this.loginWithGithub());
+    }
+
+    const backToLoginButton = this.backToLoginButtonRef()?.nativeElement;
+    if (backToLoginButton) {
+      fromEvent(backToLoginButton, 'click').subscribe(() => this.backToLogin());
+    }
+  }
 
   onLogin() {
     if (!this.loginForm.valid) {

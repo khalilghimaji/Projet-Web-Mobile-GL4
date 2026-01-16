@@ -59,10 +59,6 @@ export class MatchesService {
     matchId: string,
     numberOfDiamondsBet: number,
   ) {
-    const began = await this.verifyMatchBegan(matchId);
-    if (began) {
-      return false;
-    }
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) return false;
     if (user.diamonds < numberOfDiamondsBet) return false;
@@ -103,12 +99,11 @@ export class MatchesService {
     });
   }
 
-  async terminateMatch(
+  async notifyMatch(
     id: string,
     actualScoreFirst: number,
     actualScoreSecond: number,
   ): Promise<void> {
-    // Calculate gains
     await this.predictionCalculator.calculateAndApplyGainsAtMatchEnd(
       await this.getMatchPredictions(id),
       actualScoreFirst,
@@ -118,25 +113,6 @@ export class MatchesService {
     );
   }
 
-  async updateMatch(
-    id: string,
-    actualScoreFirst: number,
-    actualScoreSecond: number,
-  ): Promise<void> {
-    if (actualScoreFirst > 0 || actualScoreSecond > 0) {
-      // Calculate gains
-      await this.predictionCalculator.calculateAndApplyGainsAtMatchUpdate(
-        await this.getMatchPredictions(id),
-        actualScoreFirst,
-        actualScoreSecond,
-        this.predictionRepository,
-        this.userRepository,
-      );
-    } else {
-      throw new BadRequestException('No score update provided');
-    }
-  }
-
   async makePrediction(
     userId: string,
     matchId: string,
@@ -144,6 +120,10 @@ export class MatchesService {
     scoreSecond: number,
     diamondsBet: number,
   ): Promise<Prediction> {
+    const began = await this.verifyMatchBegan(matchId);
+    if (began) {
+      throw new BadRequestException('Cannot predict after match has started');
+    }
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
     if (user.diamonds < diamondsBet)

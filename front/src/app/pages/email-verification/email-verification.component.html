@@ -28,9 +28,9 @@
         application.
       </p>
       <p-button
+        #loginButton
         label="Go to Login"
         icon="pi pi-sign-in"
-        (click)="goToLogin()"
         styleClass="p-button-primary verification-button"
       ></p-button>
     </div>
@@ -50,9 +50,9 @@
       ></p-message>
       <div class="action-buttons">
         <p-button
+          #retryButton
           label="Try Again"
           icon="pi pi-refresh"
-          (click)="verifyEmailToken()"
           styleClass="p-button-outlined p-button-danger verification-button"
         ></p-button>
       </div>

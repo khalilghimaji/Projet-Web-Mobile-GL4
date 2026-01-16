@@ -159,6 +159,8 @@ export class WebSocketClientService implements OnModuleInit, OnModuleDestroy {
           await this.handleMatchEnded(event);
           break;
         case 'MATCH_STARTED':
+          await this.handleMatchStarted(event);
+          break;
         case 'CARD_ISSUED':
         case 'SUBSTITUTION':
           this.logger.debug(`ℹ️ Ignoring event: ${event.type}`);
@@ -173,7 +175,18 @@ export class WebSocketClientService implements OnModuleInit, OnModuleDestroy {
       );
     }
   }
+  private async handleMatchStarted(event: MatchStartedEvent) {
+    this.logger.log(`🏁 Match started ${event.match_id}: ${event.start_time}`);
 
+    try {
+      await this.matchesService.notifyMatch(event.match_id, 0, 0);
+    } catch (error) {
+      this.logger.error(
+        `Failed to start match ${event.match_id}:`,
+        error.message,
+      );
+    }
+  }
   private async handleMatchEnded(event: MatchEndedEvent) {
     this.logger.log(`🏁 Match ended ${event.match_id}: ${event.final_score}`);
 
@@ -181,7 +194,7 @@ export class WebSocketClientService implements OnModuleInit, OnModuleDestroy {
     const [homeScore, awayScore] = this.parseScore(event.final_score);
 
     try {
-      await this.matchesService.terminateMatch(
+      await this.matchesService.notifyMatch(
         event.match_id,
         homeScore,
         awayScore,
@@ -206,7 +219,7 @@ export class WebSocketClientService implements OnModuleInit, OnModuleDestroy {
     const [homeScore, awayScore] = this.parseScore(event.score);
 
     try {
-      await this.matchesService.updateMatch(
+      await this.matchesService.notifyMatch(
         event.match_id,
         homeScore,
         awayScore,

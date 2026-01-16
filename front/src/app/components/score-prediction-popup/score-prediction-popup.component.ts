@@ -19,8 +19,11 @@ import {
 } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
-import { InputNumberModule } from 'primeng/inputnumber';
-import { Observable, of } from 'rxjs';
+import { InputTextModule } from 'primeng/inputtext';
+import { FloatLabelModule } from 'primeng/floatlabel';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
+import { lastValueFrom, Observable, of } from 'rxjs';
 import { map, catchError, tap } from 'rxjs/operators';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { MatchesService, Prediction } from '../../services/Api';
@@ -41,7 +44,10 @@ export interface TeamPrediction {
     ReactiveFormsModule,
     DialogModule,
     ButtonModule,
-    InputNumberModule,
+    InputTextModule,
+    FloatLabelModule,
+    IconFieldModule,
+    InputIconModule,
   ],
   templateUrl: './score-prediction-popup.component.html',
   styleUrls: ['./score-prediction-popup.component.css'],
@@ -65,9 +71,9 @@ export class ScorePredictionPopupComponent {
   isUpdating = signal(false);
 
   predictionForm: FormGroup = new FormGroup({
-    team1Score: new FormControl(0, [Validators.min(0)]),
-    team2Score: new FormControl(0, [Validators.min(0)]),
-    numberOfDiamonds: new FormControl(1, {
+    team1Score: new FormControl<number | null>(0, [Validators.min(0)]),
+    team2Score: new FormControl<number | null>(0, [Validators.min(0)]),
+    numberOfDiamonds: new FormControl<number | null>(1, {
       validators: [Validators.min(1)],
       asyncValidators: [this.diamondAsyncValidator.bind(this)],
       updateOn: 'blur',
@@ -146,15 +152,15 @@ export class ScorePredictionPopupComponent {
     this.visible.set(false);
   }
 
-  onSubmit(): void {
+  async onSubmit(): Promise<void> {
     if (this.predictionForm.valid) {
+      const formValue = this.predictionForm.getRawValue();
       const prediction: TeamPrediction = {
-        team1Score: this.predictionForm.value.team1Score,
-        team2Score: this.predictionForm.value.team2Score,
+        team1Score: Number(formValue.team1Score),
+        team2Score: Number(formValue.team2Score),
         matchId: this.matchId(),
-        numberOfDiamonds: this.predictionForm.value.numberOfDiamonds,
+        numberOfDiamonds: Number(formValue.numberOfDiamonds),
       };
-
       const operation$ = this.isUpdating()
         ? this.matchesService.matchesControllerUpdatePrediction(
             String(prediction.matchId) || '0',
@@ -183,11 +189,10 @@ export class ScorePredictionPopupComponent {
           this.predictionSubmitted.emit(prediction);
         },
         error: (e) => {
-          console.error('Error saving prediction:', e);
           this.notificationService.showError(
             `There was an error ${
               this.isUpdating() ? 'updating' : 'saving'
-            } your prediction. Please try again.`
+            } your prediction. ${e.error.message}. Please try again.`
           );
         },
         complete: () => {

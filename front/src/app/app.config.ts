@@ -22,13 +22,12 @@ import {
 import { CredentialsInterceptor } from './shared/interceptors/credentials.interceptor';
 import { AuthInterceptor } from './shared/interceptors/auth.interceptor';
 import { ApiKeyInterceptor } from './shared/interceptors/apikey.interceptor';
-import { catchError, EMPTY, map, of } from 'rxjs';
+import { catchError, EMPTY } from 'rxjs';
 import { AuthService } from './services/auth.service';
 import { CustomPreloadStrategy } from './shared/custom-preload.strategy';
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideRouter(routes),
     provideAnimationsAsync(),
     provideZonelessChangeDetection(),
     MessageService,
