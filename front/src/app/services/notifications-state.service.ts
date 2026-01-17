@@ -14,6 +14,7 @@ import {
   EMPTY,
   tap,
 } from 'rxjs';
+import { MatchesService } from './Api';
 
 interface RankingUser extends NotificationDataAnyOf1RankingsInner {
   rank?: number;
@@ -25,6 +26,7 @@ interface RankingUser extends NotificationDataAnyOf1RankingsInner {
 export class NotificationsStateService {
   private readonly notificationsApi = inject(NotificationsApiService);
   private readonly authService = inject(AuthService);
+  private readonly matchesController = inject(MatchesService);
 
   // State signals
   private readonly _diamonds = signal(0);
@@ -87,6 +89,9 @@ export class NotificationsStateService {
         this._rankings.set([]);
       } else {
         this._diamonds.set(this.authService.currentUser()?.diamonds || 0);
+        this.matchesController.matchesControllerGetUserGains().subscribe({
+          next: (gains) => this._gainedDiamonds.set(gains),
+        });
       }
     });
   }

@@ -16,11 +16,15 @@ import { UpdatePredictionDto } from './dto/update-prediction.dto';
 import { Prediction } from './entities/prediction.entity';
 import { MatchStat } from './dto/get-match-stats-info.dto';
 import { TerminateMatchDto } from './dto/terminate-match.dto';
+import { RedisCacheService } from 'src/Common/cache/redis-cache.service';
 
 @Controller('matches')
 @UseGuards(JwtAuthGuard)
 export class MatchesController {
-  constructor(private readonly matchesService: MatchesService) {}
+  constructor(
+    private readonly matchesService: MatchesService,
+    private readonly cacheService: RedisCacheService,
+  ) {}
 
   @Post('can-predict/:id')
   async canPredict(
@@ -110,5 +114,10 @@ export class MatchesController {
     body: TerminateMatchDto,
   ): Promise<void> {
     return this.matchesService.endMatch(id, body.scoreFirst, body.scoreSecond);
+  }
+
+  @Get('user/gains')
+  async getUserGains(@User('id') userId: string): Promise<number> {
+    return (await this.cacheService.getUserGains(userId)) ?? 0;
   }
 }

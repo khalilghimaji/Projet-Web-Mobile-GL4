@@ -7,10 +7,14 @@ import {
 import { NotificationType } from '../Enums/notification-type.enum';
 import { Repository } from 'typeorm';
 import { User } from 'src/auth/entities/user.entity';
+import { RedisCacheService } from 'src/Common/cache/redis-cache.service';
 
 @Injectable()
 export class PredictionCalculatorService {
-  constructor(private readonly notificationsService: NotificationsService) {}
+  constructor(
+    private readonly notificationsService: NotificationsService,
+    private readonly cacheService: RedisCacheService,
+  ) {}
 
   async calculateAndApplyGainsAtMatchEnd(
     predictions: Prediction[],
@@ -57,6 +61,7 @@ export class PredictionCalculatorService {
             message: `You gained ${gain} diamonds for your prediction! And now you have ${prediction.user.diamonds} diamonds.`,
             data: { gain, newDiamonds: prediction.user.diamonds },
           });
+          await this.cacheService.storeUserGains(prediction.user.id, sum);
         })(),
       );
     }
@@ -103,6 +108,7 @@ export class PredictionCalculatorService {
             data: { gain: sum, newDiamonds: 0 },
           });
           await updateRankingScore(userId.id, sum, userRepository);
+          await this.cacheService.storeUserGains(userId.id, sum);
         })(),
       );
     }
