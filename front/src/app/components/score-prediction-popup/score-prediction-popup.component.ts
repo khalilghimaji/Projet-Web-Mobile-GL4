@@ -8,6 +8,8 @@ import {
   Input,
   Signal,
   effect,
+  viewChild,
+  ElementRef,
 } from '@angular/core';
 
 import {
@@ -81,6 +83,9 @@ export class ScorePredictionPopupComponent {
     }),
   });
 
+  cancelButtonRef = viewChild<ElementRef>('cancelButton');
+  submitButtonRef = viewChild<ElementRef>('submitButton');
+
   constructor() {
     // Update form values when predictionDataSignal changes
     effect(() => {
@@ -93,6 +98,21 @@ export class ScorePredictionPopupComponent {
         },
         { emitEvent: false },
       );
+    });
+
+    effect(() => {
+      const button = this.cancelButtonRef()?.nativeElement;
+      if (button) {
+        button.addEventListener('click', () => {
+          this.onCancel();
+        });
+      }
+      const submitButton = this.submitButtonRef()?.nativeElement;
+      if (submitButton) {
+        submitButton.addEventListener('click', () => {
+          this.onSubmit();
+        });
+      }
     });
   }
 
