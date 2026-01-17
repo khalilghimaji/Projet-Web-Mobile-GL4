@@ -162,7 +162,11 @@
         icon="pi pi-check"
         type="submit"
         severity="success"
-        [disabled]="predictionForm.invalid || predictionForm.pending"
+        [disabled]="
+          predictionForm.invalid ||
+          predictionForm.pending ||
+          !areValuesChanged()
+        "
       ></button>
     </div>
   </ng-template>

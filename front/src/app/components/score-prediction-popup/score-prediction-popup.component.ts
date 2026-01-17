@@ -10,6 +10,7 @@ import {
   effect,
   viewChild,
   ElementRef,
+  computed,
 } from '@angular/core';
 
 import {
@@ -31,6 +32,7 @@ import { Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { MatchesService, Prediction } from '../../services/Api';
 import { NotificationService } from '../../services/notification.service';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 export interface TeamPrediction {
   team1Score?: number;
@@ -83,6 +85,19 @@ export class ScorePredictionPopupComponent {
     }),
   });
 
+  formChangeSignal = toSignal(this.predictionForm.valueChanges);
+
+  areValuesChanged = computed(() => {
+    return (
+      this.predictionDataSignal().team1Score !==
+        this.formChangeSignal()?.team1Score ||
+      this.predictionDataSignal().team2Score !==
+        this.formChangeSignal()?.team2Score ||
+      this.predictionDataSignal().numberOfDiamonds !==
+        this.formChangeSignal()?.numberOfDiamonds
+    );
+  });
+
   cancelButtonRef = viewChild<ElementRef>('cancelButton');
   submitButtonRef = viewChild<ElementRef>('submitButton');
 
@@ -90,16 +105,12 @@ export class ScorePredictionPopupComponent {
     // Update form values when predictionDataSignal changes
     effect(() => {
       const predictionData = this.predictionDataSignal();
-      this.predictionForm.patchValue(
-        {
-          team1Score: predictionData.team1Score || 0,
-          team2Score: predictionData.team2Score || 0,
-          numberOfDiamonds: predictionData.numberOfDiamonds || 1,
-        },
-        { emitEvent: false },
-      );
+      this.predictionForm.patchValue({
+        team1Score: predictionData.team1Score || 0,
+        team2Score: predictionData.team2Score || 0,
+        numberOfDiamonds: predictionData.numberOfDiamonds || 1,
+      });
     });
-
     effect(() => {
       const button = this.cancelButtonRef()?.nativeElement;
       if (button) {
