@@ -32,7 +32,7 @@ export class AuthCallbackComponent implements OnInit, AfterViewInit {
     private route: ActivatedRoute,
     private router: Router,
     private authService: AuthService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
   ) {}
 
   ngAfterViewInit(): void {
@@ -65,14 +65,14 @@ export class AuthCallbackComponent implements OnInit, AfterViewInit {
       next: (user) => {
         this.authService.setAuthData(user);
         this.notificationService.showSuccess(
-          `Successfully logged in with ${this.provider()}`
+          `Successfully logged in with ${this.provider()}`,
         );
         this.loading.set(false);
-        this.router.navigate(['/']);
+        this.router.navigate([localStorage.getItem('redirectUrl') || '/']);
       },
       error: (err) => {
         this.error.set(
-          err.error?.message || 'Failed to authenticate. Please try again.'
+          err.error?.message || 'Failed to authenticate. Please try again.',
         );
         this.loading.set(false);
       },

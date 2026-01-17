@@ -6,7 +6,7 @@ import {
   ChangeDetectionStrategy,
   viewChild,
   ElementRef,
-  AfterViewInit,
+  effect,
 } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
@@ -34,7 +34,7 @@ import { fromEvent } from 'rxjs';
   styleUrls: ['./mfa-setup.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class MfaSetupComponent implements OnInit, AfterViewInit {
+export class MfaSetupComponent implements OnInit {
   private readonly authService = inject(AuthService);
   // State signals
   userProfile = this.authService.currentUser;
@@ -63,7 +63,59 @@ export class MfaSetupComponent implements OnInit, AfterViewInit {
   constructor(
     private notificationService: NotificationService,
     private router: Router,
-  ) {}
+  ) {
+    effect(() => {
+      {
+        const startMfaButton = this.startMfaButtonRef()?.nativeElement;
+        if (startMfaButton) {
+          fromEvent(startMfaButton, 'click').subscribe(() =>
+            this.startMfaSetup(),
+          );
+        }
+
+        const nextButton = this.nextButtonRef()?.nativeElement;
+        if (nextButton) {
+          fromEvent(nextButton, 'click').subscribe(() => this.nextStep());
+        }
+
+        const backButton1 = this.backButton1Ref()?.nativeElement;
+        if (backButton1) {
+          fromEvent(backButton1, 'click').subscribe(() => this.previousStep());
+        }
+
+        const enableMfaButton = this.enableMfaButtonRef()?.nativeElement;
+        if (enableMfaButton) {
+          fromEvent(enableMfaButton, 'click').subscribe(() => this.enableMfa());
+        }
+
+        const backButton2 = this.backButton2Ref()?.nativeElement;
+        if (backButton2) {
+          fromEvent(backButton2, 'click').subscribe(() => this.previousStep());
+        }
+
+        const finishSetupButton = this.finishSetupButtonRef()?.nativeElement;
+        if (finishSetupButton) {
+          fromEvent(finishSetupButton, 'click').subscribe(() =>
+            this.finishSetup(),
+          );
+        }
+
+        const disableMfaButton = this.disableMfaButtonRef()?.nativeElement;
+        if (disableMfaButton) {
+          fromEvent(disableMfaButton, 'click').subscribe(() =>
+            this.disableMfa(),
+          );
+        }
+
+        const qrCodeImg = this.qrCodeImgRef()?.nativeElement;
+        if (qrCodeImg) {
+          fromEvent<Event>(qrCodeImg, 'load').subscribe((event) =>
+            this.onQrCodeLoaded(event),
+          );
+        }
+      }
+    });
+  }
 
   ngOnInit(): void {
     if (!this.authService.isAuthenticated()) {
@@ -80,50 +132,6 @@ export class MfaSetupComponent implements OnInit, AfterViewInit {
         this.notificationService.showError('Failed to load profile');
       },
     });
-  }
-
-  ngAfterViewInit(): void {
-    const startMfaButton = this.startMfaButtonRef()?.nativeElement;
-    if (startMfaButton) {
-      fromEvent(startMfaButton, 'click').subscribe(() => this.startMfaSetup());
-    }
-
-    const nextButton = this.nextButtonRef()?.nativeElement;
-    if (nextButton) {
-      fromEvent(nextButton, 'click').subscribe(() => this.nextStep());
-    }
-
-    const backButton1 = this.backButton1Ref()?.nativeElement;
-    if (backButton1) {
-      fromEvent(backButton1, 'click').subscribe(() => this.previousStep());
-    }
-
-    const enableMfaButton = this.enableMfaButtonRef()?.nativeElement;
-    if (enableMfaButton) {
-      fromEvent(enableMfaButton, 'click').subscribe(() => this.enableMfa());
-    }
-
-    const backButton2 = this.backButton2Ref()?.nativeElement;
-    if (backButton2) {
-      fromEvent(backButton2, 'click').subscribe(() => this.previousStep());
-    }
-
-    const finishSetupButton = this.finishSetupButtonRef()?.nativeElement;
-    if (finishSetupButton) {
-      fromEvent(finishSetupButton, 'click').subscribe(() => this.finishSetup());
-    }
-
-    const disableMfaButton = this.disableMfaButtonRef()?.nativeElement;
-    if (disableMfaButton) {
-      fromEvent(disableMfaButton, 'click').subscribe(() => this.disableMfa());
-    }
-
-    const qrCodeImg = this.qrCodeImgRef()?.nativeElement;
-    if (qrCodeImg) {
-      fromEvent<Event>(qrCodeImg, 'load').subscribe((event) =>
-        this.onQrCodeLoaded(event),
-      );
-    }
   }
 
   startMfaSetup(): void {

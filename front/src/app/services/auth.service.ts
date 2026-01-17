@@ -268,7 +268,7 @@ export class AuthService {
 
   completeLogin(): void {
     this.notificationService.showSuccess('Login successful');
-    this.router.navigate(['/']);
+    this.router.navigate([localStorage.getItem('redirectUrl') || '/']);
   }
 
   setAuthData(userData: UserDto): void {
