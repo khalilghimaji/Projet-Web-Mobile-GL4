@@ -3,9 +3,7 @@ import {
   input,
   computed,
   inject,
-  signal,
   ChangeDetectionStrategy,
-  NgModule,
   viewChild,
   ElementRef,
   AfterViewInit,
@@ -14,10 +12,6 @@ import {
 import { RouterModule, ActivatedRoute } from '@angular/router';
 import { Location } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
-import {
-  ScorePredictionPopupComponent,
-  TeamPrediction,
-} from '../../components/score-prediction-popup/score-prediction-popup.component';
 import { FormsModule } from '@angular/forms';
 import { fromEvent } from 'rxjs';
 @Component({
@@ -80,29 +74,14 @@ export class ErrorPageComponent implements AfterViewInit {
     );
   });
 
-  // ================ this part is specific to demonstrate score prediction popup ==================
-
-  // Score prediction popup state
-  showPredictionDialog = signal(false);
-  matchId = signal(0);
-
   backButtonRef = viewChild<ElementRef>('backButton');
-  predictButtonRef = viewChild<ElementRef>('predictButton');
 
-  // ====================================  end ============================================
   constructor(private location: Location) {}
 
   ngAfterViewInit(): void {
     const backButton = this.backButtonRef()?.nativeElement;
     if (backButton) {
       fromEvent(backButton, 'click').subscribe(() => this.goBack());
-    }
-
-    const predictButton = this.predictButtonRef()?.nativeElement;
-    if (predictButton) {
-      fromEvent(predictButton, 'click').subscribe(() =>
-        this.showPredictionDialog.set(true)
-      );
     }
   }
 

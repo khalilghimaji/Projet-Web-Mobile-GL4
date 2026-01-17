@@ -8,12 +8,21 @@
   /* Added extra padding for hamburger menu */
 }
 
+.header-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 40px;
+  flex-wrap: wrap;
+}
+
 .page-header {
   text-align: center;
   font-size: 2.5rem;
   font-weight: 700;
   color: #2c3e50;
-  margin: 0 0 40px 0;
+  margin: 0;
   padding: 0 20px;
   background: linear-gradient(135deg, #4CAF50 0%, #81c784 100%);
   -webkit-background-clip: text;
@@ -33,6 +42,61 @@
   height: 4px;
   background: linear-gradient(90deg, #4CAF50, #81c784);
   border-radius: 2px;
+}
+
+.reload-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #4CAF50 0%, #81c784 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+}
+
+.reload-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+}
+
+.reload-btn:active {
+  transform: translateY(0);
+}
+
+.reload-btn i {
+  font-size: 16px;
+  transition: transform 0.3s ease;
+}
+
+.reload-btn:hover i {
+  transform: rotate(180deg);
+}
+
+.reload-btn:disabled,
+.reload-btn.loading {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.reload-btn .pi-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .notifications-list {
@@ -100,9 +164,105 @@
 /* Empty state */
 .no-notifications {
   text-align: center;
-  padding: 40px;
-  color: #71839b;
-  font-family: 'Poppins', sans-serif;
+  padding: 60px 20px;
+  color: #6b7280;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.no-notifications i {
+  font-size: 48px;
+  color: #d1d5db;
+  margin-bottom: 8px;
+}
+
+.no-notifications p {
+  font-size: 16px;
+  margin: 0;
+}
+
+/* Loading state */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  gap: 20px;
+  color: #6b7280;
+}
+
+.loading-spinner {
+  font-size: 48px;
+  color: #4CAF50;
+}
+
+.loading-spinner i {
+  animation: spin 1s linear infinite;
+}
+
+.loading-state p {
+  font-size: 16px;
+  margin: 0;
+}
+
+/* Error state */
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  gap: 16px;
+  color: #ef4444;
+  text-align: center;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.error-state i {
+  font-size: 64px;
+  color: #ef4444;
+}
+
+.error-state h3 {
+  margin: 0;
+  font-size: 24px;
+  color: #dc2626;
+}
+
+.error-state p {
+  margin: 0;
+  font-size: 14px;
+  color: #6b7280;
+  line-height: 1.6;
+}
+
+.retry-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 8px;
+}
+
+.retry-btn:hover {
+  background: #dc2626;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.retry-btn i {
   font-size: 16px;
 }
 

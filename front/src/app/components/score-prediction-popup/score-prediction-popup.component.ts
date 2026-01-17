@@ -5,7 +5,6 @@ import {
   inject,
   ChangeDetectionStrategy,
   model,
-  signal,
   Input,
   Signal,
   effect,
@@ -26,9 +25,8 @@ import { InputTextModule } from 'primeng/inputtext';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
-import { lastValueFrom, Observable, of } from 'rxjs';
-import { map, catchError, tap } from 'rxjs/operators';
-import { rxResource } from '@angular/core/rxjs-interop';
+import { Observable, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 import { MatchesService, Prediction } from '../../services/Api';
 import { NotificationService } from '../../services/notification.service';
 
