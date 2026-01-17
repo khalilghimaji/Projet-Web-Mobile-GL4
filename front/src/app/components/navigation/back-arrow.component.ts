@@ -1,24 +1,13 @@
-import { Component } from '@angular/core';
+import { Component, viewChild, AfterViewInit, ElementRef } from '@angular/core';
 import { Location } from '@angular/common';
-import {
-  trigger,
-  state,
-  style,
-  animate,
-  transition,
-} from '@angular/animations';
+import { fromEvent } from 'rxjs';
 
 @Component({
   selector: 'app-back-arrow',
   standalone: true,
   imports: [],
   template: `
-    <button
-      class="back-arrow"
-      (click)="goBack()"
-      (mouseenter)="onHover(true)"
-      (mouseleave)="onHover(false)"
-    >
+    <button #buttonArrow class="back-arrow">
       <img src="/images/img.png" alt="Back" />
     </button>
   `,
@@ -90,16 +79,19 @@ import {
     `,
   ],
 })
-export class BackArrowComponent {
-  buttonState = 'normal';
+export class BackArrowComponent implements AfterViewInit {
+  buttonArrowRef = viewChild<ElementRef>('buttonArrow');
 
   constructor(private location: Location) {}
 
-  goBack(): void {
-    this.location.back();
+  ngAfterViewInit(): void {
+    const button = this.buttonArrowRef()?.nativeElement;
+    if (button) {
+      fromEvent(button, 'click').subscribe(() => this.goBack());
+    }
   }
 
-  onHover(isHovered: boolean) {
-    this.buttonState = isHovered ? 'hovered' : 'normal';
+  goBack(): void {
+    this.location.back();
   }
 }

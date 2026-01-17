@@ -8,13 +8,11 @@
  * Do not edit the class manually.
  */
 import { User } from './user';
-import { Match } from './match';
 
 
 export interface Prediction { 
     user: User;
     userId: string;
-    match: Match;
     matchId: string;
     scoreFirstEquipe: number;
     scoreSecondEquipe: number;

@@ -1,7 +1,7 @@
-import { Injectable, Signal, inject } from '@angular/core';
-import { HttpClient , httpResource } from '@angular/common/http';
+import { Injectable, Signal, inject, computed , signal } from '@angular/core';
+import { HttpClient, httpResource } from '@angular/common/http';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import { environment } from '../../environments/environment.development';
 import { Team, Fixture, Standing, NextMatchData } from '../models/models';
 
@@ -9,6 +9,17 @@ interface ApiResponse<T> {
   success: number;
   result: T[];
 }
+
+interface MatchSettings {
+  limit: number;
+  skip: number;
+}
+
+interface PaginatedMatchParams {
+  teamId: number;
+  settings: MatchSettings;
+}
+
 
 @Injectable({
   providedIn: 'root',
@@ -18,10 +29,9 @@ export class TeamService {
   private apiUrl = environment.allSportsApi.baseUrl;
   private apiKey = environment.allSportsApi.apiKey;
 
-  /**
-   * Transform API response body into a Team object
-   * Extracts the first team from the result array
-   */
+  
+
+  
   private transformTeamResponse(response: ApiResponse<Team>): Team | null {
     if (response.success === 1 && response.result && response.result.length > 0) {
       return response.result[0];
@@ -29,9 +39,7 @@ export class TeamService {
     return null;
   }
 
-  /**
-   * Transform API response body into Fixtures array
-   */
+  
   private transformFixturesResponse(response: ApiResponse<Fixture>): Fixture[] {
     if (response.success === 1 && response.result) {
       return response.result;
@@ -39,12 +47,11 @@ export class TeamService {
     return [];
   }
 
-  /**
-   * Transform API response body to get next match
-   */
+ 
+ 
   private transformNextMatchResponse(response: ApiResponse<Fixture>): Fixture | null {
     if (response.success === 1 && response.result && response.result.length > 0) {
-      const upcoming = response.result.find(f => 
+      const upcoming = response.result.find(f =>
         f.event_status === '' || f.event_status === 'Not Started'
       );
       return upcoming || response.result[0];
@@ -52,9 +59,7 @@ export class TeamService {
     return null;
   }
 
-  /**
-   * Transform API response body into Standings array
-   */
+ 
   private transformStandingsResponse(response: ApiResponse<Standing>): Standing[] {
     if (response.success === 1 && response.result) {
       return response.result;
@@ -62,17 +67,13 @@ export class TeamService {
     return [];
   }
 
-  /**
-   * Get team basic info + players using resource
-   */
+
   getTeamResource(teamId: Signal<number>) {
 
-    
-
     return rxResource({
-      params : teamId,
+      params: teamId,
       stream: (params) => {
-        const url = `${this.apiUrl}/?met=Teams&teamId=${params.params}&APIkey=${this.apiKey}`;
+        const url = `${this.apiUrl}?met=Teams&teamId=${params.params}`;
         return this.http.get<ApiResponse<Team>>(url).pipe(
           map(response => this.transformTeamResponse(response))
         );
@@ -81,21 +82,32 @@ export class TeamService {
   }
 
 
-  /**
-   * Get recent matches using resource
-   */
-  getRecentMatchesResource(teamId: Signal<number>, days = 90) {
-    const today = new Date();
-    const pastDate = new Date();
-    pastDate.setDate(today.getDate() - days);
-    
-    const from = this.formatDate(pastDate);
-    const to = this.formatDate(today);
-
+ 
+  getRecentMatchesResource(
+    teamId: Signal<number>,
+    fromDaysAgo: Signal<number>,
+    toDaysAgo: Signal<number> = signal(0)
+  ) {
     return rxResource({
-      params: teamId,
-      stream: (params) => {
-        return this.http.get<ApiResponse<Fixture>>(`${this.apiUrl}/?met=Fixtures&teamId=${params.params}&from=${from}&to=${to}&APIkey=${this.apiKey}`).pipe(
+      params: computed(() => ({
+        teamId: teamId(),
+        fromDays: fromDaysAgo(),
+        toDays: toDaysAgo()
+      })),
+      stream: ({ params }) => {
+        const today = new Date();
+        const startDate = new Date();
+        const endDate = new Date();
+        
+        startDate.setDate(today.getDate() - params.fromDays);
+        endDate.setDate(today.getDate() - params.toDays);
+        
+        const from = this.formatDate(startDate);
+        const to = this.formatDate(endDate);
+
+        return this.http.get<ApiResponse<Fixture>>(
+          `${this.apiUrl}?met=Fixtures&teamId=${params.teamId}&from=${from}&to=${to}&APIkey=${this.apiKey}`
+        ).pipe(
           map(response => this.transformFixturesResponse(response))
         );
       }
@@ -109,23 +121,22 @@ export class TeamService {
     const today = new Date();
     const futureDate = new Date();
     futureDate.setDate(today.getDate() + 30);
-    
+
     const from = this.formatDate(today);
     const to = this.formatDate(futureDate);
-    const url = `${this.apiUrl}/?met=Fixtures&teamId=${teamId()}&from=${from}&to=${to}&APIkey=${this.apiKey}`;
 
     return rxResource({
       params: teamId,
       stream: (params) => {
-        return this.http.get<ApiResponse<Fixture>>(`${this.apiUrl}/?met=Fixtures&teamId=${params.params}&from=${from}&to=${to}&APIkey=${this.apiKey}`).pipe(
+        return this.http.get<ApiResponse<Fixture>>(`${this.apiUrl}?met=Fixtures&teamId=${params.params}&from=${from}&to=${to}`).pipe(
           map(response => this.transformNextMatchResponse(response))
         );
       }
     });
   }
 
-  
-  
+
+
 
   /**
    * Format date to yyyy-mm-dd

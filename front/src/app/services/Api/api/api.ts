@@ -6,4 +6,6 @@ export * from './matches.service';
 import { MatchesService } from './matches.service';
 export * from './notifications.service';
 import { NotificationsService } from './notifications.service';
-export const APIS = [AppService, AuthenticationService, MatchesService, NotificationsService];
+export * from './user.service';
+import { UserService } from './user.service';
+export const APIS = [AppService, AuthenticationService, MatchesService, NotificationsService, UserService];

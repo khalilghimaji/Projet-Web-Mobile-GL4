@@ -5,63 +5,64 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Match } from './entities/match.entity';
 import { Prediction } from './entities/prediction.entity';
 import { User } from '../auth/entities/user.entity';
-import { MatchStatus } from '../Enums/matchstatus.enum';
-import { PredictionCalculatorService } from './prediction-calculator.service';
+import {
+  notifyUsersAboutRankingUpdate,
+  PredictionCalculatorService,
+} from './prediction-calculator.service';
 import { NotificationType } from 'src/Enums/notification-type.enum';
 import { NotificationsService } from 'src/notifications/notifications.service';
+import { ConfigService } from '@nestjs/config';
+import { MatchStat } from './dto/get-match-stats-info.dto';
 
 @Injectable()
 export class MatchesService {
   constructor(
-    @InjectRepository(Match)
-    private readonly matchRepository: Repository<Match>,
     @InjectRepository(Prediction)
     private readonly predictionRepository: Repository<Prediction>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private readonly predictionCalculator: PredictionCalculatorService,
     private readonly notificationsService: NotificationsService,
+    private readonly configService: ConfigService,
   ) {}
 
-  async activateMatch(id: string): Promise<Match> {
-    let match = await this.matchRepository.findOne({ where: { id } });
-    if (!match) {
-      match = this.matchRepository.create({ id, status: MatchStatus.ONGOING });
-    } else {
-      if (match.status !== MatchStatus.INACTIVE)
-        throw new BadRequestException('Match is not inactive');
-      match.status = MatchStatus.ONGOING;
+  async verifyMatchBegan(id: string): Promise<boolean> {
+    // fetch from api the match status using all sports api
+    const apiKey = this.configService.get<string>('ALL_SPORTS_API_KEY');
+    //also need the timezone of the server to send to the api
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const response = await fetch(
+      `https://apiv2.allsportsapi.com/football?met=Fixtures&APIkey=${apiKey}&matchId=${id}&timezone=${timezone}`,
+    );
+    const data = await response.json();
+    const success = data.success;
+    if (success !== 1) {
+      throw new NotFoundException('Match not found in external API');
     }
-    return this.matchRepository.save(match);
+    if (data.result && data.result.length > 0) {
+      const matchData = data.result[0];
+      const eventDate = matchData.event_date;
+      const eventTime = matchData.event_time;
+      // the time is in format HH:MM so we need to combine date and time
+      const eventDateTimeString = `${eventDate}T${eventTime}:00`;
+      const eventDateTime = new Date(eventDateTimeString);
+      const currentDate = new Date();
+      if (eventDateTime < currentDate) {
+        return true;
+      }
+    }
+    return false;
   }
   async canPredict(
     userId: string,
     matchId: string,
     numberOfDiamondsBet: number,
   ) {
-    const match = await this.matchRepository.findOne({
-      where: { id: matchId },
-    });
-    if (!match) return false;
-    if (match.status !== MatchStatus.ONGOING) return false;
-
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) return false;
     if (user.diamonds < numberOfDiamondsBet) return false;
-
-    const exists = await this.predictionRepository.exists({
-      where: {
-        userId,
-        matchId,
-      },
-    });
-
-    if (exists) {
-      return false;
-    }
     return true;
   }
 
@@ -69,6 +70,7 @@ export class MatchesService {
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
     user.diamonds += numberOfDiamonds;
+    user.score += numberOfDiamonds;
     const newdiamonds = user.diamonds;
     await this.userRepository.save(user);
     await this.notificationsService.notify({
@@ -77,71 +79,57 @@ export class MatchesService {
       message: `You received ${numberOfDiamonds} diamonds!`,
       data: { gain: numberOfDiamonds, newDiamonds: newdiamonds },
     });
-  }
-  async disableMatch(id: string): Promise<Match> {
-    const match = await this.matchRepository.findOne({ where: { id } });
-    if (!match) throw new NotFoundException('Match not found');
-    if (match.status !== MatchStatus.ONGOING)
-      throw new BadRequestException('Match is not ongoing');
-    match.status = MatchStatus.INACTIVE;
-    return this.matchRepository.save(match);
+    await notifyUsersAboutRankingUpdate(
+      this.userRepository,
+      this.notificationsService,
+    );
   }
 
-  async terminateMatch(
+  async getMatchPredictions(
+    matchId: string,
+    includUser = false,
+  ): Promise<Prediction[]> {
+    return this.predictionRepository.find({
+      where: { matchId },
+      relations: includUser ? ['user'] : [],
+    });
+  }
+
+  async getUserPrediction(
+    userId: string,
+    matchId: string,
+  ): Promise<Prediction | null> {
+    return this.predictionRepository.findOne({
+      where: { userId, matchId },
+    });
+  }
+
+  async endMatch(
     id: string,
     actualScoreFirst: number,
     actualScoreSecond: number,
-  ): Promise<Match> {
-    const match = await this.matchRepository.findOne({
-      where: { id },
-      relations: ['predictions', 'predictions.user'],
-    });
-    if (!match) throw new NotFoundException('Match not found');
-    if (match.status !== MatchStatus.ONGOING)
-      throw new BadRequestException('Match is not ongoing');
-    match.status = MatchStatus.COMPLETED;
-    match.scoreFirstTeam = actualScoreFirst;
-    match.scoreSecondTeam = actualScoreSecond;
-
-    // Calculate gains
+  ): Promise<void> {
     await this.predictionCalculator.calculateAndApplyGainsAtMatchEnd(
-      match.predictions,
+      await this.getMatchPredictions(id, true),
       actualScoreFirst,
       actualScoreSecond,
       this.userRepository,
       this.predictionRepository,
     );
-
-    return this.matchRepository.save(match);
   }
 
   async updateMatch(
     id: string,
     actualScoreFirst: number,
     actualScoreSecond: number,
-  ): Promise<Match> {
-    if (actualScoreFirst > 0 || actualScoreSecond > 0) {
-      const match = await this.matchRepository.findOne({
-        where: { id },
-        relations: ['predictions', 'predictions.user'],
-      });
-      if (!match) throw new NotFoundException('Match not found');
-      if (match.status !== MatchStatus.ONGOING)
-        throw new BadRequestException('Match is not ongoing');
-      match.scoreFirstTeam = actualScoreFirst;
-      match.scoreSecondTeam = actualScoreSecond;
-
-      // Calculate gains
-      await this.predictionCalculator.calculateAndApplyGainsAtMatchUpdate(
-        match.predictions,
-        actualScoreFirst,
-        actualScoreSecond,
-        this.predictionRepository,
-      );
-
-      return this.matchRepository.save(match);
-    }
-    throw new BadRequestException('No score update provided');
+  ): Promise<void> {
+    await this.predictionCalculator.calculateAndApplyGainsAtMatchUpdate(
+      await this.getMatchPredictions(id, true),
+      actualScoreFirst,
+      actualScoreSecond,
+      this.predictionRepository,
+      this.userRepository,
+    );
   }
 
   async makePrediction(
@@ -151,13 +139,10 @@ export class MatchesService {
     scoreSecond: number,
     diamondsBet: number,
   ): Promise<Prediction> {
-    const match = await this.matchRepository.findOne({
-      where: { id: matchId },
-    });
-    if (!match) throw new NotFoundException('Match not found');
-    if (match.status !== MatchStatus.ONGOING)
-      throw new BadRequestException('Match is not active');
-
+    const began = await this.verifyMatchBegan(matchId);
+    if (began) {
+      throw new BadRequestException('Cannot predict after match has started');
+    }
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
     if (user.diamonds < diamondsBet)
@@ -178,6 +163,7 @@ export class MatchesService {
 
     // Deduct diamonds
     user.diamonds -= diamondsBet;
+    user.score -= diamondsBet;
     await this.userRepository.save(user);
 
     await this.notificationsService.notify({
@@ -186,6 +172,11 @@ export class MatchesService {
       message: `You spent ${diamondsBet} diamonds for your prediction! And now you have ${user.diamonds} diamonds.`,
       data: { gain: -diamondsBet, newDiamonds: user.diamonds },
     });
+
+    await notifyUsersAboutRankingUpdate(
+      this.userRepository,
+      this.notificationsService,
+    );
 
     const prediction = this.predictionRepository.create({
       userId,
@@ -197,5 +188,105 @@ export class MatchesService {
     });
     await this.predictionRepository.save(prediction);
     return prediction;
+  }
+
+  async updatePrediction(
+    userId: string,
+    matchId: string,
+    scoreFirst?: number,
+    scoreSecond?: number,
+    newDiamondsBet?: number,
+  ): Promise<Prediction> {
+    // Check if match has begun
+    const began = await this.verifyMatchBegan(matchId);
+    if (began) {
+      throw new BadRequestException(
+        'Cannot update prediction after match has started',
+      );
+    }
+
+    const prediction = await this.predictionRepository.findOne({
+      where: { userId, matchId },
+    });
+
+    if (!prediction) {
+      throw new NotFoundException('Prediction not found');
+    }
+
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User not found');
+
+    // Handle diamond bet change
+    if (
+      newDiamondsBet !== undefined &&
+      newDiamondsBet !== prediction.numberOfDiamondsBet
+    ) {
+      const oldBet = prediction.numberOfDiamondsBet;
+      const diamondDifference = newDiamondsBet - oldBet;
+
+      if (diamondDifference > 0) {
+        // User is betting more diamonds
+        if (user.diamonds < diamondDifference) {
+          throw new BadRequestException('Not enough diamonds');
+        }
+      }
+
+      user.diamonds -= diamondDifference;
+      user.score -= diamondDifference;
+
+      await this.userRepository.save(user);
+
+      if (diamondDifference !== 0) {
+        await this.notificationsService.notify({
+          userId: user.id,
+          type: NotificationType.CHANGE_OF_POSSESSED_GEMS,
+          message:
+            diamondDifference > 0
+              ? `You spent ${diamondDifference} more diamonds for your updated prediction! You now have ${user.diamonds} diamonds.`
+              : `You got ${Math.abs(diamondDifference)} diamonds back from your updated prediction! You now have ${user.diamonds} diamonds.`,
+          data: { gain: -diamondDifference, newDiamonds: user.diamonds },
+        });
+
+        await notifyUsersAboutRankingUpdate(
+          this.userRepository,
+          this.notificationsService,
+        );
+      }
+
+      prediction.numberOfDiamondsBet = newDiamondsBet;
+    }
+
+    // Update scores
+    if (scoreFirst !== undefined) {
+      prediction.scoreFirstEquipe = scoreFirst;
+    }
+    if (scoreSecond !== undefined) {
+      prediction.scoreSecondEquipe = scoreSecond;
+    }
+
+    await this.predictionRepository.save(prediction);
+    return prediction;
+  }
+
+  async getPredictionsStatsForMatch(matchId: string): Promise<MatchStat> {
+    const predictions = await this.getMatchPredictions(matchId);
+    const totalVotes = predictions.length;
+    const homeVotes = predictions.filter(
+      (p) => p.scoreFirstEquipe > p.scoreSecondEquipe,
+    ).length;
+    const drawVotes = predictions.filter(
+      (p) => p.scoreFirstEquipe === p.scoreSecondEquipe,
+    ).length;
+    const awayVotes = predictions.filter(
+      (p) => p.scoreFirstEquipe < p.scoreSecondEquipe,
+    ).length;
+    const hasbegun = await this.verifyMatchBegan(matchId);
+    return {
+      totalVotes,
+      homePercentage: totalVotes > 0 ? (homeVotes / totalVotes) * 100 : 0,
+      drawPercentage: totalVotes > 0 ? (drawVotes / totalVotes) * 100 : 0,
+      awayPercentage: totalVotes > 0 ? (awayVotes / totalVotes) * 100 : 0,
+      voteEnabled: !hasbegun,
+    };
   }
 }

@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, input } from '@angular/core';
+import {Component, ChangeDetectionStrategy, input, Input, Signal} from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 export interface Score {
@@ -30,5 +30,5 @@ export interface Score {
 })
 export class ScoreDisplayComponent {
   // Signal reference passed from parent
-  scoreSignal = input.required<Score>();
+  @Input({ required: true }) scoreSignal!: Signal<Score>
 }

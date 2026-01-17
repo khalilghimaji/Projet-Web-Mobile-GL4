@@ -1,0 +1,15 @@
+<div class="notifications-container">
+  <h2 class="page-header">Your Notifications</h2>
+  <div class="notifications-list">
+    @for (item of notifications.value(); track item.id) {
+    <app-notification-element
+      [notification]="item"
+      [isRealTime]="item.isRealTime"
+      (markAsRead)="markAsRead($event)"
+      (delete)="deleteNotification($event)"
+    />
+    }@empty {
+    <div class="no-notifications">No notifications yet.</div>
+    }
+  </div>
+</div>

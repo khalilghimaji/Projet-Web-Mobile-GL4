@@ -1,13 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 
-import { Router, RouterOutlet } from '@angular/router';
-import { MenuItem } from 'primeng/api';
+import { RouterOutlet } from '@angular/router';
 import { MenubarModule } from 'primeng/menubar';
 import { ButtonModule } from 'primeng/button';
-import { Toast } from 'primeng/toast';
 import { SideMenuComponent } from './components/side-menu/side-menu.component';
-import { AuthService } from './services/auth.service';
 import { LoadingComponent } from './components/loading/loading.component';
+import { ToastComponent } from "./components/toast/toast.component";
 
 @Component({
   selector: 'app-root',
@@ -16,41 +14,16 @@ import { LoadingComponent } from './components/loading/loading.component';
     RouterOutlet,
     MenubarModule,
     ButtonModule,
-    Toast,
     SideMenuComponent,
     LoadingComponent,
-  ],
+    ToastComponent
+],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AppComponent implements OnInit {
+export class AppComponent {
   title = 'KickStream';
-  menuItems: MenuItem[] = [];
 
-  constructor(private router: Router, private authService: AuthService) {}
-
-  ngOnInit() {
-    this.menuItems = [
-      {
-        label: 'Home',
-        icon: 'pi pi-home',
-        routerLink: '/',
-      },
-      {
-        label: 'Categories',
-        icon: 'pi pi-list',
-        items: [
-          { label: 'Fiction', routerLink: ['/'] },
-          { label: 'Non-Fiction', routerLink: ['/'] },
-          { label: 'Science', routerLink: ['/'] },
-          { label: 'Technology', routerLink: ['/'] },
-          { label: 'History', routerLink: ['/'] },
-        ],
-      },
-      {
-        label: 'About',
-        icon: 'pi pi-info-circle',
-      },
-    ];
-  }
+  constructor() {}
 }

@@ -71,6 +71,13 @@ body {
   color: #333;
 }
 
+/* Add top margin on large screens for fixed menubar */
+@media (min-width: 1024px) {
+  body {
+    margin-top: 60px;
+  }
+}
+
 /* Ensure consistent background for all major containers */
 .surface-ground,
 .surface-card {

@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, input } from '@angular/core';
+import {Component, ChangeDetectionStrategy, input, Signal, Input} from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 export interface MatchStatus {
@@ -44,5 +44,5 @@ export interface MatchStatus {
 })
 export class StatusBadgeComponent {
   // Signal reference passed from parent
-  statusSignal = input.required<MatchStatus>();
+  @Input({ required: true }) statusSignal!: Signal<MatchStatus>
 }

@@ -12,6 +12,7 @@ import {
   timeout,
 } from 'rxjs';
 import { AuthenticationService, UserDto } from './Api';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 @Injectable({
   providedIn: 'root',
@@ -20,6 +21,7 @@ export class AuthService {
   // Track authentication state
   private authState = new BehaviorSubject<boolean>(false);
   public authState$ = this.authState.asObservable();
+  public authStateSignal = toSignal(this.authState$);
   private currentUser = new BehaviorSubject<UserDto | null>(null);
   public currentUser$ = this.currentUser.asObservable();
 
@@ -133,7 +135,6 @@ export class AuthService {
               success: false,
             };
           }
-          console.log('Login response:', response);
           this.setAuthData(response.user);
           return {
             requiresOtp: false,
@@ -278,7 +279,6 @@ export class AuthService {
 
     localStorage.setItem('user_email', userData.email || '');
     localStorage.setItem('user_data', JSON.stringify(userData));
-    console.log('Setting auth data:', userData);
     this.currentUser.next(userData);
     this.authState.next(true);
   }
