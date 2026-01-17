@@ -1,11 +1,11 @@
 import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
-import { AsyncPipe, CommonModule, NgOptimizedImage } from '@angular/common';
+import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { DrawerModule } from 'primeng/drawer';
 import { AuthService } from '../../services/auth.service';
-import { NotificationsStateService } from '../../services/notifications-state.service';
 import { ImageDefaultPipe } from '../../shared/pipes/image-default.pipe';
 import { MenuItem } from 'primeng/api';
+import { UserStatsComponent } from './user-stats/user-stats.component';
 
 interface CustomMenuItem {
   icon: string;
@@ -27,6 +27,7 @@ interface CustomMenuItem {
     NgOptimizedImage,
     DrawerModule,
     ImageDefaultPipe,
+    UserStatsComponent,
   ],
   templateUrl: './side-menu.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -109,25 +110,10 @@ export class SideMenuComponent {
     }));
   }
 
-  constructor(
-    public authService: AuthService,
-    public notificationsState: NotificationsStateService,
-  ) {}
+  constructor(public authService: AuthService) {}
 
   get isAuthenticated() {
     return this.authService.isAuthenticated;
-  }
-
-  get diamonds() {
-    return this.notificationsState.diamonds;
-  }
-
-  get gainedDiamonds() {
-    return this.notificationsState.gainedDiamonds;
-  }
-
-  get unreadNotificationsCount() {
-    return this.notificationsState.unreadCount;
   }
 
   toggleMenu() {

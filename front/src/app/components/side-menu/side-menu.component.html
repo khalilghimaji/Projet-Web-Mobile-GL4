@@ -93,28 +93,6 @@
   }
 </ng-template>
 
-<!-- Diamonds Display Template -->
-<ng-template #diamondsTemplate>
-  <div class="diamonds-display-wrapper">
-    <i class="pi pi-diamond"></i>
-    <span class="diamonds-count">{{ diamonds() }}</span>
-    @if (gainedDiamonds() !== 0) {
-      <span
-        class="diamonds-change"
-        [class.positive]="gainedDiamonds() > 0"
-        [class.negative]="gainedDiamonds() < 0"
-      >
-        <i
-          class="pi"
-          [class.pi-arrow-up]="gainedDiamonds() > 0"
-          [class.pi-arrow-down]="gainedDiamonds() < 0"
-        ></i>
-        {{ gainedDiamonds() > 0 ? "+" : "" }}{{ gainedDiamonds() }}
-      </span>
-    }
-  </div>
-</ng-template>
-
 <!-- User Profile Template -->
 <ng-template #userProfileTemplate let-profile="profile">
   <div class="user-profile-wrapper">
@@ -218,17 +196,7 @@
       } @else {
         @let userProfile = authService.currentUser();
         <div class="menubar-user-section">
-          <div class="menubar-diamonds">
-            <ng-container *ngTemplateOutlet="diamondsTemplate"></ng-container>
-          </div>
-          <div class="menubar-notifications" [routerLink]="'/notifications'">
-            <i class="pi pi-bell"></i>
-            @if (unreadNotificationsCount() > 0) {
-              <span class="notification-badge">{{
-                unreadNotificationsCount()
-              }}</span>
-            }
-          </div>
+          <app-user-stats context="desktop"></app-user-stats>
           <div class="menubar-profile">
             <ng-container
               *ngTemplateOutlet="
@@ -292,22 +260,7 @@
               "
             ></ng-container>
             <div class="profile-actions">
-              <div class="diamonds-container">
-                <ng-container
-                  *ngTemplateOutlet="diamondsTemplate"
-                ></ng-container>
-              </div>
-              <div
-                class="notifications-container"
-                [routerLink]="'/notifications'"
-              >
-                <i class="pi pi-bell"></i>
-                @if (unreadNotificationsCount() > 0) {
-                  <span class="notification-badge">{{
-                    unreadNotificationsCount()
-                  }}</span>
-                }
-              </div>
+              <app-user-stats context="mobile"></app-user-stats>
             </div>
           </div>
         </div>
