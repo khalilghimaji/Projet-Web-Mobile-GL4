@@ -21,7 +21,13 @@ export const routes: Routes = [
         (c) => c.TeamDetailPageComponent
       ),
   },
-
+  {
+    path: 'fixtures',
+    loadComponent: () =>
+      import('./match/pages/fixtures/fixtures.page').then(
+        (m) => m.FixturesPage
+      ),
+  },
   {
     path: 'error',
     children: [

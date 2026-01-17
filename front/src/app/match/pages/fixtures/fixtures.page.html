@@ -108,7 +108,7 @@
                 <p class="text-sm text-gray-700 dark:text-gray-300 font-medium">{{ group.league.country_name }}</p>
               </div>
             </div>
-            <a class="text-primary text-sm font-semibold hover:text-white transition cursor-pointer flex items-center gap-1">
+            <a [routerLink]="['/standings', group.league.league_key]" class="text-primary text-sm font-semibold hover:text-white transition cursor-pointer flex items-center gap-1">
               View Standings
               <span class="material-symbols-outlined" style="font-size: 18px;">arrow_forward</span>
             </a>

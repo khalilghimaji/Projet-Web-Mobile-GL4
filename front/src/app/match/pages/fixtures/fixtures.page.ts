@@ -1,6 +1,6 @@
 import { Component, ChangeDetectionStrategy, signal, computed, inject, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { FixturesResourceFactory } from '../../services/fixtures-resource.factory';
 import { FixturesApiService } from '../../services/fixtures-api.service';
 import { FixtureCardComponent } from '../../components/fixture-card/fixture-card.component';
@@ -13,6 +13,7 @@ import { Fixture, ParsedFixture, DateTab, FixturesByLeague, FixtureStatus } from
   standalone: true,
   imports: [
     CommonModule,
+    RouterLink,
     FixtureCardComponent,
     DateTabComponent,
     LeagueFilterChipComponent
@@ -204,4 +205,3 @@ export class FixturesPage {
     return tab.date.toDateString() === this.selectedDate().toDateString();
   }
 }
-
