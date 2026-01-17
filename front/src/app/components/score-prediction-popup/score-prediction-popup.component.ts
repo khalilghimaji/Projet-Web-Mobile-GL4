@@ -111,19 +111,27 @@ export class ScorePredictionPopupComponent {
         numberOfDiamonds: predictionData.numberOfDiamonds || 1,
       });
     });
-    effect(() => {
+    effect((onCleanup) => {
+      console.log('Setting up button event listeners');
+      const subs: (() => void)[] = [];
       const button = this.cancelButtonRef()?.nativeElement;
       if (button) {
-        button.addEventListener('click', () => {
-          this.onCancel();
-        });
+        const handler = () => this.onCancel();
+        button.addEventListener('click', handler);
+        subs.push(() => button.removeEventListener('click', handler));
       }
       const submitButton = this.submitButtonRef()?.nativeElement;
       if (submitButton) {
-        submitButton.addEventListener('click', () => {
-          this.onSubmit();
-        });
+        const submitHandler = () => this.onSubmit();
+        submitButton.addEventListener('click', submitHandler);
+        subs.push(() =>
+          submitButton.removeEventListener('click', submitHandler),
+        );
       }
+      onCleanup(() => {
+        console.log('Cleaning up button event listeners');
+        subs.forEach((unsub) => unsub());
+      });
     });
   }
 
