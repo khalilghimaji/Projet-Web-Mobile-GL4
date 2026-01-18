@@ -11,7 +11,6 @@ import {
   viewChild,
   ElementRef,
   computed,
-  AfterViewInit,
   DestroyRef,
 } from '@angular/core';
 
@@ -30,16 +29,9 @@ import { InputTextModule } from 'primeng/inputtext';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
-import { EMPTY, fromEvent, Observable, of, Subscription } from 'rxjs';
-import {
-  map,
-  catchError,
-  switchMap,
-  filter,
-  tap,
-  finalize,
-} from 'rxjs/operators';
-import { MatchesService, Prediction } from '../../services/Api';
+import { fromEvent, Observable, of } from 'rxjs';
+import { map, catchError, switchMap } from 'rxjs/operators';
+import { MatchesService } from '../../services/Api';
 import { NotificationService } from '../../services/notification.service';
 import {
   takeUntilDestroyed,

@@ -92,6 +92,7 @@ export class NotificationsStateService {
         this.matchesController.matchesControllerGetUserGains().subscribe({
           next: (gains) => this._gainedDiamonds.set(gains),
         });
+        this.reloadNotifications();
       }
     });
   }
