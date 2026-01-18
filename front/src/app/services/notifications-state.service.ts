@@ -87,6 +87,7 @@ export class NotificationsStateService {
         this._diamonds.set(0);
         this._gainedDiamonds.set(0);
         this._rankings.set([]);
+        this.notifications.set([]);
       } else {
         this._diamonds.set(this.authService.currentUser()?.diamonds || 0);
         this.matchesController.matchesControllerGetUserGains().subscribe({

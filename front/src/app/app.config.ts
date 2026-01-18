@@ -55,8 +55,7 @@ export const appConfig: ApplicationConfig = {
     provideAppInitializer(() => {
       const authService = inject(AuthService);
       return authService.getProfile().pipe(
-        catchError((error) => {
-          console.log('error', error);
+        catchError(() => {
           return EMPTY;
         })
       );
