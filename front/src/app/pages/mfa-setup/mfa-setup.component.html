@@ -32,14 +32,13 @@
               <span>Guard against password theft</span>
             </div>
           </div>
-          <button
-            pButton
-            #startMfaButton
+          <p-button
+            (onClick)="startMfaSetup()"
             label="Set Up Two-Factor Authentication"
             icon="pi pi-lock"
             [style]="{ width: '100%' }"
             styleClass="p-button-primary mfa-button"
-          ></button>
+          ></p-button>
         </div>
       </div>
     }
@@ -58,7 +57,7 @@
               <!-- Updated to use our ImagePreloadDirective -->
               @if (qrCodeUrl()) {
                 <img
-                  #qrCodeImg
+                  (load)="onQrCodeLoaded($event)"
                   [src]="qrCodeUrl()"
                   alt="QR Code for MFA Setup"
                   appImagePreload
@@ -75,7 +74,7 @@
             </div>
             <button
               pButton
-              #nextButton
+              (click)="nextStep()"
               label="Next"
               icon="pi pi-arrow-right"
               iconPos="right"
@@ -110,7 +109,7 @@
             <div class="button-group w-100">
               <button
                 pButton
-                #backButton1
+                (click)="previousStep()"
                 label="Back"
                 icon="pi pi-arrow-left"
                 [style]="{ width: '100%' }"
@@ -118,7 +117,7 @@
               ></button>
               <button
                 pButton
-                #enableMfaButton
+                (click)="enableMfa()"
                 label="{{ isLoading() ? 'Verifying...' : 'Enable 2FA' }}"
                 icon="pi pi-check"
                 iconPos="right"
@@ -162,7 +161,7 @@
             <div class="button-group">
               <button
                 pButton
-                #backButton2
+                (click)="previousStep()"
                 label="Back"
                 icon="pi pi-arrow-left"
                 [style]="{ width: '100%' }"
@@ -170,7 +169,7 @@
               ></button>
               <button
                 pButton
-                #finishSetupButton
+                (click)="finishSetup()"
                 label="Finish Setup"
                 icon="pi pi-check"
                 iconPos="right"
@@ -215,7 +214,7 @@
           }
           <button
             pButton
-            #disableMfaButton
+            (click)="disableMfa()"
             label="{{ isLoading() ? 'Processing...' : 'Disable 2FA' }}"
             icon="pi pi-times"
             [style]="{ width: '100%' }"
@@ -225,7 +224,7 @@
             @if (isLoading()) {
               <p-progressSpinner
                 [style]="{ width: '20px', height: '20px' }"
-                styleClass="custom-spinner"
+                class="custom-spinner"
                 strokeWidth="4"
               ></p-progressSpinner>
             }

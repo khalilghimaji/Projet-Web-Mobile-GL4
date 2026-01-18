@@ -4,9 +4,6 @@ import {
   signal,
   inject,
   ChangeDetectionStrategy,
-  viewChild,
-  ElementRef,
-  effect,
 } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
@@ -17,7 +14,6 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { MessageModule } from 'primeng/message';
 import { AuthService } from '../../services/auth.service';
 import { NotificationService } from '../../services/notification.service';
-import { fromEvent } from 'rxjs';
 
 @Component({
   selector: 'app-mfa-setup',
@@ -51,70 +47,10 @@ export class MfaSetupComponent implements OnInit {
   recoveryCodes = signal<string[]>([]);
   password = signal('');
 
-  startMfaButtonRef = viewChild<ElementRef>('startMfaButton');
-  nextButtonRef = viewChild<ElementRef>('nextButton');
-  backButton1Ref = viewChild<ElementRef>('backButton1');
-  enableMfaButtonRef = viewChild<ElementRef>('enableMfaButton');
-  backButton2Ref = viewChild<ElementRef>('backButton2');
-  finishSetupButtonRef = viewChild<ElementRef>('finishSetupButton');
-  disableMfaButtonRef = viewChild<ElementRef>('disableMfaButton');
-  qrCodeImgRef = viewChild<ElementRef>('qrCodeImg');
-
   constructor(
     private notificationService: NotificationService,
     private router: Router,
   ) {
-    effect(() => {
-      {
-        const startMfaButton = this.startMfaButtonRef()?.nativeElement;
-        if (startMfaButton) {
-          fromEvent(startMfaButton, 'click').subscribe(() =>
-            this.startMfaSetup(),
-          );
-        }
-
-        const nextButton = this.nextButtonRef()?.nativeElement;
-        if (nextButton) {
-          fromEvent(nextButton, 'click').subscribe(() => this.nextStep());
-        }
-
-        const backButton1 = this.backButton1Ref()?.nativeElement;
-        if (backButton1) {
-          fromEvent(backButton1, 'click').subscribe(() => this.previousStep());
-        }
-
-        const enableMfaButton = this.enableMfaButtonRef()?.nativeElement;
-        if (enableMfaButton) {
-          fromEvent(enableMfaButton, 'click').subscribe(() => this.enableMfa());
-        }
-
-        const backButton2 = this.backButton2Ref()?.nativeElement;
-        if (backButton2) {
-          fromEvent(backButton2, 'click').subscribe(() => this.previousStep());
-        }
-
-        const finishSetupButton = this.finishSetupButtonRef()?.nativeElement;
-        if (finishSetupButton) {
-          fromEvent(finishSetupButton, 'click').subscribe(() =>
-            this.finishSetup(),
-          );
-        }
-
-        const disableMfaButton = this.disableMfaButtonRef()?.nativeElement;
-        if (disableMfaButton) {
-          fromEvent(disableMfaButton, 'click').subscribe(() =>
-            this.disableMfa(),
-          );
-        }
-
-        const qrCodeImg = this.qrCodeImgRef()?.nativeElement;
-        if (qrCodeImg) {
-          fromEvent<Event>(qrCodeImg, 'load').subscribe((event) =>
-            this.onQrCodeLoaded(event),
-          );
-        }
-      }
-    });
   }
 
   ngOnInit(): void {

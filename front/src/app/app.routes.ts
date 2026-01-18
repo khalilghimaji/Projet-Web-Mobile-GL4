@@ -33,7 +33,7 @@ export const routes: Routes = [
           ),
       },
       {
-        path: ':code',
+        path: ':errorCode',
         loadComponent: () =>
           import('./pages/error-page/error-page.component').then(
             (c) => c.ErrorPageComponent

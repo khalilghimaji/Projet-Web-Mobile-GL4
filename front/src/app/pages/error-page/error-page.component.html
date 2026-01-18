@@ -7,7 +7,7 @@
     <p class="error-message">{{ message() }}</p>
     <div class="actions">
       <a routerLink="/" class="home-button">Return to Home</a>
-      <button #backButton class="back-button">Go Back</button>
+      <button (click)="goBack()" class="back-button">Go Back</button>
     </div>
   </div>
 </div>

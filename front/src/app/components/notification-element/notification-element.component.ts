@@ -11,6 +11,7 @@ import { MessageModule } from 'primeng/message';
 import { DatePipe, NgStyle } from '@angular/common';
 import { Notification } from '../../services/Api';
 import { fromEvent } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-notification-element',
@@ -32,15 +33,19 @@ export class NotificationElementComponent implements AfterViewInit {
   ngAfterViewInit() {
     const deletebutton = this.deleteButtonRef()?.nativeElement;
     if (deletebutton) {
-      fromEvent(deletebutton, 'click').subscribe(() => {
-        this.onDelete();
-      });
+      fromEvent(deletebutton, 'click')
+        .pipe(takeUntilDestroyed())
+        .subscribe(() => {
+          this.onDelete();
+        });
     }
     const markAsReadButton = this.markAsReadButtonRef()?.nativeElement;
     if (markAsReadButton) {
-      fromEvent(markAsReadButton, 'click').subscribe(() => {
-        this.onMarkAsRead();
-      });
+      fromEvent(markAsReadButton, 'click')
+        .pipe(takeUntilDestroyed())
+        .subscribe(() => {
+          this.onMarkAsRead();
+        });
     }
   }
 

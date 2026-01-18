@@ -28,11 +28,11 @@ import { InputTextModule } from 'primeng/inputtext';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
-import { Observable, of } from 'rxjs';
+import { fromEvent, Observable, of, Subscription } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { MatchesService, Prediction } from '../../services/Api';
 import { NotificationService } from '../../services/notification.service';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 
 export interface TeamPrediction {
   team1Score?: number;
@@ -113,24 +113,26 @@ export class ScorePredictionPopupComponent {
     });
     effect((onCleanup) => {
       console.log('Setting up button event listeners');
-      const subs: (() => void)[] = [];
+      const subs: Subscription[] = [];
       const button = this.cancelButtonRef()?.nativeElement;
       if (button) {
-        const handler = () => this.onCancel();
-        button.addEventListener('click', handler);
-        subs.push(() => button.removeEventListener('click', handler));
+        subs.push(
+          fromEvent(button, 'click')
+            .pipe(takeUntilDestroyed())
+            .subscribe(() => this.onCancel()),
+        );
       }
       const submitButton = this.submitButtonRef()?.nativeElement;
       if (submitButton) {
-        const submitHandler = () => this.onSubmit();
-        submitButton.addEventListener('click', submitHandler);
-        subs.push(() =>
-          submitButton.removeEventListener('click', submitHandler),
+        subs.push(
+          fromEvent(submitButton, 'click')
+            .pipe(takeUntilDestroyed())
+            .subscribe(() => this.onSubmit()),
         );
       }
       onCleanup(() => {
         console.log('Cleaning up button event listeners');
-        subs.forEach((unsub) => unsub());
+        subs.forEach((unsub) => unsub.unsubscribe());
       });
     });
   }

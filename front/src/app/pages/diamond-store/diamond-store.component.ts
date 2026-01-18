@@ -82,14 +82,14 @@ export class DiamondStoreComponent {
       .subscribe({
         next: () => {
           this.notificationService.showSuccess(
-            `Successfully purchased ${pkg.amount} diamonds!`
+            `Successfully purchased ${pkg.amount} diamonds!`,
           );
           this.loading.update((loading) => ({ ...loading, [pkg.id]: false }));
         },
         error: (error) => {
           console.error('Error purchasing diamonds:', error);
           this.notificationService.showError(
-            'Failed to purchase diamonds. Please try again.'
+            'Failed to purchase diamonds. Please try again.',
           );
           this.loading.update((loading) => ({ ...loading, [pkg.id]: false }));
         },

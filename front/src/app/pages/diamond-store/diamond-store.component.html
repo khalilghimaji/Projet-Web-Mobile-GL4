@@ -8,33 +8,32 @@
 
   <div class="packages-grid">
     @for (pkg of diamondPackages; track pkg.id) {
-    <p-card [styleClass]="'package-card' + (pkg.popular ? ' popular' : '')">
-      @if (pkg.popular) {
-      <div class="popular-badge">Most Popular</div>
-      }
+      <p-card [styleClass]="'package-card' + (pkg.popular ? ' popular' : '')">
+        @if (pkg.popular) {
+          <div class="popular-badge">Most Popular</div>
+        }
 
-      <ng-template pTemplate="header">
-        <div class="package-icon">{{ pkg.icon }}</div>
-      </ng-template>
+        <ng-template pTemplate="header">
+          <div class="package-icon">{{ pkg.icon }}</div>
+        </ng-template>
 
-      <div class="package-content">
-        <h2 class="package-amount">{{ pkg.amount }} Diamonds</h2>
-        <p class="package-price">{{ pkg.price }}</p>
-      </div>
+        <div class="package-content">
+          <h2 class="package-amount">{{ pkg.amount }} Diamonds</h2>
+          <p class="package-price">{{ pkg.price }}</p>
+        </div>
 
-      <ng-template pTemplate="footer">
-        <p-button
-          label="Purchase"
-          icon="pi pi-shopping-cart"
-          [loading]="isLoading(pkg.id)"
-          [disabled]="isLoading(pkg.id)"
-          (onClick)="purchaseDiamonds(pkg)"
-          [styleClass]="
-            'purchase-button' + (pkg.popular ? ' popular-button' : '')
-          "
-        />
-      </ng-template>
-    </p-card>
+        <ng-template pTemplate="footer">
+          <button
+            pButton
+            label="Purchase"
+            icon="pi pi-shopping-cart"
+            [loading]="isLoading(pkg.id)"
+            [disabled]="isLoading(pkg.id)"
+            (onClick)="purchaseDiamonds(pkg)"
+            [class]="'purchase-button' + (pkg.popular ? ' popular-button' : '')"
+          ></button>
+        </ng-template>
+      </p-card>
     }
   </div>
 
