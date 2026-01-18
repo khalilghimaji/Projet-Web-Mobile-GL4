@@ -5,13 +5,15 @@ import {
   input,
   output,
   viewChild,
-  AfterViewInit,
+  DestroyRef,
+  inject,
 } from '@angular/core';
 import { MessageModule } from 'primeng/message';
 import { DatePipe, NgStyle } from '@angular/common';
 import { Notification } from '../../services/Api';
-import { fromEvent } from 'rxjs';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { fromEvent, of } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-notification-element',
@@ -21,7 +23,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
 })
-export class NotificationElementComponent implements AfterViewInit {
+export class NotificationElementComponent {
   notification = input.required<Notification>();
   markAsRead = output<Notification>();
   delete = output<Notification>();
@@ -30,23 +32,36 @@ export class NotificationElementComponent implements AfterViewInit {
   deleteButtonRef = viewChild<ElementRef<HTMLElement>>('onDeleteButton');
   markAsReadButtonRef =
     viewChild<ElementRef<HTMLElement>>('onMarkAsReadButton');
-  ngAfterViewInit() {
-    const deletebutton = this.deleteButtonRef()?.nativeElement;
-    if (deletebutton) {
-      fromEvent(deletebutton, 'click')
-        .pipe(takeUntilDestroyed())
-        .subscribe(() => {
-          this.onDelete();
-        });
-    }
-    const markAsReadButton = this.markAsReadButtonRef()?.nativeElement;
-    if (markAsReadButton) {
-      fromEvent(markAsReadButton, 'click')
-        .pipe(takeUntilDestroyed())
-        .subscribe(() => {
-          this.onMarkAsRead();
-        });
-    }
+
+  private readonly destroRef = inject(DestroyRef);
+  constructor() {
+    // Delete button click
+    toObservable(this.deleteButtonRef)
+      .pipe(
+        switchMap((ref) => {
+          if (!ref?.nativeElement) {
+            return of(null);
+          }
+          return fromEvent(ref.nativeElement, 'click').pipe(
+            takeUntilDestroyed(this.destroRef),
+          );
+        }),
+      )
+      .subscribe((el) => !el || this.onDelete());
+
+    // Mark as read button click
+    toObservable(this.markAsReadButtonRef)
+      .pipe(
+        switchMap((ref) => {
+          if (!ref?.nativeElement) {
+            return of(null);
+          }
+          return fromEvent(ref.nativeElement, 'click').pipe(
+            takeUntilDestroyed(this.destroRef),
+          );
+        }),
+      )
+      .subscribe((el) => !el || this.onMarkAsRead());
   }
 
   onMarkAsRead() {

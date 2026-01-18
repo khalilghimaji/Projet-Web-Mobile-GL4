@@ -5,7 +5,7 @@ import {
   ChangeDetectionStrategy,
   viewChild,
   ElementRef,
-  AfterViewInit,
+  DestroyRef,
 } from '@angular/core';
 
 import {
@@ -26,7 +26,9 @@ import { NotificationService } from '../../services/notification.service';
 import { MessageModule } from 'primeng/message';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { environment } from '../../../environments/environment';
-import { fromEvent } from 'rxjs';
+import { fromEvent, of } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
+import { toObservable, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-signup-page',
@@ -46,11 +48,12 @@ import { fromEvent } from 'rxjs';
   styleUrl: './signup-page.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SignupPageComponent implements AfterViewInit {
+export class SignupPageComponent {
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
   private readonly authService = inject(AuthService);
   private readonly notificationService = inject(NotificationService);
+  private readonly destroRef = inject(DestroyRef);
 
   isLoading = signal(false);
   errorMessage = signal('');
@@ -71,30 +74,66 @@ export class SignupPageComponent implements AfterViewInit {
     agreeTerms: [false, Validators.requiredTrue],
   });
 
-  ngAfterViewInit(): void {
-    const profileImagePreview = this.profileImagePreviewRef()?.nativeElement;
-    const profileImageInput = this.profileImageInputRef()?.nativeElement;
-    if (profileImagePreview && profileImageInput) {
-      fromEvent(profileImagePreview, 'click').subscribe(() =>
-        profileImageInput.click()
+  constructor() {
+    toObservable(this.profileImagePreviewRef)
+      .pipe(
+        switchMap((ref) => {
+          if (!ref?.nativeElement) {
+            return of(null);
+          }
+          return fromEvent(ref.nativeElement, 'click').pipe(
+            takeUntilDestroyed(this.destroRef),
+          );
+        }),
+      )
+      .subscribe((el) => {
+        const input = this.profileImageInputRef()?.nativeElement;
+        if (input && el) input.click();
+      });
+
+    // Profile image input change
+    toObservable(this.profileImageInputRef)
+      .pipe(
+        switchMap((ref) => {
+          if (!ref?.nativeElement) {
+            return of(null);
+          }
+          return fromEvent(ref.nativeElement, 'change').pipe(
+            takeUntilDestroyed(this.destroRef),
+          );
+        }),
+      )
+      .subscribe(
+        (event) => !event || this.onProfileImageSelected(event as Event),
       );
-    }
 
-    if (profileImageInput) {
-      fromEvent(profileImageInput, 'change').subscribe((event) =>
-        this.onProfileImageSelected(event as Event)
-      );
-    }
+    // Google button click
+    toObservable(this.googleButtonRef)
+      .pipe(
+        switchMap((ref) => {
+          if (!ref?.nativeElement) {
+            return of(null);
+          }
+          return fromEvent(ref.nativeElement, 'click').pipe(
+            takeUntilDestroyed(this.destroRef),
+          );
+        }),
+      )
+      .subscribe((el) => !el || this.loginWithGoogle());
 
-    const googleButton = this.googleButtonRef()?.nativeElement;
-    if (googleButton) {
-      fromEvent(googleButton, 'click').subscribe(() => this.loginWithGoogle());
-    }
-
-    const githubButton = this.githubButtonRef()?.nativeElement;
-    if (githubButton) {
-      fromEvent(githubButton, 'click').subscribe(() => this.loginWithGithub());
-    }
+    // GitHub button click
+    toObservable(this.githubButtonRef)
+      .pipe(
+        switchMap((ref) => {
+          if (!ref?.nativeElement) {
+            return of(null);
+          }
+          return fromEvent(ref.nativeElement, 'click').pipe(
+            takeUntilDestroyed(this.destroRef),
+          );
+        }),
+      )
+      .subscribe((el) => !el || this.loginWithGithub());
   }
 
   onProfileImageSelected(event: Event) {
@@ -111,7 +150,7 @@ export class SignupPageComponent implements AfterViewInit {
       ];
       if (!validImageTypes.includes(file.type)) {
         this.errorMessage.set(
-          'Please select a valid image file (JPEG, PNG, JPG, GIF)'
+          'Please select a valid image file (JPEG, PNG, JPG, GIF)',
         );
         return;
       }
@@ -168,7 +207,7 @@ export class SignupPageComponent implements AfterViewInit {
         this.isLoading.set(false);
         if (response.success) {
           this.notificationService.showSuccess(
-            'Registration successful! Please check your email to verify your account.'
+            'Registration successful! Please check your email to verify your account.',
           );
           this.router.navigate(['/login']);
         } else {
@@ -178,7 +217,7 @@ export class SignupPageComponent implements AfterViewInit {
       error: (error) => {
         this.isLoading.set(false);
         this.errorMessage.set(
-          error.message || 'Registration failed. Please try again.'
+          error.message || 'Registration failed. Please try again.',
         );
       },
     });

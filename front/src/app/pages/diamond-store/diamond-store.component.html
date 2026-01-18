@@ -29,7 +29,7 @@
             icon="pi pi-shopping-cart"
             [loading]="isLoading(pkg.id)"
             [disabled]="isLoading(pkg.id)"
-            (onClick)="purchaseDiamonds(pkg)"
+            (click)="purchaseDiamonds(pkg)"
             [class]="'purchase-button' + (pkg.popular ? ' popular-button' : '')"
           ></button>
         </ng-template>

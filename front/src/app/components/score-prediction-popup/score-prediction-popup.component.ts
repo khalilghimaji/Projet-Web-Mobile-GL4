@@ -11,6 +11,8 @@ import {
   viewChild,
   ElementRef,
   computed,
+  AfterViewInit,
+  DestroyRef,
 } from '@angular/core';
 
 import {
@@ -28,11 +30,22 @@ import { InputTextModule } from 'primeng/inputtext';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
-import { fromEvent, Observable, of, Subscription } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
+import { EMPTY, fromEvent, Observable, of, Subscription } from 'rxjs';
+import {
+  map,
+  catchError,
+  switchMap,
+  filter,
+  tap,
+  finalize,
+} from 'rxjs/operators';
 import { MatchesService, Prediction } from '../../services/Api';
 import { NotificationService } from '../../services/notification.service';
-import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import {
+  takeUntilDestroyed,
+  toObservable,
+  toSignal,
+} from '@angular/core/rxjs-interop';
 
 export interface TeamPrediction {
   team1Score?: number;
@@ -97,11 +110,37 @@ export class ScorePredictionPopupComponent {
         this.formChangeSignal()?.numberOfDiamonds
     );
   });
-
+  private destroRef = inject(DestroyRef);
   cancelButtonRef = viewChild<ElementRef>('cancelButton');
   submitButtonRef = viewChild<ElementRef>('submitButton');
 
   constructor() {
+    toObservable(this.cancelButtonRef)
+      .pipe(
+        switchMap((ref) => {
+          if (!ref?.nativeElement) {
+            return of(null);
+          }
+          return fromEvent(ref.nativeElement, 'click').pipe(
+            takeUntilDestroyed(this.destroRef),
+          );
+        }),
+      )
+      .subscribe((el) => !el || this.onCancel());
+
+    toObservable(this.submitButtonRef)
+      .pipe(
+        switchMap((ref) => {
+          if (!ref?.nativeElement) {
+            return of(null);
+          }
+          return fromEvent(ref.nativeElement, 'click').pipe(
+            takeUntilDestroyed(this.destroRef),
+          );
+        }),
+      )
+      .subscribe((el) => !el || this.onSubmit());
+
     // Update form values when predictionDataSignal changes
     effect(() => {
       const predictionData = this.predictionDataSignal();
@@ -109,30 +148,6 @@ export class ScorePredictionPopupComponent {
         team1Score: predictionData.team1Score || 0,
         team2Score: predictionData.team2Score || 0,
         numberOfDiamonds: predictionData.numberOfDiamonds || 1,
-      });
-    });
-    effect((onCleanup) => {
-      console.log('Setting up button event listeners');
-      const subs: Subscription[] = [];
-      const button = this.cancelButtonRef()?.nativeElement;
-      if (button) {
-        subs.push(
-          fromEvent(button, 'click')
-            .pipe(takeUntilDestroyed())
-            .subscribe(() => this.onCancel()),
-        );
-      }
-      const submitButton = this.submitButtonRef()?.nativeElement;
-      if (submitButton) {
-        subs.push(
-          fromEvent(submitButton, 'click')
-            .pipe(takeUntilDestroyed())
-            .subscribe(() => this.onSubmit()),
-        );
-      }
-      onCleanup(() => {
-        console.log('Cleaning up button event listeners');
-        subs.forEach((unsub) => unsub.unsubscribe());
       });
     });
   }

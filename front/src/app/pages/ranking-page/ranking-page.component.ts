@@ -7,6 +7,7 @@ import {
   viewChild,
   ElementRef,
   afterNextRender,
+  DestroyRef,
 } from '@angular/core';
 import { fromEvent } from 'rxjs';
 import { CommonModule } from '@angular/common';
@@ -19,6 +20,7 @@ import { NotificationsStateService } from '../../services/notifications-state.se
 import { UserService } from '../../services/Api';
 import { MedalIconPipe } from '../../shared/pipes/medal-icon.pipe';
 import { InitialsPipe } from '../../shared/pipes/initials.pipe';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-ranking-page',
@@ -51,14 +53,16 @@ export class RankingPageComponent implements OnInit {
   topThree = this.notificationsState.topThreeRankings;
   remainingRankings = this.notificationsState.remainingRankings;
 
+  private readonly destroyRef = inject(DestroyRef);
   constructor() {
-    // Setup fromEvent listener after view is rendered
     afterNextRender(() => {
       const btnElement = this.reloadBtn()?.nativeElement;
       if (btnElement) {
-        fromEvent(btnElement, 'click').subscribe(() => {
-          this.loadRankings();
-        });
+        fromEvent(btnElement, 'click')
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe(() => {
+            this.loadRankings();
+          });
       }
     });
   }
