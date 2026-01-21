@@ -259,22 +259,6 @@
   gap: 16px;
 }
 
-.menubar-diamonds {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 20px;
-  color: white;
-  font-weight: 600;
-  font-size: 14px;
-}
-
-.menubar-diamonds i {
-  font-size: 16px;
-}
-
 /* Diamonds Display Wrapper (shared) */
 .diamonds-display-wrapper {
   display: flex;
@@ -633,26 +617,56 @@
   width: 100%;
 }
 
-/* Drawer diamonds display */
-.diamonds-container .diamonds-display-wrapper {
-  padding: 8px 12px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 20px;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+/* Keep old notifications-container styles for backwards compatibility if needed */
+.notifications-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #f3f4f6;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.notifications-container:hover {
+  background: #e5e7eb;
+  color: #374151;
+  transform: scale(1.05);
+}
+
+.notifications-container i {
+  font-size: 18px;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ef4444;
   color: white;
+  border-radius: 9px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 0 4px;
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
 }
 
-.diamonds-container .diamonds-display-wrapper:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-}
-
-.diamonds-container .diamonds-display-wrapper i {
-  color: #FFD700;
-  font-size: 16px;
-  filter: drop-shadow(0 0 4px rgba(255, 215, 0, 0.5));
-  animation: sparkle 2s ease-in-out infinite;
+/* Profile Actions Container */
+.profile-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
 }
 
 @keyframes sparkle {

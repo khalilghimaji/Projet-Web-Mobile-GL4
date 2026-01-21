@@ -1,147 +1,172 @@
 <div class="ranking-page-container">
   <div class="page-header">
-    <h1 class="page-title">
-      <i class="pi pi-trophy"></i>
-      User Rankings
-    </h1>
-    <p class="page-subtitle">Top users based on prediction accuracy</p>
+    <div class="header-content">
+      <div class="header-text">
+        <h1 class="page-title">
+          <i class="pi pi-trophy"></i>
+          User Rankings
+        </h1>
+        <p class="page-subtitle">Top users based on prediction accuracy</p>
+      </div>
+      <button
+        #reloadBtn
+        class="reload-btn"
+        [disabled]="loading()"
+        [class.loading]="loading()"
+        aria-label="Reload rankings"
+      >
+        <i
+          class="pi"
+          [class.pi-refresh]="!loading()"
+          [class.pi-spin]="loading()"
+          [class.pi-spinner]="loading()"
+        ></i>
+        {{ loading() ? "Loading..." : "Reload" }}
+      </button>
+    </div>
   </div>
 
   @if (error()) {
-  <p-message severity="error" [text]="error()!"></p-message>
-  } @if (loading()) {
-  <p-card>
-    <div class="podium-skeleton">
-      @for (i of [1, 2, 3]; track i) {
-      <div class="podium-item-skeleton">
-        <p-skeleton shape="circle" size="5rem"></p-skeleton>
-        <p-skeleton width="8rem" height="1.5rem"></p-skeleton>
-        <p-skeleton width="4rem"></p-skeleton>
-      </div>
-      }
-    </div>
-
-    <p-table [value]="[1, 2, 3, 4, 5]">
-      <ng-template pTemplate="body">
-        <tr>
-          <td><p-skeleton width="2rem"></p-skeleton></td>
-          <td><p-skeleton shape="circle" size="2.5rem"></p-skeleton></td>
-          <td><p-skeleton width="10rem"></p-skeleton></td>
-          <td><p-skeleton width="4rem"></p-skeleton></td>
-        </tr>
-      </ng-template>
-    </p-table>
-  </p-card>
-  } @if (!loading() && rankings().length > 0) {
-  <!-- Top 3 Podium -->
-  <p-card styleClass="podium-card">
-    <div class="podium-container">
-      @for (user of topThree(); track user.rank) {
-      <div class="podium-item" [class.first-place]="user.rank === 1">
-        <div class="medal">{{ user.rank! | medalIcon }}</div>
-
-        @if (user.imageUrl) {
-        <img
-          [src]="user.imageUrl"
-          [alt]="user.firstName + ' ' + user.lastName"
-          class="user-avatar-large"
-        />
-        } @else {
-        <p-avatar
-          [label]="user.firstName | initials : user.lastName"
-          size="xlarge"
-          shape="circle"
-          styleClass="avatar-large"
-        ></p-avatar>
-        }
-
-        <div class="user-info">
-          <h3 class="user-name">{{ user.firstName }} {{ user.lastName }}</h3>
-          <div class="user-score">
-            <i class="pi pi-star-fill"></i>
-            {{ user.score }} points
+    <p-message severity="error" [text]="error()!"></p-message>
+  }
+  @if (loading()) {
+    <p-card>
+      <div class="podium-skeleton">
+        @for (i of [1, 2, 3]; track i) {
+          <div class="podium-item-skeleton">
+            <p-skeleton shape="circle" size="5rem"></p-skeleton>
+            <p-skeleton width="8rem" height="1.5rem"></p-skeleton>
+            <p-skeleton width="4rem"></p-skeleton>
           </div>
-          <div class="user-rank">Rank #{{ user.rank }}</div>
-        </div>
+        }
       </div>
-      }
-    </div>
-  </p-card>
 
-  <!-- Remaining Rankings Table -->
-  @if (remainingRankings().length > 0) {
-  <p-card styleClass="rankings-table-card">
-    <p-table
-      [value]="remainingRankings()"
-      styleClass="rankings-table"
-      [rows]="10"
-      [paginator]="remainingRankings().length > 10"
-    >
-      <ng-template pTemplate="header">
-        <tr>
-          <th style="width: 5rem">Rank</th>
-          <th style="width: 4rem"></th>
-          <th>Player</th>
-          <th style="width: 10rem">Score</th>
-        </tr>
-      </ng-template>
+      <p-table [value]="[1, 2, 3, 4, 5]">
+        <ng-template pTemplate="body">
+          <tr>
+            <td><p-skeleton width="2rem"></p-skeleton></td>
+            <td><p-skeleton shape="circle" size="2.5rem"></p-skeleton></td>
+            <td><p-skeleton width="10rem"></p-skeleton></td>
+            <td><p-skeleton width="4rem"></p-skeleton></td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </p-card>
+  }
+  @if (!loading() && rankings().length > 0) {
+    <!-- Top 3 Podium -->
+    <p-card styleClass="podium-card">
+      <div class="podium-container">
+        @for (user of topThree(); track user.rank) {
+          <div class="podium-item" [class.first-place]="user.rank === 1">
+            <div class="medal">{{ user.rank! | medalIcon }}</div>
 
-      <ng-template pTemplate="body" let-user>
-        <tr>
-          <td>
-            <span class="rank-badge">#{{ user.rank }}</span>
-          </td>
-          <td>
             @if (user.imageUrl) {
-            <img
-              [src]="user.imageUrl"
-              [alt]="user.firstName + ' ' + user.lastName"
-              class="user-avatar-small"
-            />
+              <img
+                [src]="user.imageUrl"
+                [alt]="user.firstName + ' ' + user.lastName"
+                class="user-avatar-large"
+              />
             } @else {
-            <p-avatar
-              [label]="user.firstName | initials : user.lastName"
-              size="normal"
-              shape="circle"
-            ></p-avatar>
+              <p-avatar
+                [label]="user.firstName | initials: user.lastName"
+                size="xlarge"
+                shape="circle"
+                styleClass="avatar-large"
+              ></p-avatar>
             }
-          </td>
-          <td>
-            <span class="user-name-text">
-              {{ user.firstName }} {{ user.lastName }}
-            </span>
-          </td>
-          <td>
-            <span class="score-badge">
-              <i class="pi pi-star-fill"></i>
-              {{ user.score }}
-            </span>
-          </td>
-        </tr>
-      </ng-template>
 
-      <ng-template pTemplate="emptymessage">
-        <tr>
-          <td colspan="4">
-            <div class="empty-message">
-              <i class="pi pi-info-circle"></i>
-              No additional rankings available
+            <div class="user-info">
+              <h3 class="user-name">
+                {{ user.firstName }} {{ user.lastName }}
+              </h3>
+              <div class="user-score">
+                <i class="pi pi-star-fill"></i>
+                {{ user.score }} points
+              </div>
+              <div class="user-rank">Rank #{{ user.rank }}</div>
             </div>
-          </td>
-        </tr>
-      </ng-template>
-    </p-table>
-  </p-card>
-  } } @if (!loading() && rankings().length === 0 && !error()) {
-  <p-card>
-    <div class="empty-state">
-      <i
-        class="pi pi-trophy"
-        style="font-size: 4rem; color: var(--surface-400)"
-      ></i>
-      <h3>No Rankings Yet</h3>
-      <p>Rankings will appear here once users start making predictions.</p>
-    </div>
-  </p-card>
+          </div>
+        }
+      </div>
+    </p-card>
+
+    <!-- Remaining Rankings Table -->
+    @if (remainingRankings().length > 0) {
+      <p-card styleClass="rankings-table-card">
+        <p-table
+          [value]="remainingRankings()"
+          styleClass="rankings-table"
+          [rows]="10"
+          [paginator]="remainingRankings().length > 10"
+        >
+          <ng-template pTemplate="header">
+            <tr>
+              <th style="width: 5rem">Rank</th>
+              <th style="width: 4rem"></th>
+              <th>Player</th>
+              <th style="width: 10rem">Score</th>
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="body" let-user>
+            <tr>
+              <td>
+                <span class="rank-badge">#{{ user.rank }}</span>
+              </td>
+              <td>
+                @if (user.imageUrl) {
+                  <img
+                    [src]="user.imageUrl"
+                    [alt]="user.firstName + ' ' + user.lastName"
+                    class="user-avatar-small"
+                  />
+                } @else {
+                  <p-avatar
+                    [label]="user.firstName | initials: user.lastName"
+                    size="normal"
+                    shape="circle"
+                  ></p-avatar>
+                }
+              </td>
+              <td>
+                <span class="user-name-text">
+                  {{ user.firstName }} {{ user.lastName }}
+                </span>
+              </td>
+              <td>
+                <span class="score-badge">
+                  <i class="pi pi-star-fill"></i>
+                  {{ user.score }}
+                </span>
+              </td>
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="4">
+                <div class="empty-message">
+                  <i class="pi pi-info-circle"></i>
+                  No additional rankings available
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </p-card>
+    }
+  }
+  @if (!loading() && rankings().length === 0 && !error()) {
+    <p-card>
+      <div class="empty-state">
+        <i
+          class="pi pi-trophy"
+          style="font-size: 4rem; color: var(--surface-400)"
+        ></i>
+        <h3>No Rankings Yet</h3>
+        <p>Rankings will appear here once users start making predictions.</p>
+      </div>
+    </p-card>
   }
 </div>

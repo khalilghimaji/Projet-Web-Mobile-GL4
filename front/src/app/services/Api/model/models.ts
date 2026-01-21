@@ -24,6 +24,7 @@ export * from './refresResponse';
 export * from './resetPasswordDto';
 export * from './resetPasswordResponseDto';
 export * from './signUpResponseDto';
+export * from './terminateMatchDto';
 export * from './updatePredictionDto';
 export * from './user';
 export * from './userDto';

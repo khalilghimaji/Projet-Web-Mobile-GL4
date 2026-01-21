@@ -5,8 +5,20 @@
 }
 
 .page-header {
-    text-align: center;
     margin-bottom: 2rem;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
+.header-text {
+    flex: 1;
+    text-align: center;
 }
 
 .page-title {
@@ -28,6 +40,76 @@
     font-size: 1.1rem;
     color: var(--text-color-secondary);
     margin: 0;
+}
+
+/* Reload Button */
+.reload-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #4CAF50 0%, #81c784 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+    white-space: nowrap;
+}
+
+.reload-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+}
+
+.reload-btn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.reload-btn i {
+    font-size: 16px;
+    transition: transform 0.3s ease;
+}
+
+.reload-btn:hover:not(:disabled) i {
+    transform: rotate(180deg);
+}
+
+.reload-btn:disabled,
+.reload-btn.loading {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.reload-btn .pi-spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Responsive adjustment */
+@media (max-width: 768px) {
+    .header-content {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .reload-btn {
+        width: 100%;
+        justify-content: center;
+    }
 }
 
 /* Podium Styles */

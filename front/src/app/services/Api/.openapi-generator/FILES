@@ -39,6 +39,7 @@ model/refresResponse.ts
 model/resetPasswordDto.ts
 model/resetPasswordResponseDto.ts
 model/signUpResponseDto.ts
+model/terminateMatchDto.ts
 model/updatePredictionDto.ts
 model/user.ts
 model/userDto.ts

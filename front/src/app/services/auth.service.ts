@@ -1,8 +1,7 @@
-import { Injectable } from '@angular/core';
+import { Injectable, signal, computed, effect, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { NotificationService } from './notification.service';
 import {
-  BehaviorSubject,
   catchError,
   map,
   Observable,
@@ -12,30 +11,42 @@ import {
   timeout,
 } from 'rxjs';
 import { AuthenticationService, UserDto } from './Api';
-import { toSignal } from '@angular/core/rxjs-interop';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
-  // Track authentication state
-  private authState = new BehaviorSubject<boolean>(false);
-  public authState$ = this.authState.asObservable();
-  public authStateSignal = toSignal(this.authState$);
-  private currentUser = new BehaviorSubject<UserDto | null>(null);
-  public currentUser$ = this.currentUser.asObservable();
+  // Dependencies using inject()
+  private readonly router = inject(Router);
+  private readonly notificationService = inject(NotificationService);
+  private readonly apiAuthService = inject(AuthenticationService);
 
-  // Token refresh
-  private isRefreshing = false;
+  // Signals for reactive state management
+  private readonly _currentUser = signal<UserDto | null>(null);
+  private readonly _isRefreshing = signal(false);
 
-  constructor(
-    private router: Router,
-    private notificationService: NotificationService,
-    private apiAuthService: AuthenticationService
-  ) {
+  // Public readonly signals
+  readonly currentUser = this._currentUser.asReadonly();
+  readonly isAuthenticated = computed(() => this._currentUser() !== null);
+  readonly hasOtpEnabled = computed(
+    () => this._currentUser()?.isMFAEnabled ?? false,
+  );
+  readonly userEmail = computed(() => this._currentUser()?.email ?? '');
+  readonly isRefreshing = this._isRefreshing.asReadonly();
+
+  constructor() {
     this.loadUserState();
+
+    // Effect to sync auth state with localStorage
+    effect(() => {
+      const user = this._currentUser();
+      if (user) {
+        this.persistUserState(user);
+      }
+    });
+
+    // Load profile if authenticated
     if (this.isAuthenticated()) {
-      this.authState.next(true);
       this.getProfile().subscribe({ error: () => this.clearAuthData() });
     }
   }
@@ -49,14 +60,17 @@ export class AuthService {
     const userData = localStorage.getItem('user_data');
     if (userData) {
       try {
-        this.currentUser.next(JSON.parse(userData));
-      } catch (e) {}
+        this._currentUser.set(JSON.parse(userData));
+      } catch (e) {
+        // Invalid JSON in localStorage
+      }
     }
   }
 
-  // Check if a user has MFA enabled
-  hasOtpEnabled(): boolean {
-    return this.currentUser.value?.isMFAEnabled || false;
+  private persistUserState(user: UserDto): void {
+    if (!this.isBrowser()) return;
+    localStorage.setItem('user_email', user.email || '');
+    localStorage.setItem('user_data', JSON.stringify(user));
   }
 
   generateMfaSecret(): Observable<{ secret: string; qrCode: string }> {
@@ -64,8 +78,8 @@ export class AuthService {
       .authControllerGenerateMfaSecret()
       .pipe(
         catchError((error) =>
-          this.handleError('Failed to generate MFA secret', error)
-        )
+          this.handleError('Failed to generate MFA secret', error),
+        ),
       );
   }
 
@@ -89,19 +103,19 @@ export class AuthService {
       }),
       catchError((error) => {
         this.notificationService.showError(
-          error.error?.message || 'Failed to enable MFA'
+          error.error?.message || 'Failed to enable MFA',
         );
         return of({
           success: false,
           message: error.error?.message || 'Failed to enable MFA',
           recoveryCodes: [],
         });
-      })
+      }),
     );
   }
 
   disableMfa(
-    password: string
+    password: string,
   ): Observable<{ success: boolean; message: string }> {
     return this.apiAuthService.authControllerDisableMfa({ password }).pipe(
       map(() => {
@@ -109,20 +123,20 @@ export class AuthService {
       }),
       catchError((error) => {
         this.notificationService.showError(
-          error.error?.message || 'Failed to disable MFA'
+          error.error?.message || 'Failed to disable MFA',
         );
         return of({
           success: false,
           message: error.error?.message || 'Failed to disable MFA',
         });
-      })
+      }),
     );
   }
 
   initiateLogin(
     email: string,
     password: string,
-    rememberMe: boolean
+    rememberMe: boolean,
   ): Observable<{ requiresOtp: boolean; message: string; success: boolean }> {
     return this.apiAuthService
       .authControllerLogin({ email, password, rememberMe: rememberMe })
@@ -144,20 +158,20 @@ export class AuthService {
         }),
         catchError((error) => {
           this.notificationService.showError(
-            error.error?.message || 'Login failed'
+            error.error?.message || 'Login failed',
           );
           return of({
             requiresOtp: false,
             message: error.error?.message || 'Login failed',
             success: false,
           });
-        })
+        }),
       );
   }
 
   verifyOtp(
     code: string,
-    rememberMe: boolean
+    rememberMe: boolean,
   ): Observable<{ success: boolean; message: string }> {
     return this.apiAuthService
       .authControllerVerifyMfaToken({ code, rememberMe })
@@ -171,13 +185,13 @@ export class AuthService {
         }),
         catchError((error) => {
           this.notificationService.showError(
-            error.error?.message || 'Invalid OTP code'
+            error.error?.message || 'Invalid OTP code',
           );
           return of({
             success: false,
             message: error.error?.message || 'Invalid OTP code',
           });
-        })
+        }),
       );
   }
 
@@ -194,7 +208,7 @@ export class AuthService {
         userData.lastname,
         userData.email,
         userData.password,
-        userData.imgUrl
+        userData.imgUrl,
       )
       .pipe(
         map(() => {
@@ -205,18 +219,18 @@ export class AuthService {
         }),
         catchError((error) => {
           this.notificationService.showError(
-            error.error?.message || 'Registration failed'
+            error.error?.message || 'Registration failed',
           );
           return of({
             success: false,
             message: error.error?.message || 'Registration failed',
           });
-        })
+        }),
       );
   }
 
   verifyEmailToken(
-    token: string
+    token: string,
   ): Observable<{ success: boolean; message: string }> {
     return this.apiAuthService.authControllerVerifyEmail({ token }).pipe(
       map(() => {
@@ -225,71 +239,50 @@ export class AuthService {
       }),
       catchError((error) => {
         this.notificationService.showError(
-          error.error?.message || 'Invalid or expired verification token'
+          error.error?.message || 'Invalid or expired verification token',
         );
         return of({
           success: false,
           message:
             error.error?.message || 'Invalid or expired verification token',
         });
-      })
+      }),
     );
-  }
-
-  // Resend verification email - mock implementation until API supports it
-  resendVerificationEmail(
-    email: string
-  ): Observable<{ success: boolean; message: string }> {
-    // This is still mocked as it seems this endpoint might not exist yet
-    return of({
-      success: true,
-      message: 'Verification email has been sent to ' + email,
-    });
   }
 
   refreshToken(): Observable<any> {
-    if (this.isRefreshing) return of(null);
+    if (this._isRefreshing()) return of(null);
 
-    this.isRefreshing = true;
+    this._isRefreshing.set(true);
     return this.apiAuthService.authControllerRefreshToken().pipe(
       tap(() => {
-        this.isRefreshing = false;
-        this.authState.next(true);
+        this._isRefreshing.set(false);
       }),
       catchError((error) => {
-        this.isRefreshing = false;
+        this._isRefreshing.set(false);
         this.clearAuthData();
-        this.authState.next(false);
         return throwError(() => error);
-      })
+      }),
     );
   }
-  completeLogin(): void {
-    this.authState.next(true);
-    this.notificationService.showSuccess('Login successful');
-    this.router.navigate(['/']);
-  }
 
-  isAuthenticated(): boolean {
-    return this.isBrowser() && !!localStorage.getItem('user_email');
+  completeLogin(): void {
+    this.notificationService.showSuccess('Login successful');
+    this.router.navigate([localStorage.getItem('redirectUrl') || '/']);
   }
 
   setAuthData(userData: UserDto): void {
     if (!this.isBrowser() || !userData) return;
-
-    localStorage.setItem('user_email', userData.email || '');
-    localStorage.setItem('user_data', JSON.stringify(userData));
-    this.currentUser.next(userData);
-    this.authState.next(true);
+    this._currentUser.set(userData);
   }
 
   public clearAuthData(): void {
     if (this.isBrowser()) {
       ['user_data', 'user_email'].forEach((key) =>
-        localStorage.removeItem(key)
+        localStorage.removeItem(key),
       );
     }
-    this.currentUser.next(null);
+    this._currentUser.set(null);
   }
 
   logout() {
@@ -297,13 +290,12 @@ export class AuthService {
       .authControllerLogout()
       .pipe(
         timeout(5000),
-        catchError(() => of(null))
+        catchError(() => of(null)),
       )
       .subscribe(() => {
         this.clearAuthData();
-        this.authState.next(false);
         this.notificationService.showSuccess(
-          'You have been successfully logged out'
+          'You have been successfully logged out',
         );
         setTimeout(() => this.router.navigate(['/login']), 10);
       });
@@ -313,54 +305,54 @@ export class AuthService {
     return this.apiAuthService.authControllerGetProfile().pipe(
       tap((user) => {
         if (user) this.setAuthData(user);
-      })
+      }),
     );
   }
 
   forgotPassword(
-    email: string
+    email: string,
   ): Observable<{ success: boolean; message: string }> {
     return this.apiAuthService.authControllerForgotPassword({ email }).pipe(
       map((response) => {
         this.notificationService.showSuccess(
-          'Password reset email sent. Please check your inbox.'
+          'Password reset email sent. Please check your inbox.',
         );
         return { success: true, message: response.message };
       }),
       catchError((error) => {
         this.notificationService.showError(
-          error.error?.message || 'Failed to request password reset'
+          error.error?.message || 'Failed to request password reset',
         );
         return of({
           success: false,
           message: error.error?.message || 'Failed to request password reset',
         });
-      })
+      }),
     );
   }
 
   resetPassword(
     token: string,
-    password: string
+    password: string,
   ): Observable<{ success: boolean; message: string }> {
     return this.apiAuthService
       .authControllerResetPassword({ token, password })
       .pipe(
         map((response) => {
           this.notificationService.showSuccess(
-            'Password reset successful. You can now log in with your new password.'
+            'Password reset successful. You can now log in with your new password.',
           );
           return { success: true, message: response.message };
         }),
         catchError((error) => {
           this.notificationService.showError(
-            error.error?.message || 'Failed to reset password'
+            error.error?.message || 'Failed to reset password',
           );
           return of({
             success: false,
             message: error.error?.message || 'Failed to reset password',
           });
-        })
+        }),
       );
   }
 }

@@ -3,6 +3,8 @@ import {
   signal,
   inject,
   ChangeDetectionStrategy,
+  input,
+  effect,
 } from '@angular/core';
 
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -42,6 +44,8 @@ export class LoginPageComponent {
   showOtpStep = signal(false);
   errorMessage = signal('');
 
+  redirectUrl = input<string | null>(null);
+
   loginForm = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
     password: ['', Validators.required],
@@ -59,6 +63,14 @@ export class LoginPageComponent {
       ],
     ],
   });
+
+  constructor() {
+    effect(() => {
+      if (this.redirectUrl()) {
+        localStorage.setItem('redirectUrl', this.redirectUrl()!);
+      }
+    });
+  }
 
   onLogin() {
     if (!this.loginForm.valid) {

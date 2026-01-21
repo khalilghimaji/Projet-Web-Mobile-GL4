@@ -5,10 +5,13 @@ import {
   inject,
   ChangeDetectionStrategy,
   model,
-  signal,
   Input,
   Signal,
   effect,
+  viewChild,
+  ElementRef,
+  computed,
+  DestroyRef,
 } from '@angular/core';
 
 import {
@@ -26,11 +29,15 @@ import { InputTextModule } from 'primeng/inputtext';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
-import { lastValueFrom, Observable, of } from 'rxjs';
-import { map, catchError, tap } from 'rxjs/operators';
-import { rxResource } from '@angular/core/rxjs-interop';
-import { MatchesService, Prediction } from '../../services/Api';
+import { fromEvent, Observable, of } from 'rxjs';
+import { map, catchError, switchMap } from 'rxjs/operators';
+import { MatchesService } from '../../services/Api';
 import { NotificationService } from '../../services/notification.service';
+import {
+  takeUntilDestroyed,
+  toObservable,
+  toSignal,
+} from '@angular/core/rxjs-interop';
 
 export interface TeamPrediction {
   team1Score?: number;
@@ -83,18 +90,57 @@ export class ScorePredictionPopupComponent {
     }),
   });
 
+  formChangeSignal = toSignal(this.predictionForm.valueChanges);
+
+  areValuesChanged = computed(() => {
+    return (
+      this.predictionDataSignal().team1Score !==
+        this.formChangeSignal()?.team1Score ||
+      this.predictionDataSignal().team2Score !==
+        this.formChangeSignal()?.team2Score ||
+      this.predictionDataSignal().numberOfDiamonds !==
+        this.formChangeSignal()?.numberOfDiamonds
+    );
+  });
+  private destroRef = inject(DestroyRef);
+  cancelButtonRef = viewChild<ElementRef>('cancelButton');
+  submitButtonRef = viewChild<ElementRef>('submitButton');
+
   constructor() {
+    toObservable(this.cancelButtonRef)
+      .pipe(
+        switchMap((ref) => {
+          if (!ref?.nativeElement) {
+            return of(null);
+          }
+          return fromEvent(ref.nativeElement, 'click').pipe(
+            takeUntilDestroyed(this.destroRef),
+          );
+        }),
+      )
+      .subscribe((el) => !el || this.onCancel());
+
+    toObservable(this.submitButtonRef)
+      .pipe(
+        switchMap((ref) => {
+          if (!ref?.nativeElement) {
+            return of(null);
+          }
+          return fromEvent(ref.nativeElement, 'click').pipe(
+            takeUntilDestroyed(this.destroRef),
+          );
+        }),
+      )
+      .subscribe((el) => !el || this.onSubmit());
+
     // Update form values when predictionDataSignal changes
     effect(() => {
       const predictionData = this.predictionDataSignal();
-      this.predictionForm.patchValue(
-        {
-          team1Score: predictionData.team1Score || 0,
-          team2Score: predictionData.team2Score || 0,
-          numberOfDiamonds: predictionData.numberOfDiamonds || 1,
-        },
-        { emitEvent: false },
-      );
+      this.predictionForm.patchValue({
+        team1Score: predictionData.team1Score || 0,
+        team2Score: predictionData.team2Score || 0,
+        numberOfDiamonds: predictionData.numberOfDiamonds || 1,
+      });
     });
   }
 

@@ -1,6 +1,14 @@
-import { Component, viewChild, AfterViewInit, ElementRef } from '@angular/core';
+import {
+  Component,
+  viewChild,
+  AfterViewInit,
+  ElementRef,
+  inject,
+  DestroyRef,
+} from '@angular/core';
 import { Location } from '@angular/common';
 import { fromEvent } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-back-arrow',
@@ -81,13 +89,15 @@ import { fromEvent } from 'rxjs';
 })
 export class BackArrowComponent implements AfterViewInit {
   buttonArrowRef = viewChild<ElementRef>('buttonArrow');
-
+  destrotyRef = inject(DestroyRef);
   constructor(private location: Location) {}
 
   ngAfterViewInit(): void {
     const button = this.buttonArrowRef()?.nativeElement;
     if (button) {
-      fromEvent(button, 'click').subscribe(() => this.goBack());
+      fromEvent(button, 'click')
+        .pipe(takeUntilDestroyed(this.destrotyRef))
+        .subscribe(() => this.goBack());
     }
   }
 
