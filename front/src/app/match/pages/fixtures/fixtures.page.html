@@ -117,7 +117,7 @@
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             @for (fixture of group.fixtures; track fixture.event_key) {
               <app-fixture-card
-                [fixtureSignal]="fixture"
+                [fixture]="fixture"
                 (cardClicked)="onFixtureClicked($event)"
               />
             }
@@ -148,4 +148,3 @@
   </div>
 
 </div>
-

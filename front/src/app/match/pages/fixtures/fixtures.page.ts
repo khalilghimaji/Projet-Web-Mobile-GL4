@@ -1,12 +1,10 @@
-import { Component, ChangeDetectionStrategy, signal, computed, inject, effect } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { FixturesResourceFactory } from '../../services/fixtures-resource.factory';
-import { FixturesApiService } from '../../services/fixtures-api.service';
 import { FixtureCardComponent } from '../../components/fixture-card/fixture-card.component';
-import { DateTabComponent } from '../../components/date-tab/date-tab.component';
 import { LeagueFilterChipComponent } from '../../components/league-filter-chip/league-filter-chip.component';
-import { Fixture, ParsedFixture, DateTab, FixturesByLeague, FixtureStatus } from '../../types/fixture.types';
+import { ParsedFixture, DateTab, FixturesByLeague, FixtureStatus } from '../../types/fixture.types';
 
 @Component({
   selector: 'app-fixtures',
@@ -15,7 +13,6 @@ import { Fixture, ParsedFixture, DateTab, FixturesByLeague, FixtureStatus } from
     CommonModule,
     RouterLink,
     FixtureCardComponent,
-    DateTabComponent,
     LeagueFilterChipComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -24,26 +21,36 @@ import { Fixture, ParsedFixture, DateTab, FixturesByLeague, FixtureStatus } from
 })
 export class FixturesPage {
   private router = inject(Router);
-  private resourceFactory = inject(FixturesResourceFactory);
-  private fixturesApi = inject(FixturesApiService);
+  private fixturesFactory = inject(FixturesResourceFactory);
 
   selectedDate = signal<Date>(new Date());
   selectedLeagueId = signal<string>('all');
-
   dateTabs = signal<DateTab[]>(this.generateDateTabs());
 
-  private leaguesRes = this.resourceFactory.createFeaturedLeaguesResource();
-  featuredLeagues = this.leaguesRes.leagues;
+  private fixturesRequest = computed(() => {
+    const from = this.formatDate(this.selectedDate());
+    const to = this.formatDate(this.selectedDate());
+    const leagueId = this.selectedLeagueId();
 
-  private rawFixtures = signal<Fixture[]>([]);
-  private isLoadingFixtures = signal<boolean>(true);
-  private fixturesError = signal<any>(null);
+    console.log('Fixtures request updated:', { from, to, leagueId });
 
+    return {
+      from,
+      to,
+      leagueId: leagueId !== 'all' ? leagueId : undefined
+    };
+  });
+
+  private fixturesStore = this.fixturesFactory.create(this.fixturesRequest);
+  private leaguesStore = this.fixturesFactory.createFeaturedLeaguesResource();
+
+  private rawFixtures = this.fixturesStore.fixtures;
+  topLeagues = this.leaguesStore.leagues;
   fixturesResource = {
-    value: computed(() => this.rawFixtures()),
-    isLoading: computed(() => this.isLoadingFixtures()),
-    hasError: computed(() => this.fixturesError() !== null),
-    error: computed(() => this.fixturesError())
+    value: this.fixturesStore.fixtures,
+    isLoading: this.fixturesStore.resource.isLoading,
+    hasError: computed(() => this.fixturesStore.resource.status() === 'error'),
+    error: this.fixturesStore.resource.error
   };
 
   parsedFixtures = computed(() => {
@@ -86,53 +93,23 @@ export class FixturesPage {
     return Array.from(grouped.values());
   });
 
-  topLeagues = computed(() => this.featuredLeagues());
-
-  constructor() {
-    this.loadFixtures();
-
-    effect(() => {
-      const date = this.selectedDate();
-      const leagueId = this.selectedLeagueId();
-      console.log('Parameters changed, reloading fixtures...');
-      this.loadFixtures();
-    });
-  }
-
-  private loadFixtures(): void {
-    const from = this.formatDate(this.selectedDate());
-    const to = this.formatDate(this.selectedDate());
-    const leagueId = this.selectedLeagueId();
-
-    console.log('Loading fixtures:', { from, to, leagueId });
-
-    this.isLoadingFixtures.set(true);
-    this.fixturesError.set(null);
-
-    this.fixturesApi.getFixtures(from, to, leagueId).subscribe({
-      next: (fixtures: Fixture[]) => {
-        console.log('Fixtures loaded:', fixtures.length);
-        this.rawFixtures.set(fixtures);
-        this.isLoadingFixtures.set(false);
-      },
-      error: (error: any) => {
-        console.error('Error loading fixtures:', error);
-        this.fixturesError.set(error);
-        this.isLoadingFixtures.set(false);
-      }
-    });
-  }
-
   onDateSelected(date: Date): void {
+    console.log('Date selected:', date.toDateString());
     this.selectedDate.set(date);
   }
 
   onLeagueSelected(leagueId: string): void {
+    console.log('League selected:', leagueId);
     this.selectedLeagueId.set(leagueId);
   }
 
   onFixtureClicked(eventKey: string): void {
+    console.log('Navigating to match:', eventKey);
     this.router.navigate(['/match', eventKey]);
+  }
+
+  isSelected(tab: DateTab): boolean {
+    return tab.date.toDateString() === this.selectedDate().toDateString();
   }
 
   private generateDateTabs(): DateTab[] {
@@ -166,7 +143,7 @@ export class FixturesPage {
     return `${year}-${month}-${day}`;
   }
 
-  private parseFixture(fixture: Fixture): ParsedFixture {
+  private parseFixture(fixture: any): ParsedFixture {
     let parsedStatus: FixtureStatus = 'SCHEDULED';
     let minute: number | undefined;
     let homeScore: number | undefined;
@@ -180,7 +157,9 @@ export class FixturesPage {
     }
 
     if (fixture.event_final_result && fixture.event_final_result !== '') {
-      const [home, away] = fixture.event_final_result.split('-').map((s: string) => parseInt(s.trim()));
+      const [home, away] = fixture.event_final_result
+        .split('-')
+        .map((s: string) => parseInt(s.trim()));
       homeScore = home;
       awayScore = away;
     }
@@ -195,13 +174,11 @@ export class FixturesPage {
   }
 
   getCurrentMonthYear(): string {
-    const months = ['January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'];
+    const months = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
     const date = this.selectedDate();
     return `${months[date.getMonth()]} ${date.getFullYear()}`;
-  }
-
-  isSelected(tab: DateTab): boolean {
-    return tab.date.toDateString() === this.selectedDate().toDateString();
   }
 }

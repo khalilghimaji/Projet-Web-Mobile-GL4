@@ -1,14 +1,15 @@
-import { inject, Injectable, signal } from '@angular/core';
+import { inject, Injectable, signal, Signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { concat, tap, filter, map, catchError, of } from 'rxjs';
+import { concat, tap, filter, catchError, of } from 'rxjs';
 import { FixturesApiService } from './fixtures-api.service';
 import { LiveEventsService } from './live-events.service';
 import { Fixture, League } from '../types/fixture.types';
 
-interface FixturesRequest {
-  from: string;
-  to: string;
-  leagueId?: string;
+
+export interface FixturesRequest {
+  from: string;       // Date de début au format YYYY-MM-DD
+  to: string;         // Date de fin au format YYYY-MM-DD
+  leagueId?: string;  // ID de la ligue (optionnel, undefined = toutes les ligues)
 }
 
 @Injectable({ providedIn: 'root' })
@@ -16,15 +17,22 @@ export class FixturesResourceFactory {
   private api = inject(FixturesApiService);
   private live = inject(LiveEventsService);
 
-  create(request: FixturesRequest) {
+
+  create(request: Signal<FixturesRequest>) {
+    console.log('FixturesResourceFactory.create() - Creating new Fixtures Store');
+
     const signals = createFixturesSignals();
 
+
     const resource = rxResource({
-      stream: () =>
+      params: () => request(),
+
+      stream: ({params}) =>
         concat(
-          this.api.getFixtures(request.from, request.to, request.leagueId).pipe(
+          // Chargement initial via HTTP API
+          this.api.getFixtures(params.from, params.to, params.leagueId).pipe(
             tap(fixtures => {
-              console.log('Initial fixtures loaded:', fixtures.length);
+              console.log(`Fixtures loaded: ${fixtures.length} matches`);
               hydrateFixtures(fixtures, signals);
             }),
             catchError(error => {
@@ -33,10 +41,11 @@ export class FixturesResourceFactory {
             })
           ),
 
+          // mises a jour en temps réel via WebSocket
           this.live.events$.pipe(
             filter(event => isFixtureEvent(event)),
             tap(event => {
-              console.log('Live event received:', event);
+              console.log('Live event received:', event.type, event.match_id);
               applyLiveUpdate(event, signals);
             }),
             catchError(error => {
@@ -47,13 +56,18 @@ export class FixturesResourceFactory {
         ),
     });
 
+
     return {
       resource,
-      ...signals,
+      fixtures: signals.fixtures.asReadonly(),
+      lastUpdate: signals.lastUpdate.asReadonly(),
     };
   }
 
+
   createFeaturedLeaguesResource() {
+    console.log('FixturesResourceFactory.createFeaturedLeaguesResource()');
+
     const leaguesSignal = signal<League[]>([]);
     const loadingSignal = signal<boolean>(true);
 
@@ -61,61 +75,43 @@ export class FixturesResourceFactory {
       stream: () =>
         this.api.getFeaturedLeagues().pipe(
           tap(leagues => {
-            console.log('Featured leagues loaded:', leagues.length);
+            console.log(`Featured leagues loaded: ${leagues.length}`);
             leaguesSignal.set(leagues);
             loadingSignal.set(false);
           }),
-          map(() => undefined),
           catchError(error => {
-            console.error('Error loading featured leagues:', error);
+            console.error(' Error loading featured leagues:', error);
             loadingSignal.set(false);
-            return of(undefined);
+            return of([]);
           })
         ),
     });
 
     return {
       resource,
-      leagues: leaguesSignal,
-      loading: loadingSignal
-    };
-  }
-
-  createAllLeaguesResource() {
-    const leaguesSignal = signal<League[]>([]);
-
-    const resource = rxResource({
-      stream: () =>
-        this.api.getAllLeagues().pipe(
-          tap(leagues => {
-            console.log('All leagues loaded:', leagues.length);
-            leaguesSignal.set(leagues);
-          }),
-          map(() => undefined),
-          catchError(error => {
-            console.error('Error loading all leagues:', error);
-            return of(undefined);
-          })
-        ),
-    });
-
-    return {
-      resource,
-      leagues: leaguesSignal,
+      leagues: leaguesSignal.asReadonly(),
+      loading: loadingSignal.asReadonly()
     };
   }
 }
 
+
 function createFixturesSignals() {
   return {
+    // Liste complète des fixtures chargées
     fixtures: signal<Fixture[]>([]),
+
+    // Timestamp de la dernière mise à jour (HTTP ou WebSocket)
     lastUpdate: signal<Date | null>(null),
   };
 }
 
+
 type FixturesSignals = ReturnType<typeof createFixturesSignals>;
 
+
 function hydrateFixtures(fixtures: Fixture[], s: FixturesSignals) {
+  console.log(`Hydrating ${fixtures.length} fixtures`);
   s.fixtures.set(fixtures);
   s.lastUpdate.set(new Date());
 }
@@ -143,7 +139,7 @@ function applyLiveUpdate(event: any, s: FixturesSignals) {
     const index = fixtures.findIndex(f => f.event_key === matchId);
 
     if (index === -1) {
-      console.log('Match not found in fixtures:', matchId);
+      console.log(`Match not found in fixtures: ${matchId}`);
       return fixtures;
     }
 
@@ -164,7 +160,7 @@ function applyLiveUpdate(event: any, s: FixturesSignals) {
 
       case 'MATCH_STARTED':
         fixture.event_live = '1';
-        fixture.event_status = '1';
+        fixture.event_status = '1'; // Minute 1
         break;
 
       case 'MATCH_ENDED':
@@ -177,11 +173,12 @@ function applyLiveUpdate(event: any, s: FixturesSignals) {
 
       case 'CARD_ISSUED':
       case 'SUBSTITUTION':
+
         break;
     }
 
     updated[index] = fixture;
-    console.log('Fixture updated:', fixture.event_key, fixture.event_status);
+    console.log(`Fixture updated: ${fixture.event_key} - ${fixture.event_status}`);
     return updated;
   });
 

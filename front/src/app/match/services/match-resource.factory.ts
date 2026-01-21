@@ -24,16 +24,22 @@ export class MatchResourceFactory {
       params: () => matchId(),
       stream: ({params: matchId}) =>
         concat(
-          // Initial HTTP snapshot
+          // Initial HTTP snapshot  chargement initial des données
           this.api.getMatch(matchId).pipe(
-            tap(dto => hydrateFromSnapshot(dto, signals))
+            tap(dto => {
+              console.log('Match data loaded:', matchId);
+              hydrateFromSnapshot(dto, signals);
+            })
           ),
 
-          // Live WebSocket updates
-          // this.live.events$.pipe(
-          //   filter(e => e.matchId === matchId),
-          //   tap(e => applyEvent(e, signals))
-          // )
+          // Live WebSocket updates  mises a jour en temps réel
+          this.live.events$.pipe(
+            filter(e => e.matchId === matchId),
+            tap(e => {
+              console.log('Live event received for match:', matchId, e.type);
+              applyEvent(e, signals);
+            })
+          )
         ),
     });
 

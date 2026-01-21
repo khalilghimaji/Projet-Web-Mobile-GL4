@@ -1,6 +1,7 @@
-import { Component, ChangeDetectionStrategy, input, computed, output } from '@angular/core';
+import { Component, ChangeDetectionStrategy, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ParsedFixture, FixtureStatus } from '../../types/fixture.types';
+import { ParsedFixture } from '../../types/fixture.types';
+
 
 @Component({
   selector: 'app-fixture-card',
@@ -11,9 +12,10 @@ import { ParsedFixture, FixtureStatus } from '../../types/fixture.types';
   styleUrls: ['./fixture-card.component.css']
 })
 export class FixtureCardComponent {
-  fixtureSignal = input.required<ParsedFixture>();
-  cardClicked = output<string>();
 
-  parsedFixture = computed(() => this.fixtureSignal());
+  fixture = input.required<ParsedFixture>();
+
+
+  cardClicked = output<string>();
 }
 
