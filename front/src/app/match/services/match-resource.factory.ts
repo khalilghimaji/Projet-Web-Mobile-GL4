@@ -10,6 +10,8 @@ import {Lineups} from '../sections/lineups-pitch/lineups-pitch.section';
 import {TeamStats} from '../types/stats.types';
 import {HeadToHead} from '../types/h2h.types';
 import {VideoHighlight} from '../types/highlight.types';
+import {mapPlayersToFormation} from '../utils/formation.util';
+import {PlayerPosition} from '../types/lineup.types';
 
 @Injectable({ providedIn: 'root' })
 export class MatchResourceFactory {
@@ -179,11 +181,30 @@ function hydrateFromSnapshot(
   ))]);
   console.log(`cards ${JSON.stringify(s.timelineSignal())}`)
   s.timelineSignal.update(t=> t.sort((a,b) => a.minute - b.minute));
-  // todo
-  // s.lineupsSignal.set({
-  //
-  // })
   console.log(`sorted ${JSON.stringify(s.timelineSignal())}`)
+
+  // Lineups mapping
+  if (dto.lineups?.home_team && dto.lineups?.away_team) {
+    const homeFormation = dto.event_home_formation || '4-3-3';
+    const awayFormation = dto.event_away_formation || '4-3-3';
+
+    s.lineupsSignal.set({
+      homeFormation,
+      awayFormation,
+      homePlayers: mapLineupPlayers(
+        dto.lineups.home_team.starting_lineups || [],
+        homeFormation,
+        'home'
+      ),
+      awayPlayers: mapLineupPlayers(
+        dto.lineups.away_team.starting_lineups || [],
+        awayFormation,
+        'away'
+      ),
+    });
+    console.log(`lineups set ${JSON.stringify(s.lineupsSignal())}`)
+  }
+
   s.statsSignal.set({stats:dto.statistics.map((s:any) => (
     {
       label: s.type,
@@ -296,3 +317,66 @@ function applyEvent(
   }
 }
 
+/**
+ * Map API lineup data to PlayerPosition array with calculated positions
+ */
+function mapLineupPlayers(
+  apiPlayers: any[],
+  formation: string,
+  team: 'home' | 'away'
+): PlayerPosition[] {
+  if (!apiPlayers || apiPlayers.length === 0) {
+    return [];
+  }
+
+  // Séparer gardien et joueurs de champ
+  const goalkeeper = apiPlayers.find(p => p.player_position === '1' || p.player_position === 1);
+  const outfieldPlayers = apiPlayers.filter(p => p.player_position !== '1' && p.player_position !== 1);
+
+  // Trier les joueurs de champ par numéro
+  outfieldPlayers.sort((a, b) => {
+    const numA = Number.parseInt(a.player_number) || 99;
+    const numB = Number.parseInt(b.player_number) || 99;
+    return numA - numB;
+  });
+
+  const players = [];
+
+  // Ajouter le gardien en premier
+  if (goalkeeper) {
+    players.push({
+      id: goalkeeper.player_key || `gk-${team}`,
+      number: Number.parseInt(goalkeeper.player_number) || 1,
+      name: extractShortName(goalkeeper.player),
+      fullName: goalkeeper.player,
+      team,
+      isGoalkeeper: true,
+    });
+  }
+
+  // Ajouter EXACTEMENT 10 joueurs de champ (pas plus)
+  const maxOutfield = 10;
+  for (let i = 0; i < Math.min(maxOutfield, outfieldPlayers.length); i++) {
+    const p = outfieldPlayers[i];
+    players.push({
+      id: p.player_key || `player-${team}-${i}`,
+      number: Number.parseInt(p.player_number) || 0,
+      name: extractShortName(p.player),
+      fullName: p.player,
+      team,
+      isGoalkeeper: false,
+    });
+  }
+
+  return mapPlayersToFormation(players, formation, team);
+}
+
+/**
+ * Extract short name from full player name
+ */
+function extractShortName(fullName: string): string {
+  if (!fullName) return '';
+  const parts = fullName.trim().split(' ');
+  if (parts.length === 1) return parts[0];
+  return parts[parts.length - 1]; // Return last name
+}
