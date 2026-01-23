@@ -5,7 +5,7 @@ import { MenubarModule } from 'primeng/menubar';
 import { ButtonModule } from 'primeng/button';
 import { SideMenuComponent } from './components/side-menu/side-menu.component';
 import { LoadingComponent } from './components/loading/loading.component';
-import { ToastComponent } from "./components/toast/toast.component";
+import { ToastComponent } from './components/toast/toast.component';
 
 @Component({
   selector: 'app-root',
@@ -16,14 +16,12 @@ import { ToastComponent } from "./components/toast/toast.component";
     ButtonModule,
     SideMenuComponent,
     LoadingComponent,
-    ToastComponent
-],
+    ToastComponent,
+  ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AppComponent {
-  title = 'KickStream';
-
   constructor() {}
 }

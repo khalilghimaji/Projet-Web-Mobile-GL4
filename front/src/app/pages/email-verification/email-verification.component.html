@@ -8,55 +8,56 @@
 
     <!-- Loading state -->
     @if (isLoading()) {
-    <div class="loading-container">
-      <p-progressSpinner
-        [style]="{ width: '50px', height: '50px' }"
-      ></p-progressSpinner>
-      <p class="loading-text">Verifying your email...</p>
-    </div>
+      <div class="loading-container">
+        <p-progressSpinner
+          [style]="{ width: '50px', height: '50px' }"
+        ></p-progressSpinner>
+        <p class="loading-text">Verifying your email...</p>
+      </div>
     }
 
     <!-- Success state -->
     @if (!isLoading() && isVerified()) {
-    <div class="success-container">
-      <div class="success-icon">
-        <i class="pi pi-check-circle"></i>
+      <div class="success-container">
+        <div class="success-icon">
+          <i class="pi pi-check-circle"></i>
+        </div>
+        <h2>Email Verified Successfully!</h2>
+        <p>
+          Your email has been verified. You can now access all features of our
+          application.
+        </p>
+        <button
+          pButton
+          routerLink="/login"
+          label="Go to Login"
+          icon="pi pi-sign-in"
+          styleClass="p-button-primary verification-button"
+        ></button>
       </div>
-      <h2>Email Verified Successfully!</h2>
-      <p>
-        Your email has been verified. You can now access all features of our
-        application.
-      </p>
-      <p-button
-        label="Go to Login"
-        icon="pi pi-sign-in"
-        (click)="goToLogin()"
-        styleClass="p-button-primary verification-button"
-      ></p-button>
-    </div>
     }
 
     <!-- Error state -->
     @if (!isLoading() && !isVerified() && errorMessage()) {
-    <div class="error-container">
-      <div class="error-icon">
-        <i class="pi pi-exclamation-circle"></i>
+      <div class="error-container">
+        <div class="error-icon">
+          <i class="pi pi-exclamation-circle"></i>
+        </div>
+        <h2>Verification Failed</h2>
+        <p-message
+          severity="error"
+          [text]="errorMessage()"
+          styleClass="w-full"
+        ></p-message>
+        <div class="action-buttons">
+          <p-button
+            (onClick)="verifyEmailToken()"
+            label="Try Again"
+            icon="pi pi-refresh"
+            styleClass="p-button-outlined p-button-danger verification-button"
+          ></p-button>
+        </div>
       </div>
-      <h2>Verification Failed</h2>
-      <p-message
-        severity="error"
-        [text]="errorMessage()"
-        styleClass="w-full"
-      ></p-message>
-      <div class="action-buttons">
-        <p-button
-          label="Try Again"
-          icon="pi pi-refresh"
-          (click)="verifyEmailToken()"
-          styleClass="p-button-outlined p-button-danger verification-button"
-        ></p-button>
-      </div>
-    </div>
     }
   </div>
 </div>

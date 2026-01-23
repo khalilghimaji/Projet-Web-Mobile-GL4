@@ -2,7 +2,7 @@
  * Match event and timeline types
  */
 
-export type EventType = 'GOAL' | 'YELLOW_CARD' | 'RED_CARD' | 'SUBSTITUTION' | 'PENALTY' | 'VAR' | 'INJURY';
+export type EventType = 'GOAL' | 'YELLOW_CARD' | 'RED_CARD' | 'SUBSTITUTION';
 
 export type TeamSide = 'home' | 'away';
 

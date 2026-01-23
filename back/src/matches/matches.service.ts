@@ -14,6 +14,7 @@ import {
 import { NotificationType } from 'src/Enums/notification-type.enum';
 import { NotificationsService } from 'src/notifications/notifications.service';
 import { ConfigService } from '@nestjs/config';
+import { MatchStat } from './dto/get-match-stats-info.dto';
 
 @Injectable()
 export class MatchesService {
@@ -59,10 +60,6 @@ export class MatchesService {
     matchId: string,
     numberOfDiamondsBet: number,
   ) {
-    const began = await this.verifyMatchBegan(matchId);
-    if (began) {
-      return false;
-    }
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) return false;
     if (user.diamonds < numberOfDiamondsBet) return false;
@@ -88,9 +85,13 @@ export class MatchesService {
     );
   }
 
-  async getMatchPredictions(matchId: string): Promise<Prediction[]> {
+  async getMatchPredictions(
+    matchId: string,
+    includUser = false,
+  ): Promise<Prediction[]> {
     return this.predictionRepository.find({
       where: { matchId },
+      relations: includUser ? ['user'] : [],
     });
   }
 
@@ -103,14 +104,13 @@ export class MatchesService {
     });
   }
 
-  async terminateMatch(
+  async endMatch(
     id: string,
     actualScoreFirst: number,
     actualScoreSecond: number,
   ): Promise<void> {
-    // Calculate gains
     await this.predictionCalculator.calculateAndApplyGainsAtMatchEnd(
-      await this.getMatchPredictions(id),
+      await this.getMatchPredictions(id, true),
       actualScoreFirst,
       actualScoreSecond,
       this.userRepository,
@@ -123,18 +123,13 @@ export class MatchesService {
     actualScoreFirst: number,
     actualScoreSecond: number,
   ): Promise<void> {
-    if (actualScoreFirst > 0 || actualScoreSecond > 0) {
-      // Calculate gains
-      await this.predictionCalculator.calculateAndApplyGainsAtMatchUpdate(
-        await this.getMatchPredictions(id),
-        actualScoreFirst,
-        actualScoreSecond,
-        this.predictionRepository,
-        this.userRepository,
-      );
-    } else {
-      throw new BadRequestException('No score update provided');
-    }
+    await this.predictionCalculator.calculateAndApplyGainsAtMatchUpdate(
+      await this.getMatchPredictions(id, true),
+      actualScoreFirst,
+      actualScoreSecond,
+      this.predictionRepository,
+      this.userRepository,
+    );
   }
 
   async makePrediction(
@@ -144,6 +139,10 @@ export class MatchesService {
     scoreSecond: number,
     diamondsBet: number,
   ): Promise<Prediction> {
+    const began = await this.verifyMatchBegan(matchId);
+    if (began) {
+      throw new BadRequestException('Cannot predict after match has started');
+    }
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
     if (user.diamonds < diamondsBet)
@@ -267,5 +266,27 @@ export class MatchesService {
 
     await this.predictionRepository.save(prediction);
     return prediction;
+  }
+
+  async getPredictionsStatsForMatch(matchId: string): Promise<MatchStat> {
+    const predictions = await this.getMatchPredictions(matchId);
+    const totalVotes = predictions.length;
+    const homeVotes = predictions.filter(
+      (p) => p.scoreFirstEquipe > p.scoreSecondEquipe,
+    ).length;
+    const drawVotes = predictions.filter(
+      (p) => p.scoreFirstEquipe === p.scoreSecondEquipe,
+    ).length;
+    const awayVotes = predictions.filter(
+      (p) => p.scoreFirstEquipe < p.scoreSecondEquipe,
+    ).length;
+    const hasbegun = await this.verifyMatchBegan(matchId);
+    return {
+      totalVotes,
+      homePercentage: totalVotes > 0 ? (homeVotes / totalVotes) * 100 : 0,
+      drawPercentage: totalVotes > 0 ? (drawVotes / totalVotes) * 100 : 0,
+      awayPercentage: totalVotes > 0 ? (awayVotes / totalVotes) * 100 : 0,
+      voteEnabled: !hasbegun,
+    };
   }
 }

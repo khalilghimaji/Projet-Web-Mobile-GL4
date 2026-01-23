@@ -52,7 +52,7 @@ export class BaseService {
     key: string,
     value: any | null | undefined,
     paramStyle: QueryParamStyle,
-    explode: boolean
+    explode: boolean,
   ): OpenApiHttpParams {
     if (value === null || value === undefined) {
       return httpParams;
@@ -61,13 +61,13 @@ export class BaseService {
     if (paramStyle === QueryParamStyle.DeepObject) {
       if (typeof value !== 'object') {
         throw Error(
-          `An object must be provided for key ${key} as it is a deep object`
+          `An object must be provided for key ${key} as it is a deep object`,
         );
       }
 
       return Object.keys(value as Record<string, any>).reduce(
         (hp, k) => hp.append(`${key}[${k}]`, value[k]),
-        httpParams
+        httpParams,
       );
     } else if (paramStyle === QueryParamStyle.Json) {
       return httpParams.append(key, JSON.stringify(value));
@@ -108,7 +108,7 @@ export class BaseService {
                 k,
                 value[k],
                 paramStyle,
-                explode
+                explode,
               );
             });
             return httpParams;

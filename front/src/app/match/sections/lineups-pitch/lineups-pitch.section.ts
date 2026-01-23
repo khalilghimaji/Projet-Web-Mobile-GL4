@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, input } from '@angular/core';
+import {Component, ChangeDetectionStrategy, input, Signal, Input} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { PlayerPositionComponent, PlayerPosition } from '../../components/player-position/player-position.component';
 
@@ -62,5 +62,5 @@ export interface Lineups {
 })
 export class LineupsPitchSection {
   // Signal reference from parent
-  lineupsSignal = input.required<Lineups>();
+  @Input({ required: true }) lineupsSignal!: Signal<Lineups>;
 }

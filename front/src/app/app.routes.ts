@@ -8,7 +8,7 @@ export const routes: Routes = [
   ...betRoutes,
   { path: 'standings', children: STANDINGS_ROUTE },
   {
-    path: 'match/:id',
+    path: 'match/:matchId',
     loadComponent: () =>
       import('./match/pages/match-detail/match-detail.page').then(
         (m) => m.MatchDetailPage
@@ -33,7 +33,7 @@ export const routes: Routes = [
           ),
       },
       {
-        path: ':code',
+        path: ':errorCode',
         loadComponent: () =>
           import('./pages/error-page/error-page.component').then(
             (c) => c.ErrorPageComponent

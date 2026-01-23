@@ -1,6 +1,13 @@
-import { ChangeDetectionStrategy, Component, OnInit, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  signal,
+  input,
+  effect,
+  linkedSignal,
+} from '@angular/core';
 
-import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { ButtonModule } from 'primeng/button';
@@ -14,28 +21,25 @@ import { MessageModule } from 'primeng/message';
   styleUrl: './email-verification.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class EmailVerificationComponent implements OnInit {
-  token = signal<string | null>(null);
-  isLoading = signal(true);
+export class EmailVerificationComponent {
+  token = input<string | null>(null);
+
   isVerified = signal(false);
-  errorMessage = signal('');
+  isLoading = linkedSignal(() => {
+    if (!this.token()) return false;
+    return true;
+  });
+  errorMessage = linkedSignal<string>(() => {
+    if (!this.token()) return 'Verification token is missing.'
+    return ''
+  });
 
-  constructor(
-    private route: ActivatedRoute,
-    private router: Router,
-    private authService: AuthService
-  ) {}
-
-  ngOnInit(): void {
-    const params = this.route.snapshot.queryParams;
-    this.token.set(params['token']);
-
-    if (this.token()) {
-      this.verifyEmailToken();
-    } else {
-      this.isLoading.set(false);
-      this.errorMessage.set('Verification token is missing.');
-    }
+  constructor(private authService: AuthService) {
+    effect(() => {
+      if (this.token()) {
+        this.verifyEmailToken();
+      }
+    });
   }
 
   protected verifyEmailToken(): void {
@@ -48,7 +52,7 @@ export class EmailVerificationComponent implements OnInit {
           this.isVerified.set(true);
         } else {
           this.errorMessage.set(
-            response.message || 'Email verification failed.'
+            response.message || 'Email verification failed.',
           );
         }
       },
@@ -56,13 +60,9 @@ export class EmailVerificationComponent implements OnInit {
         this.isLoading.set(false);
         this.errorMessage.set(
           error.message ||
-            'An error occurred during email verification. Please try again.'
+            'An error occurred during email verification. Please try again.',
         );
       },
     });
-  }
-
-  goToLogin(): void {
-    this.router.navigate(['/login']);
   }
 }

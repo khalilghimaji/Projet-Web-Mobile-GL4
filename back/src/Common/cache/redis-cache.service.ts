@@ -251,6 +251,22 @@ export class RedisCacheService {
     }
   }
 
+  async storeUserGains(userId: string, gains: number) {
+    try {
+      await this.redis.set(`user_gains_${userId}`, +gains);
+    } catch (error) {
+      this.logger.error(`Failed to store user gains: ${error.message}`);
+    }
+  }
+  async getUserGains(userId: string): Promise<number | null> {
+    try {
+      const gains = await this.redis.get(`user_gains_${userId}`);
+      return gains ? parseInt(gains, 10) : null;
+    } catch (error) {
+      this.logger.error(`Failed to get user gains: ${error.message}`);
+      return null;
+    }
+  }
   // Delete a specific key from Redis
   async del(key: string): Promise<void> {
     try {

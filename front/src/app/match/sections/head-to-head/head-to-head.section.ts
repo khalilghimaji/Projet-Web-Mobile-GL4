@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, input } from '@angular/core';
+import {Component, ChangeDetectionStrategy, input, Input, Signal, effect} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormIndicatorComponent, FormResult } from '../../components/form-indicator/form-indicator.component';
 
@@ -32,7 +32,7 @@ export interface HeadToHead {
 
           <!-- Form Results -->
           <div class="flex-1 flex justify-center">
-            <app-form-indicator [formSignal]="h2hSignal().recentForm" />
+            <app-form-indicator [formSignal]="h2hSignal().recentForm.slice(0,5)" />
           </div>
 
           <!-- Away Team Logo -->
@@ -46,7 +46,7 @@ export interface HeadToHead {
         </div>
 
         <div class="text-center text-xs text-gray-500">
-          Last 5 Matches
+          Last {{Math.min(h2hSignal().recentForm.length,5)}} Matches
         </div>
       </div>
     </section>
@@ -59,5 +59,7 @@ export interface HeadToHead {
 })
 export class HeadToHeadSection {
   // Signal reference from parent
-  h2hSignal = input.required<HeadToHead>();
+  @Input({required: true}) h2hSignal!: Signal<HeadToHead>
+  private readonly _log = effect(()=>console.log('HeadToHeadSection h2hSignal', this.h2hSignal()) );
+  protected readonly Math = Math;
 }

@@ -2,47 +2,24 @@ import {
   Component,
   input,
   computed,
-  inject,
-  signal,
   ChangeDetectionStrategy,
-  NgModule,
 } from '@angular/core';
 
-import { RouterModule, ActivatedRoute } from '@angular/router';
+import { RouterModule } from '@angular/router';
 import { Location } from '@angular/common';
-import { toSignal } from '@angular/core/rxjs-interop';
-import {
-  ScorePredictionPopupComponent,
-  TeamPrediction,
-} from '../../components/score-prediction-popup/score-prediction-popup.component';
 import { FormsModule } from '@angular/forms';
 @Component({
   selector: 'app-error-page',
   standalone: true,
-  imports: [RouterModule, ScorePredictionPopupComponent, FormsModule],
+  imports: [RouterModule, FormsModule],
   templateUrl: './error-page.component.html',
   styleUrls: ['./error-page.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ErrorPageComponent {
-  // Input signals for direct component usage
-  errorCodeInput = input<number | null>(null, { alias: 'errorCode' });
-  errorMessageInput = input<string>('', { alias: 'errorMessage' });
-  private route = inject(ActivatedRoute);
-  // Get error code from route params or input
-  private routeParams = toSignal(this.route.paramMap);
-  private routeData = toSignal(this.route.data);
-
-  // Computed error code from route or input
-  errorCode = computed(() => {
-    const routeCode = this.routeParams()?.get('code');
-    if (routeCode) return parseInt(routeCode, 10);
-
-    const dataCode = this.routeData()?.['errorCode'];
-    if (dataCode) return dataCode;
-
-    return this.errorCodeInput() || 404;
-  });
+  // Input signals for error code and message
+  errorCode = input<number>(404, { alias: 'errorCode' });
+  errorMessage = input<string>('', { alias: 'errorMessage' });
 
   // Error details map
   private errorDetails: Record<number, { title: string; message: string }> = {
@@ -60,43 +37,23 @@ export class ErrorPageComponent {
     },
   };
 
-  // Computed title and message based on error code
-  title = computed(() => {
+  // Computed error detail based on error code
+  errorDetail = computed(() => {
     const code = this.errorCode();
-    return this.errorDetails[code]?.title || 'Error';
+    return this.errorDetails[code] || { title: 'Error', message: 'Something went wrong' };
   });
+
+  // Computed title and message
+  title = computed(() => this.errorDetail().title);
 
   message = computed(() => {
-    const code = this.errorCode();
-    const customMessage = this.errorMessageInput();
-    return (
-      customMessage ||
-      this.errorDetails[code]?.message ||
-      'Something went wrong'
-    );
+    const customMessage = this.errorMessage();
+    return customMessage || this.errorDetail().message;
   });
 
-  // ================ this part is specific to demonstrate score prediction popup ==================
-
-  // Score prediction popup state
-  showPredictionDialog = signal(false);
-  matchId = signal(0);
-
-  // Demo team data
-  team1Name = 'Barcelona';
-  team2Name = 'Real Madrid';
-  team1Flag = 'https://flagcdn.com/w320/it.png';
-  team2Flag = 'https://flagcdn.com/w320/es.png';
-  // ====================================  end ============================================
   constructor(private location: Location) {}
 
   goBack() {
     this.location.back();
   }
-  // ================ score prediction popup methods ==================
-
-  onPredictionSubmitted(prediction: TeamPrediction) {
-    console.log('Prediction submitted:', prediction);
-  }
-  // ===============================  end =================================================
 }

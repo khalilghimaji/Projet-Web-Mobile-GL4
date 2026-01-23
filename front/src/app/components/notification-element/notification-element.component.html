@@ -2,7 +2,7 @@
   class="notification-container"
   [ngStyle]="{ backgroundColor: isRealTime() ? 'lightgrey' : 'white' }"
 >
-  <button class="close-button bg-red-600" (click)="onDelete()">
+  <button class="close-button bg-red-600" #onDeleteButton>
     <i class="pi pi-times text-white"></i>
   </button>
   <div class="notification-header">
@@ -16,9 +16,7 @@
   </div>
   @if (!notification().read) {
   <div class="notification-actions">
-    <button class="btn btn-primary" (click)="onMarkAsRead()">
-      Mark as Read
-    </button>
+    <button class="btn btn-primary" #onMarkAsReadButton>Mark as Read</button>
   </div>
   }
 </div>

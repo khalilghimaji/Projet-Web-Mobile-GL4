@@ -6,228 +6,231 @@
     </p>
 
     @if (!mfaEnabled() && !setupStarted()) {
-    <div>
-      <!-- MFA Setup Introduction -->
-      <div class="intro-section">
-        <div class="icon-container">
-          <i class="pi pi-shield"></i>
-        </div>
-        <h2>Enhance Your Account Security</h2>
-        <p>
-          Two-factor authentication adds an extra layer of security to your
-          account by requiring not only your password but also a code from your
-          phone when you log in.
-        </p>
-        <div class="benefits">
-          <div class="benefit-item">
-            <i class="pi pi-lock"></i>
-            <span>Protect against unauthorized access</span>
-          </div>
-          <div class="benefit-item">
-            <i class="pi pi-mobile"></i>
-            <span>Use your smartphone as a security key</span>
-          </div>
-          <div class="benefit-item">
+      <div>
+        <!-- MFA Setup Introduction -->
+        <div class="intro-section">
+          <div class="icon-container">
             <i class="pi pi-shield"></i>
-            <span>Guard against password theft</span>
           </div>
+          <h2>Enhance Your Account Security</h2>
+          <p>
+            Two-factor authentication adds an extra layer of security to your
+            account by requiring not only your password but also a code from
+            your phone when you log in.
+          </p>
+          <div class="benefits">
+            <div class="benefit-item">
+              <i class="pi pi-lock"></i>
+              <span>Protect against unauthorized access</span>
+            </div>
+            <div class="benefit-item">
+              <i class="pi pi-mobile"></i>
+              <span>Use your smartphone as a security key</span>
+            </div>
+            <div class="benefit-item">
+              <i class="pi pi-shield"></i>
+              <span>Guard against password theft</span>
+            </div>
+          </div>
+          <p-button
+            (onClick)="startMfaSetup()"
+            label="Set Up Two-Factor Authentication"
+            icon="pi pi-lock"
+            [style]="{ width: '100%' }"
+            styleClass="p-button-primary mfa-button"
+          ></p-button>
         </div>
-        <p-button
-          label="Set Up Two-Factor Authentication"
-          icon="pi pi-lock"
-          [style]="{ width: '100%' }"
-          (click)="startMfaSetup()"
-          styleClass="p-button-primary mfa-button"
-        >
-        </p-button>
       </div>
-    </div>
     }
 
     <!-- MFA Setup Process -->
     @if (!mfaEnabled() && setupStarted()) {
-    <div class="setup-process">
-      @if (step() === 1) {
-      <div class="setup-step">
-        <h3>Step 1: Scan QR Code</h3>
-        <p>
-          Scan this QR code with your authenticator app (like Google
-          Authenticator or Authy)
-        </p>
-        <div class="qr-container">
-          <!-- Updated to use our ImagePreloadDirective -->
-          @if (qrCodeUrl()) {
-          <img
-            [src]="qrCodeUrl()"
-            alt="QR Code for MFA Setup"
-            appImagePreload
-            fallback="/images/image.png"
-            (loaded)="onQrCodeLoaded($event)"
-          />
-          } @if (!qrCodeUrl() && isLoading()) {
-          <p-progressSpinner></p-progressSpinner>
-          }
-        </div>
-        <div class="manual-setup">
-          <p>Or enter this code manually in your app:</p>
-          <div class="secret-key">{{ secretKey() }}</div>
-        </div>
-        <p-button
-          label="Next"
-          icon="pi pi-arrow-right"
-          iconPos="right"
-          [style]="{ width: '100%' }"
-          (click)="nextStep()"
-          [disabled]="!secretKey()"
-          styleClass="p-button-primary mfa-button"
-        >
-        </p-button>
-      </div>
-      } @if (step() === 2) {
-      <div class="setup-step">
-        <h3>Step 2: Verify Setup</h3>
-        <p>
-          Enter the 6-digit code from your authenticator app to verify the setup
-        </p>
-        <div class="input-container">
-          <i class="pi pi-key"></i>
-          <input
-            type="text"
-            pInputText
-            [ngModel]="otpCode()"
-            (ngModelChange)="otpCode.set($event)"
-            placeholder="Enter 6-digit code"
-            maxlength="6"
-          />
-        </div>
-        @if (errorMessage()) {
-        <div class="error-message">
-          <p-message severity="error" [text]="errorMessage()"></p-message>
-        </div>
-        }
-        <div class="button-group w-100">
-          <p-button
-            label="Back"
-            icon="pi pi-arrow-left"
-            [style]="{ width: '100%' }"
-            (click)="previousStep()"
-            styleClass="p-button-outlined mfa-button"
-          >
-          </p-button>
-          <p-button
-            label="{{ isLoading() ? 'Verifying...' : 'Enable 2FA' }}"
-            icon="pi pi-check"
-            iconPos="right"
-            [style]="{ width: '100%' }"
-            (click)="enableMfa()"
-            [disabled]="otpCode().length !== 6 || isLoading()"
-            styleClass="p-button-primary mfa-button"
-          >
-            @if (isLoading()) {
-            <p-progressSpinner
-              [style]="{ width: '20px', height: '20px' }"
-              styleClass="custom-spinner"
-              strokeWidth="4"
-            ></p-progressSpinner>
-            }
-          </p-button>
-        </div>
-      </div>
-      }
-      <!-- Step 3: Recovery Codes -->
-      @if (step() === 3) {
-      <div class="setup-step">
-        <h3>Step 3: Save Your Recovery Codes</h3>
-        <p>
-          Please save these recovery codes in a secure location. You will need
-          them to access your account if you lose your authenticator device.
-        </p>
-        <div class="recovery-codes-container">
-          <div class="recovery-codes">
-            @for (code of recoveryCodes(); track code) {
-            <div class="code">
-              {{ code }}
+      <div class="setup-process">
+        @if (step() === 1) {
+          <div class="setup-step">
+            <h3>Step 1: Scan QR Code</h3>
+            <p>
+              Scan this QR code with your authenticator app (like Google
+              Authenticator or Authy)
+            </p>
+            <div class="qr-container">
+              <!-- Updated to use our ImagePreloadDirective -->
+              @if (qrCodeUrl()) {
+                <img
+                  (load)="onQrCodeLoaded($event)"
+                  [src]="qrCodeUrl()"
+                  alt="QR Code for MFA Setup"
+                  appImagePreload
+                  fallback="/images/image.png"
+                />
+              }
+              @if (!qrCodeUrl() && isLoading()) {
+                <p-progressSpinner></p-progressSpinner>
+              }
             </div>
-            }
+            <div class="manual-setup">
+              <p>Or enter this code manually in your app:</p>
+              <div class="secret-key">{{ secretKey() }}</div>
+            </div>
+            <button
+              pButton
+              (click)="nextStep()"
+              label="Next"
+              icon="pi pi-arrow-right"
+              iconPos="right"
+              [style]="{ width: '100%' }"
+              [disabled]="!secretKey()"
+              styleClass="p-button-primary mfa-button"
+            ></button>
           </div>
-        </div>
-        <p class="warning-text">
-          <i class="pi pi-exclamation-triangle"></i>
-          Each code can only be used once. Keep these codes secure!
-        </p>
-        <div class="button-group">
-          <p-button
-            label="Back"
-            icon="pi pi-arrow-left"
-            [style]="{ width: '100%' }"
-            (click)="previousStep()"
-            styleClass="p-button-outlined mfa-button"
-          >
-          </p-button>
-          <p-button
-            label="Finish Setup"
-            icon="pi pi-check"
-            iconPos="right"
-            [style]="{ width: '100%' }"
-            (click)="finishSetup()"
-            styleClass="p-button-primary mfa-button"
-          >
-          </p-button>
-        </div>
+        }
+        @if (step() === 2) {
+          <div class="setup-step">
+            <h3>Step 2: Verify Setup</h3>
+            <p>
+              Enter the 6-digit code from your authenticator app to verify the
+              setup
+            </p>
+            <div class="input-container">
+              <i class="pi pi-key"></i>
+              <input
+                type="text"
+                pInputText
+                [(ngModel)]="otpCode"
+                placeholder="Enter 6-digit code"
+                maxlength="6"
+              />
+            </div>
+            @if (errorMessage()) {
+              <div class="error-message">
+                <p-message severity="error" [text]="errorMessage()"></p-message>
+              </div>
+            }
+            <div class="button-group w-100">
+              <button
+                pButton
+                (click)="previousStep()"
+                label="Back"
+                icon="pi pi-arrow-left"
+                [style]="{ width: '100%' }"
+                styleClass="p-button-outlined mfa-button"
+              ></button>
+              <button
+                pButton
+                (click)="enableMfa()"
+                label="{{ isLoading() ? 'Verifying...' : 'Enable 2FA' }}"
+                icon="pi pi-check"
+                iconPos="right"
+                [style]="{ width: '100%' }"
+                [disabled]="otpCode().length !== 6 || isLoading()"
+                styleClass="p-button-primary mfa-button"
+              >
+                @if (isLoading()) {
+                  <p-progressSpinner
+                    [style]="{ width: '20px', height: '20px' }"
+                    styleClass="custom-spinner"
+                    strokeWidth="4"
+                  ></p-progressSpinner>
+                }
+              </button>
+            </div>
+          </div>
+        }
+        <!-- Step 3: Recovery Codes -->
+        @if (step() === 3) {
+          <div class="setup-step">
+            <h3>Step 3: Save Your Recovery Codes</h3>
+            <p>
+              Please save these recovery codes in a secure location. You will
+              need them to access your account if you lose your authenticator
+              device.
+            </p>
+            <div class="recovery-codes-container">
+              <div class="recovery-codes">
+                @for (code of recoveryCodes(); track code) {
+                  <div class="code">
+                    {{ code }}
+                  </div>
+                }
+              </div>
+            </div>
+            <p class="warning-text">
+              <i class="pi pi-exclamation-triangle"></i>
+              Each code can only be used once. Keep these codes secure!
+            </p>
+            <div class="button-group">
+              <button
+                pButton
+                (click)="previousStep()"
+                label="Back"
+                icon="pi pi-arrow-left"
+                [style]="{ width: '100%' }"
+                styleClass="p-button-outlined mfa-button"
+              ></button>
+              <button
+                pButton
+                (click)="finishSetup()"
+                label="Finish Setup"
+                icon="pi pi-check"
+                iconPos="right"
+                [style]="{ width: '100%' }"
+                styleClass="p-button-primary mfa-button"
+              ></button>
+            </div>
+          </div>
+        }
       </div>
-      }
-    </div>
     }
 
     <!-- MFA Management (when already enabled) -->
     @if (mfaEnabled()) {
-    <div class="mfa-management">
-      <div class="status-active">
-        <i class="pi pi-check-circle"></i>
-        <h3>Two-Factor Authentication is Active</h3>
-        <p>
-          Your account is currently protected with two-factor authentication.
-        </p>
-      </div>
-      <div class="disable-section">
-        <h4>Disable Two-Factor Authentication</h4>
-        <p>
-          You'll need to enter your password to disable two-factor
-          authentication.
-        </p>
-        <div class="input-container">
-          <i class="pi pi-lock"></i>
-          <input
-            type="password"
-            pInputText
-            [ngModel]="password()"
-            (ngModelChange)="password.set($event)"
-            placeholder="Enter your password"
-          />
+      <div class="mfa-management">
+        <div class="status-active">
+          <i class="pi pi-check-circle"></i>
+          <h3>Two-Factor Authentication is Active</h3>
+          <p>
+            Your account is currently protected with two-factor authentication.
+          </p>
         </div>
-        @if (errorMessage()) {
-        <div class="error-message">
-          <p-message severity="error" [text]="errorMessage()"></p-message>
-        </div>
-        }
-        <p-button
-          label="{{ isLoading() ? 'Processing...' : 'Disable 2FA' }}"
-          icon="pi pi-times"
-          [style]="{ width: '100%' }"
-          (click)="disableMfa()"
-          [disabled]="password() === '' || isLoading()"
-          styleClass="p-button-danger mfa-button"
-        >
-          @if (isLoading()) {
-          <p-progressSpinner
-            [style]="{ width: '20px', height: '20px' }"
-            styleClass="custom-spinner"
-            strokeWidth="4"
-          ></p-progressSpinner>
+        <div class="disable-section">
+          <h4>Disable Two-Factor Authentication</h4>
+          <p>
+            You'll need to enter your password to disable two-factor
+            authentication.
+          </p>
+          <div class="input-container">
+            <i class="pi pi-lock"></i>
+            <input
+              type="password"
+              pInputText
+              [(ngModel)]="password"
+              placeholder="Enter your password"
+            />
+          </div>
+          @if (errorMessage()) {
+            <div class="error-message">
+              <p-message severity="error" [text]="errorMessage()"></p-message>
+            </div>
           }
-        </p-button>
+          <button
+            pButton
+            (click)="disableMfa()"
+            label="{{ isLoading() ? 'Processing...' : 'Disable 2FA' }}"
+            icon="pi pi-times"
+            [style]="{ width: '100%' }"
+            [disabled]="password() === '' || isLoading()"
+            styleClass="p-button-danger mfa-button"
+          >
+            @if (isLoading()) {
+              <p-progressSpinner
+                [style]="{ width: '20px', height: '20px' }"
+                class="custom-spinner"
+                strokeWidth="4"
+              ></p-progressSpinner>
+            }
+          </button>
+        </div>
       </div>
-    </div>
     }
 
     <div class="back-link">

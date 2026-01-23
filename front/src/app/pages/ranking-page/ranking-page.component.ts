@@ -3,24 +3,24 @@ import {
   OnInit,
   signal,
   inject,
-  computed,
   ChangeDetectionStrategy,
+  viewChild,
+  ElementRef,
+  afterNextRender,
+  DestroyRef,
 } from '@angular/core';
+import { fromEvent } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { CardModule } from 'primeng/card';
 import { TableModule } from 'primeng/table';
 import { AvatarModule } from 'primeng/avatar';
 import { SkeletonModule } from 'primeng/skeleton';
 import { MessageModule } from 'primeng/message';
-import { NotificationsApiService } from '../../services/notifications-api.service';
-import { NotificationDataAnyOf1RankingsInner } from '../../services/Api/model/notificationDataAnyOf1RankingsInner';
+import { NotificationsStateService } from '../../services/notifications-state.service';
 import { UserService } from '../../services/Api';
 import { MedalIconPipe } from '../../shared/pipes/medal-icon.pipe';
 import { InitialsPipe } from '../../shared/pipes/initials.pipe';
-
-interface RankingUser extends NotificationDataAnyOf1RankingsInner {
-  rank?: number;
-}
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-ranking-page',
@@ -40,20 +40,35 @@ interface RankingUser extends NotificationDataAnyOf1RankingsInner {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RankingPageComponent implements OnInit {
-  private readonly notificationsService = inject(NotificationsApiService);
+  private readonly notificationsState = inject(NotificationsStateService);
   private readonly userController = inject(UserService);
+  private reloadBtn = viewChild<ElementRef<HTMLButtonElement>>('reloadBtn');
+
   // Signals for reactive state management
-  rankings = signal<RankingUser[]>([]);
   loading = signal<boolean>(true);
   error = signal<string | null>(null);
 
-  // Computed signals
-  topThree = computed(() => this.rankings().slice(0, 3));
-  remainingRankings = computed(() => this.rankings().slice(3));
+  // Get rankings from state service
+  rankings = this.notificationsState.rankings;
+  topThree = this.notificationsState.topThreeRankings;
+  remainingRankings = this.notificationsState.remainingRankings;
+
+  private readonly destroyRef = inject(DestroyRef);
+  constructor() {
+    afterNextRender(() => {
+      const btnElement = this.reloadBtn()?.nativeElement;
+      if (btnElement) {
+        fromEvent(btnElement, 'click')
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe(() => {
+            this.loadRankings();
+          });
+      }
+    });
+  }
 
   ngOnInit(): void {
     this.loadRankings();
-    this.subscribeToRankingUpdates();
   }
 
   private loadRankings(): void {
@@ -62,8 +77,8 @@ export class RankingPageComponent implements OnInit {
 
     this.userController.userControllerGetRankings().subscribe({
       next: (rankings) => {
-        this.rankings.set(
-          rankings.map((user, index) => ({ ...user, rank: index + 1 }))
+        this.notificationsState.setRankings(
+          rankings.map((user, index) => ({ ...user, rank: index + 1 })),
         );
         this.loading.set(false);
       },
@@ -71,27 +86,6 @@ export class RankingPageComponent implements OnInit {
         console.error('Error loading rankings:', err);
         this.error.set('Failed to load rankings. Please try again later.');
         this.loading.set(false);
-      },
-    });
-  }
-
-  private subscribeToRankingUpdates(): void {
-    this.notificationsService.connectToSSE().subscribe({
-      next: (notification) => {
-        if (notification.type === 'RANKING_UPDATE' && notification.data) {
-          const data = notification.data;
-          if (data.rankings) {
-            this.rankings.set(
-              data.rankings.map((user: RankingUser, index: number) => ({
-                ...user,
-                rank: index + 1,
-              }))
-            );
-          }
-        }
-      },
-      error: (err) => {
-        console.error('SSE connection error:', err);
       },
     });
   }

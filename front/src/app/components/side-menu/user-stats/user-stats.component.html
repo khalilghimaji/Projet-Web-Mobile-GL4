@@ -1,0 +1,30 @@
+<div
+  class="user-stats-container"
+  [class.desktop]="context() === 'desktop'"
+  [class.mobile]="context() === 'mobile'"
+>
+  <div class="diamonds-display-wrapper">
+    <i class="pi pi-diamond"></i>
+    <span class="diamonds-count">{{ diamonds() }}</span>
+    @if (gainedDiamonds() !== 0) {
+      <span
+        class="diamonds-change"
+        [class.positive]="gainedDiamonds() > 0"
+        [class.negative]="gainedDiamonds() < 0"
+      >
+        <i
+          class="pi"
+          [class.pi-arrow-up]="gainedDiamonds() > 0"
+          [class.pi-arrow-down]="gainedDiamonds() < 0"
+        ></i>
+        {{ gainedDiamonds() > 0 ? "+" : "" }}{{ gainedDiamonds() }}
+      </span>
+    }
+  </div>
+  <div class="notifications-container" [routerLink]="'/notifications'">
+    <i class="pi pi-bell"></i>
+    @if (unreadNotificationsCount() > 0) {
+      <span class="notification-badge">{{ unreadNotificationsCount() }}</span>
+    }
+  </div>
+</div>

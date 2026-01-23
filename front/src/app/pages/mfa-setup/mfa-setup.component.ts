@@ -2,7 +2,6 @@ import {
   Component,
   OnInit,
   signal,
-  computed,
   inject,
   ChangeDetectionStrategy,
 } from '@angular/core';
@@ -15,7 +14,6 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { MessageModule } from 'primeng/message';
 import { AuthService } from '../../services/auth.service';
 import { NotificationService } from '../../services/notification.service';
-import { toSignal } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-mfa-setup',
@@ -35,8 +33,8 @@ import { toSignal } from '@angular/core/rxjs-interop';
 export class MfaSetupComponent implements OnInit {
   private readonly authService = inject(AuthService);
   // State signals
-  userProfile = toSignal(this.authService.currentUser$);
-  mfaEnabled = computed(() => this.userProfile()?.isMFAEnabled || false);
+  userProfile = this.authService.currentUser;
+  mfaEnabled = this.authService.hasOtpEnabled;
 
   setupStarted = signal(false);
   step = signal(1);
@@ -51,8 +49,9 @@ export class MfaSetupComponent implements OnInit {
 
   constructor(
     private notificationService: NotificationService,
-    private router: Router
-  ) {}
+    private router: Router,
+  ) {
+  }
 
   ngOnInit(): void {
     if (!this.authService.isAuthenticated()) {
@@ -86,7 +85,7 @@ export class MfaSetupComponent implements OnInit {
       error: (error) => {
         this.errorMessage.set(
           error.error?.message ||
-            'Failed to generate MFA secret. Please try again.'
+            'Failed to generate MFA secret. Please try again.',
         );
         this.isLoading.set(false);
       },
@@ -136,7 +135,7 @@ export class MfaSetupComponent implements OnInit {
       error: (error) => {
         this.isLoading.set(false);
         this.errorMessage.set(
-          error.error?.message || 'Failed to enable MFA. Please try again.'
+          error.error?.message || 'Failed to enable MFA. Please try again.',
         );
       },
     });
@@ -144,7 +143,7 @@ export class MfaSetupComponent implements OnInit {
 
   finishSetup(): void {
     this.notificationService.showSuccess(
-      'Two-factor authentication enabled successfully'
+      'Two-factor authentication enabled successfully',
     );
     this.setupStarted.set(false);
     this.step.set(1);
@@ -155,7 +154,7 @@ export class MfaSetupComponent implements OnInit {
   disableMfa(): void {
     if (!this.password()) {
       this.errorMessage.set(
-        'Password is required to disable two-factor authentication'
+        'Password is required to disable two-factor authentication',
       );
       return;
     }
@@ -168,7 +167,7 @@ export class MfaSetupComponent implements OnInit {
         this.isLoading.set(false);
         if (response.success) {
           this.notificationService.showSuccess(
-            'Two-factor authentication disabled successfully'
+            'Two-factor authentication disabled successfully',
           );
           this.setupStarted.set(false);
           this.password.set('');
@@ -181,7 +180,7 @@ export class MfaSetupComponent implements OnInit {
       error: (error) => {
         this.isLoading.set(false);
         this.errorMessage.set(
-          error.error?.message || 'Failed to disable MFA. Please try again.'
+          error.error?.message || 'Failed to disable MFA. Please try again.',
         );
       },
     });

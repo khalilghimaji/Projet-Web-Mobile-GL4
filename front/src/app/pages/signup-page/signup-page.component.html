@@ -46,6 +46,7 @@
           style="margin-bottom: 20px; text-align: center"
         >
           <div
+            #profileImagePreviewId
             class="profile-image-preview"
             style="
               width: 100px;
@@ -61,7 +62,6 @@
               border: 2px dashed #9c7350;
               cursor: pointer;
             "
-            (click)="profileImageInput.click()"
             [style.background-image]="
               profileImagePreview()
                 ? 'url(' + profileImagePreview() + ')'
@@ -71,7 +71,7 @@
             [style.background-position]="'center'"
           >
             @if (!profileImagePreview()) {
-            <i class="pi pi-user" style="font-size: 2rem; color: #9c7350"></i>
+              <i class="pi pi-user" style="font-size: 2rem; color: #9c7350"></i>
             }
           </div>
           <input
@@ -79,7 +79,6 @@
             type="file"
             style="display: none"
             accept="image/*"
-            (change)="onProfileImageSelected($event)"
             formControlName="profileImage"
           />
           <p style="margin-top: 10px; font-size: 12px; color: #525252">
@@ -225,16 +224,16 @@
 
         <!-- Error message area -->
         @if (errorMessage()) {
-        <div
-          class="error-container"
-          style="margin-bottom: 15px; text-align: center"
-        >
-          <p-message
-            severity="error"
-            [text]="errorMessage()"
-            styleClass="w-full"
-          ></p-message>
-        </div>
+          <div
+            class="error-container"
+            style="margin-bottom: 15px; text-align: center"
+          >
+            <p-message
+              severity="error"
+              [text]="errorMessage()"
+              styleClass="w-full"
+            ></p-message>
+          </div>
         }
 
         <!-- Terms checkbox - updated styling -->
@@ -267,17 +266,17 @@
             height: '57px',
             fontSize: '16px',
             fontWeight: '600',
-            opacity: signupForm.invalid || isLoading() ? '0.8' : '1'
+            opacity: signupForm.invalid || isLoading() ? '0.8' : '1',
           }"
           styleClass="p-button-rounded"
         >
           @if (isLoading()) {
-          <p-progressSpinner
-            [style]="{ width: '20px', height: '20px' }"
-            styleClass="custom-spinner"
-            strokeWidth="4"
-          >
-          </p-progressSpinner>
+            <p-progressSpinner
+              [style]="{ width: '20px', height: '20px' }"
+              styleClass="custom-spinner"
+              strokeWidth="4"
+            >
+            </p-progressSpinner>
           }
         </p-button>
 
@@ -328,7 +327,9 @@
               (mouseenter)="facebookHovered = true"
               (mouseleave)="facebookHovered = false"
             ></p-button>-->
-            <p-button
+            <button
+              pButton
+              #googleButton
               type="button"
               [style]="{
                 backgroundColor: 'white',
@@ -340,16 +341,17 @@
                 width: '100%',
                 transition: 'all 0.2s ease',
                 boxShadow: '0 6px 10px rgba(0, 0, 0, 0.15)',
-                transform: 'translateY(-2px)'
+                transform: 'translateY(-2px)',
               }"
               styleClass="google-btn"
               label="Sign In with Google"
               icon="pi pi-google"
               [outlined]="true"
-              (click)="loginWithGoogle()"
-            ></p-button>
+            ></button>
 
-            <p-button
+            <button
+              pButton
+              #githubButton
               type="button"
               [style]="{
                 backgroundColor: '#24292e',
@@ -359,13 +361,12 @@
                 fontWeight: 'normal',
                 width: '100%',
                 transition: 'all 0.2s ease',
-                marginTop: '10px'
+                marginTop: '10px',
               }"
               styleClass="github-btn"
               label="Sign In with GitHub"
               icon="pi pi-github"
-              (click)="loginWithGithub()"
-            ></p-button>
+            ></button>
           </div>
 
           <a

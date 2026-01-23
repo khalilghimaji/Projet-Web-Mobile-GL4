@@ -10,16 +10,21 @@ import {
 import { MatchesService } from './matches.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { User } from '../Decorator/user.decorator';
-import { TerminateMatchDto } from './dto/terminate-match.dto';
 import { PredictDto } from './dto/predict.dto';
 import { CanPredictMatchDto } from './dto/can-predict-match.dto';
 import { UpdatePredictionDto } from './dto/update-prediction.dto';
 import { Prediction } from './entities/prediction.entity';
+import { MatchStat } from './dto/get-match-stats-info.dto';
+import { TerminateMatchDto } from './dto/terminate-match.dto';
+import { RedisCacheService } from 'src/Common/cache/redis-cache.service';
 
 @Controller('matches')
 @UseGuards(JwtAuthGuard)
 export class MatchesController {
-  constructor(private readonly matchesService: MatchesService) {}
+  constructor(
+    private readonly matchesService: MatchesService,
+    private readonly cacheService: RedisCacheService,
+  ) {}
 
   @Post('can-predict/:id')
   async canPredict(
@@ -33,6 +38,13 @@ export class MatchesController {
       matchId,
       boy.numberOfDiamondsBet,
     );
+  }
+
+  @Get('match-stats-info/:id')
+  async getPredictionsStatsForMatch(
+    @Param('id') matchId: string,
+  ): Promise<MatchStat> {
+    return this.matchesService.getPredictionsStatsForMatch(matchId);
   }
 
   @Get(':id/prediction')
@@ -80,5 +92,32 @@ export class MatchesController {
       body.scoreSecond,
       body.numberOfDiamondsBet,
     );
+  }
+
+  @Post(':id/update-match')
+  async updateMatch(
+    @Param('id') id: string,
+    @Body()
+    body: TerminateMatchDto,
+  ): Promise<void> {
+    return this.matchesService.updateMatch(
+      id,
+      body.scoreFirst,
+      body.scoreSecond,
+    );
+  }
+
+  @Post(':id/end-match')
+  async endMatch(
+    @Param('id') id: string,
+    @Body()
+    body: TerminateMatchDto,
+  ): Promise<void> {
+    return this.matchesService.endMatch(id, body.scoreFirst, body.scoreSecond);
+  }
+
+  @Get('user/gains')
+  async getUserGains(@User('id') userId: string): Promise<number> {
+    return (await this.cacheService.getUserGains(userId)) ?? 0;
   }
 }

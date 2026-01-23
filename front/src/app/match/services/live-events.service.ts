@@ -1,22 +1,21 @@
-import { defer, Observable, share } from 'rxjs';
-import { webSocket } from 'rxjs/webSocket';
-import { MatchEvent } from '../types/timeline.types';
-import { Injectable } from '@angular/core';
+import {defer, Observable, share} from 'rxjs';
+import {webSocket} from 'rxjs/webSocket';
+import {MatchEvent} from '../types/timeline.types';
+import {Injectable} from '@angular/core';
 
 @Injectable({ providedIn: 'root' })
 export class LiveEventsService {
   private readonly closeDelayMs = 300;
-  private wsUrl = 'wss://example.com/live'; // Default URL
 
   private socket$ = defer(() => {
-    console.log('WS CONNECT to:', this.wsUrl);
-    return webSocket<MatchEvent>(this.wsUrl);
+    console.log('WS CONNECT');
+    return webSocket<MatchEvent>(process.env['WS_API_URL']!);
   });
 
   private subscribers = 0;
   private closeTimer: any = null;
 
-  readonly events$ = new Observable<MatchEvent>(observer => {
+  readonly events$ = new Observable<any>(observer => {
     this.subscribers++;
 
     if (this.closeTimer) {
