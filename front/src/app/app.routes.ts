@@ -17,9 +17,9 @@ export const routes: Routes = [
   {
     path: 'team/:id',
     loadComponent: () =>
-      import('./components/team-detail-page/team-detail-page.component').then(
-        (c) => c.TeamDetailPageComponent
-      ),
+      import(
+        './team-details/pages/team-detail-page/team-detail-page.component'
+      ).then((c) => c.TeamDetailPageComponent),
   },
 
   {
