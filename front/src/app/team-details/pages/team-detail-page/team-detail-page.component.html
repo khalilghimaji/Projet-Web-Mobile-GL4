@@ -49,13 +49,13 @@
         class="load-more-btn"
         (click)="loadMoreMatches()"
       >
-        Load More Matches (Next 15 days)
+        Load More Matches (Next 30 days)
       </button>
 
     </div>
     } @else {
     <p class="no-more-matches">
-      No more matches available (showing last {{ realDaysOffset() + 15 }} days)
+      No more matches available
     </p>
     } } @else {
     <p class="no-matches">No recent matches found</p>

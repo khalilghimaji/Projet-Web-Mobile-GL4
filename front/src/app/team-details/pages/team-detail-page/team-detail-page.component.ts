@@ -43,8 +43,8 @@ export class TeamDetailPageComponent {
   id = input.required<number>();
   teamId = computed(() => Number(this.id()));
 
-  private readonly DAYS_PER_PAGE = 15;
-  private readonly MAX_DAYS = 100;
+  private readonly DAYS_PER_PAGE = 30;
+  private readonly MAX_DAYS = 120;
 
   //fetching team + players
   teamResource = this.teamService.getTeamResource(this.id);
@@ -54,36 +54,23 @@ export class TeamDetailPageComponent {
 
   // fecthing recent matches
 
-  realDaysOffset = signal(0);
   hasMoreToLoad = computed(() => this.realDaysOffset() < this.MAX_DAYS);
 
-  accumulatedMatches = linkedSignal<Fixture[] | undefined, Fixture[]>({
-    source: () => this.recentMatchesResource.value(),
-    computation: (newMatches, previous) => {
-      const currentMatches = previous?.value ?? [];
-      if (!newMatches || newMatches.length === 0) return currentMatches;
-
-      return [...currentMatches, ...newMatches];
+  realDaysOffset = linkedSignal({
+    source: () => this.id(),
+    computation: () => {
+      console.log('resetting');
+      return 0;
     },
   });
 
-  constructor() {
-    // reset pagination when team changes
-    effect(() => {
-      this.id();
-      this.realDaysOffset.set(0);
-      this.accumulatedMatches.set([]);
-    });
-  }
-
   recentMatchesResource = this.teamService.getRecentMatchesResource(
-      this.id,
-      computed(() => this.realDaysOffset() + this.DAYS_PER_PAGE),
-      this.realDaysOffset
-    );
+    this.id,
+    computed(() => this.realDaysOffset() + this.DAYS_PER_PAGE),
+    this.realDaysOffset
+  );
 
-
-  //load next batch of matches (15 more days)
+  //load next batch of matches (30 more days)
 
   loadMoreMatches(): void {
     if (this.hasMoreToLoad() && !this.recentMatchesResource.isLoading()) {
@@ -105,4 +92,44 @@ export class TeamDetailPageComponent {
       this.router.navigate(['/team', prevId]);
     }
   }
+
+  accumulatedMatches = linkedSignal<
+    { id: number; matches: Fixture[] | undefined },
+    Fixture[]
+  >({
+    source: () => ({
+      id: this.id(),
+      matches: this.recentMatchesResource.value(),
+    }),
+    computation: (source, previous) => {
+      // if we have a new team
+      const isNewTeam = previous && source.id !== previous.source.id;
+
+      if (isNewTeam) {
+        return source.matches ?? [];
+      }
+
+      // if the resource value still undefined because off fetching
+      if (!source.matches) {
+        return previous ? previous.value : [];
+      }
+
+      console.log(previous!.value, 'then vs now', source.matches);
+
+      //appending new matches
+
+      const existing = previous!.value;
+
+      const newUniqueMatches = source.matches.filter(
+        (newM) => !existing.find((oldM) => oldM.event_key === newM.event_key)
+      );
+
+      
+      const updatedList = [...existing, ...newUniqueMatches];
+
+      
+
+      return updatedList;
+    },
+  });
 }
