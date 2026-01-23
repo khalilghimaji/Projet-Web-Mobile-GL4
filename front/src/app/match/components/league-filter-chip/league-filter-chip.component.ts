@@ -1,6 +1,9 @@
-import { Component, ChangeDetectionStrategy, input, output, computed } from '@angular/core';
+import { Component, ChangeDetectionStrategy, input, output, computed, viewChild, ElementRef, DestroyRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { League } from '../../types/fixture.types';
+import { fromEvent, of } from 'rxjs';
+import { switchMap, filter } from 'rxjs/operators';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-league-filter-chip',
@@ -15,6 +18,9 @@ export class LeagueFilterChipComponent {
   selectedLeagueId = input.required<string>();
   chipClicked = output<string>();
 
+  private destroyRef = inject(DestroyRef);
+  chipButtonRef = viewChild<ElementRef>('chipButton');
+
   isAllLeagues = computed(() => this.league() === null);
 
   isSelected = computed(() => {
@@ -27,5 +33,24 @@ export class LeagueFilterChipComponent {
 
     return league.league_key === selectedId;
   });
+
+  constructor() {
+    // Optimisation fromEvent pour les clics sur le chip
+    toObservable(this.chipButtonRef)
+      .pipe(
+        switchMap((ref) => {
+          if (!ref?.nativeElement) return of(null);
+          return fromEvent<MouseEvent>(ref.nativeElement, 'click').pipe(
+            takeUntilDestroyed(this.destroyRef)
+          );
+        }),
+        filter((event): event is MouseEvent => event !== null)
+      )
+      .subscribe(() => {
+        const league = this.league();
+        const leagueId = league === null ? 'all' : league.league_key;
+        this.chipClicked.emit(leagueId);
+      });
+  }
 }
 

@@ -1,5 +1,6 @@
 @if (isAllLeagues()) {
   <button
+    #chipButton
     class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full px-5 shadow-sm transition active:scale-95"
     [class.bg-white]="isSelected()"
     [class.text-background-dark]="isSelected()"
@@ -8,7 +9,6 @@
     [class.border-white[5]="!isSelected()"
     [class.text-text-secondary]="!isSelected()"
     [class.hover:text-white]="!isSelected()"
-    (click)="chipClicked.emit('all')"
   >
     <span class="text-sm" [class.font-bold]="isSelected()" [class.font-medium]="!isSelected()">
       All Leagues
@@ -16,6 +16,7 @@
   </button>
 } @else {
   <button
+    #chipButton
     class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full px-4 transition active:scale-95"
     [class.bg-primary[20]="isSelected()"
     [class.border-primary]="isSelected()"
@@ -27,7 +28,6 @@
     [class.hover:text-white]="!isSelected()"
     [class.font-medium]="!isSelected()"
     [class.border]="true"
-    (click)="chipClicked.emit(league()?.league_key || '')"
   >
     @if (league()?.league_logo) {
       <img

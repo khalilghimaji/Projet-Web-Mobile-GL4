@@ -1,10 +1,13 @@
-import { Component, ChangeDetectionStrategy, signal, computed, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, computed, inject, viewChild, ElementRef, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { FixturesResourceFactory } from '../../services/fixtures-resource.factory';
 import { FixtureCardComponent } from '../../components/fixture-card/fixture-card.component';
 import { LeagueFilterChipComponent } from '../../components/league-filter-chip/league-filter-chip.component';
 import { ParsedFixture, DateTab, FixturesByLeague, FixtureStatus } from '../../types/fixture.types';
+import { fromEvent, of } from 'rxjs';
+import { switchMap, filter, map } from 'rxjs/operators';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-fixtures',
@@ -22,6 +25,9 @@ import { ParsedFixture, DateTab, FixturesByLeague, FixtureStatus } from '../../t
 export class FixturesPage {
   private router = inject(Router);
   private fixturesFactory = inject(FixturesResourceFactory);
+  private destroyRef = inject(DestroyRef);
+
+  dateTabsContainerRef = viewChild<ElementRef>('dateTabsContainer');
 
   selectedDate = signal<Date>(new Date());
   selectedLeagueId = signal<string>('all');
@@ -92,6 +98,31 @@ export class FixturesPage {
 
     return Array.from(grouped.values());
   });
+
+  constructor() {
+    // Optimisation fromEvent pour date selection
+    toObservable(this.dateTabsContainerRef)
+      .pipe(
+        switchMap((ref) => {
+          if (!ref?.nativeElement) return of(null);
+          return fromEvent<MouseEvent>(ref.nativeElement, 'click').pipe(
+            takeUntilDestroyed(this.destroyRef)
+          );
+        }),
+        filter((event): event is MouseEvent => event !== null),
+        map((event) => {
+          const target = event.target as HTMLElement;
+          const button = target.closest('.date-tab-button') as HTMLElement;
+          if (!button) return null;
+          const dateStr = button.getAttribute('data-date');
+          return dateStr ? new Date(dateStr) : null;
+        }),
+        filter((date): date is Date => date !== null)
+      )
+      .subscribe((date) => {
+        this.onDateSelected(date);
+      });
+  }
 
   onDateSelected(date: Date): void {
     console.log('Date selected:', date.toDateString());

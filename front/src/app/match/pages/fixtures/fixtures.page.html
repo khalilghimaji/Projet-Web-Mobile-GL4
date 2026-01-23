@@ -32,15 +32,15 @@
         </div>
       </div>
 
-      <div class="grid grid-cols-5 gap-3">
+      <div #dateTabsContainer class="grid grid-cols-5 gap-3">
         @for (tab of dateTabs(); track tab.date) {
           <button
-            class="flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-200"
+            class="date-tab-button flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-200"
             [ngClass]="{
               'bg-primary text-background-dark shadow-lg shadow-primary/30': isSelected(tab),
               'bg-surface-highlight/30 text-text-secondary hover:bg-surface-highlight hover:text-white': !isSelected(tab)
             }"
-            (click)="onDateSelected(tab.date)"
+            [attr.data-date]="tab.date.toISOString()"
           >
             <span class="text-xs font-medium mb-1" [class.font-bold]="isSelected(tab)">
               {{ tab.isToday ? 'Today' : tab.dayName }}
