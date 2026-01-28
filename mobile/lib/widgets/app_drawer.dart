@@ -8,78 +8,369 @@ class AppDrawer extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(userDataProvider);
+
     return Drawer(
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          const DrawerHeader(
-            decoration: BoxDecoration(color: Colors.blue),
-            child: Text(
-              'KickStream Menu',
-              style: TextStyle(color: Colors.white, fontSize: 24),
+      child: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF1a237e), // Deep blue
+              Color(0xFF3949ab), // Medium blue
+              Color(0xFF5e35b1), // Purple accent
+            ],
+          ),
+        ),
+        child: Column(
+          children: [
+            // Enhanced Header
+            Container(
+              height: 180,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFF1976d2), // Bright blue
+                    Color(0xFF42a5f5), // Light blue
+                    Color(0xFF1e88e5), // Medium blue
+                  ],
+                ),
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(30),
+                  bottomRight: Radius.circular(30),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 10,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
+              ),
+              child: Stack(
+                children: [
+                  Positioned(
+                    top: 50,
+                    left: 20,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'KickStream',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Mobile App',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.8),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w300,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Positioned(
+                    top: 40,
+                    right: 20,
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Icon(
+                        Icons.sports_soccer,
+                        color: Colors.white,
+                        size: 32,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
+            const SizedBox(height: 20),
+            // Navigation Items
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                children: [
+                  _buildNavItem(
+                    context,
+                    icon: Icons.home_rounded,
+                    title: 'Home',
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      context.go('/home');
+                    },
+                  ),
+                  _buildNavItem(
+                    context,
+                    icon: Icons.notifications_rounded,
+                    title: 'Notifications',
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      context.go('/notifications');
+                    },
+                  ),
+                  _buildNavItem(
+                    context,
+                    icon: Icons.leaderboard_rounded,
+                    title: 'Ranking',
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      context.go('/ranking');
+                    },
+                  ),
+                  _buildNavItem(
+                    context,
+                    icon: Icons.store_rounded,
+                    title: 'Diamond Store',
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      context.go('/diamond-store');
+                    },
+                  ),
+                  _buildNavItem(
+                    context,
+                    icon: Icons.table_chart_rounded,
+                    title: 'Standings',
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      context.go('/standings');
+                    },
+                  ),
+                  _buildNavItem(
+                    context,
+                    icon: Icons.sports_soccer_rounded,
+                    title: 'Leagues',
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      context.go('/leagues');
+                    },
+                  ),
+                ],
+              ),
+            ),
+            // User Info Section
+            if (user != null) ...[
+              Container(
+                margin: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 8,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF1976d2), Color(0xFF42a5f5)],
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.blue.withOpacity(0.3),
+                                blurRadius: 8,
+                                offset: Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: CircleAvatar(
+                            radius: 24,
+                            backgroundColor: Colors.transparent,
+                            backgroundImage: user.imgUrl != null
+                                ? NetworkImage(user.imgUrl!)
+                                : null,
+                            child: user.imgUrl == null
+                                ? Text(
+                                    '${user.firstName[0]}${user.lastName[0]}',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
+                                  )
+                                : null,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '${user.firstName} ${user.lastName}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  color: Color(0xFF2d3748),
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              Text(
+                                user.email,
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  fontSize: 12,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFe3f2fd),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.diamond_rounded,
+                            color: Color(0xFF1976d2),
+                            size: 18,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            '${user.diamonds} diamonds',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF1976d2),
+                              fontSize: 14,
+                            ),
+                          ),
+                          if (user.isMFAEnabled == true) ...[
+                            const SizedBox(width: 12),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.green.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: Colors.green.withOpacity(0.3),
+                                ),
+                              ),
+                              child: const Row(
+                                children: [
+                                  Icon(
+                                    Icons.security_rounded,
+                                    color: Colors.green,
+                                    size: 14,
+                                  ),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    'MFA',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: Colors.green,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            // Logout Button
+            Container(
+              margin: const EdgeInsets.all(16),
+              child: ElevatedButton.icon(
+                onPressed: () async {
+                  Navigator.of(context).pop();
+                  await ref.read(authActionsProvider).logout();
+                  if (context.mounted) {
+                    context.go('/login');
+                  }
+                },
+                icon: const Icon(Icons.logout_rounded, color: Colors.white),
+                label: const Text(
+                  'Logout',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFd32f2f),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 4,
+                  shadowColor: Colors.red.withOpacity(0.3),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        color: Colors.white.withOpacity(0.1),
+      ),
+      child: ListTile(
+        leading: Icon(icon, color: Colors.white, size: 24),
+        title: Text(
+          title,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
           ),
-          ListTile(
-            leading: const Icon(Icons.home),
-            title: const Text('Home'),
-            onTap: () {
-              Navigator.of(context).pop(); // Close drawer
-              context.go('/home');
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.notifications),
-            title: const Text('Notifications'),
-            onTap: () {
-              Navigator.of(context).pop(); // Close drawer
-              context.go('/notifications');
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.leaderboard),
-            title: const Text('Ranking'),
-            onTap: () {
-              Navigator.of(context).pop(); // Close drawer
-              context.go('/ranking');
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.store),
-            title: const Text('Diamond Store'),
-            onTap: () {
-              Navigator.of(context).pop(); // Close drawer
-              context.go('/diamond-store');
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.table_chart),
-            title: const Text('Standings'),
-            onTap: () {
-              Navigator.of(context).pop(); // Close drawer
-              context.go('/standings');
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.sports_soccer),
-            title: const Text('Leagues'),
-            onTap: () {
-              Navigator.of(context).pop(); // Close drawer
-              context.go('/leagues');
-            },
-          ),
-          const Divider(),
-          ListTile(
-            leading: const Icon(Icons.logout),
-            title: const Text('Logout'),
-            onTap: () async {
-              Navigator.of(context).pop(); // Close drawer
-              await ref.read(authActionsProvider).logout();
-              if (context.mounted) {
-                context.go('/login');
-              }
-            },
-          ),
-        ],
+        ),
+        onTap: onTap,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       ),
     );
   }
