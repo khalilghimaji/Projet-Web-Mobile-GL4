@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'package:mobile/providers/api_providers.dart';
 import 'package:mobile/screens/login_screen.dart';
 import 'package:mobile/screens/signup_screen.dart';
-import 'package:mobile/screens/forget_password_screen.dart';
-import 'package:mobile/screens/mfa_setup_screen.dart';
-import 'package:mobile/screens/email_verification_screen.dart';
 import 'package:mobile/screens/notifications_screen.dart';
 import 'package:mobile/screens/ranking_screen.dart';
 import 'package:mobile/screens/diamond_store_screen.dart';
@@ -15,8 +14,11 @@ import 'package:mobile/screens/leagues_list_screen.dart';
 import 'package:mobile/screens/match_detail_screen.dart';
 import 'package:mobile/screens/team_detail_screen.dart';
 import 'package:mobile/screens/error_screen.dart';
+import 'package:mobile/widgets/app_drawer.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const ProviderScope(child: MainApp()));
 }
 
@@ -44,21 +46,6 @@ final _router = GoRouter(
     // Auth routes
     GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
     GoRoute(path: '/signup', builder: (context, state) => const SignupScreen()),
-    GoRoute(
-      path: '/forget-password',
-      builder: (context, state) {
-        final token = state.uri.queryParameters['token'];
-        return ForgetPasswordScreen(token: token);
-      },
-    ),
-    GoRoute(
-      path: '/mfa-setup',
-      builder: (context, state) => const MfaSetupScreen(),
-    ),
-    GoRoute(
-      path: '/email-verification',
-      builder: (context, state) => const EmailVerificationScreen(),
-    ),
     // Other pages
     GoRoute(
       path: '/notifications',
@@ -126,45 +113,7 @@ class HomeScreen extends ConsumerWidget {
           ),
         ],
       ),
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            const DrawerHeader(
-              decoration: BoxDecoration(color: Colors.blue),
-              child: Text(
-                'KickStream Menu',
-                style: TextStyle(color: Colors.white, fontSize: 24),
-              ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.notifications),
-              title: const Text('Notifications'),
-              onTap: () => context.go('/notifications'),
-            ),
-            ListTile(
-              leading: const Icon(Icons.leaderboard),
-              title: const Text('Ranking'),
-              onTap: () => context.go('/ranking'),
-            ),
-            ListTile(
-              leading: const Icon(Icons.store),
-              title: const Text('Diamond Store'),
-              onTap: () => context.go('/diamond-store'),
-            ),
-            ListTile(
-              leading: const Icon(Icons.table_chart),
-              title: const Text('Standings'),
-              onTap: () => context.go('/standings'),
-            ),
-            ListTile(
-              leading: const Icon(Icons.sports_soccer),
-              title: const Text('Leagues'),
-              onTap: () => context.go('/leagues'),
-            ),
-          ],
-        ),
-      ),
+      drawer: const AppDrawer(),
       body: const Center(child: Text('Welcome to KickStream!')),
     );
   }

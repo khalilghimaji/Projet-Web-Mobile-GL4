@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:dio/dio.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:mobile/providers/api_providers.dart';
-import 'package:openapi/openapi.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -16,13 +16,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _otpController = TextEditingController();
 
   bool _isLoading = false;
-  bool _showOtpStep = false;
-  bool _rememberMe = false;
   String? _errorMessage;
-  String? _mfaToken;
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +26,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       appBar: AppBar(title: const Text('Login')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
-        child: _showOtpStep ? _buildOtpForm() : _buildLoginForm(),
+        child: _buildLoginForm(),
       ),
     );
   }
@@ -75,9 +71,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             controller: _emailController,
             autofocus: true,
             decoration: const InputDecoration(
-              labelText: 'Username',
+              labelText: 'Email',
               border: OutlineInputBorder(),
-              prefixIcon: Icon(Icons.person),
+              prefixIcon: Icon(Icons.email),
             ),
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.next,
@@ -112,19 +108,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               }
               return null;
             },
-          ),
-          const SizedBox(height: 16),
-
-          // Remember Me
-          Row(
-            children: [
-              Checkbox(
-                value: _rememberMe,
-                onChanged: (value) =>
-                    setState(() => _rememberMe = value ?? false),
-              ),
-              const Text('Remember Me'),
-            ],
           ),
           const SizedBox(height: 24),
 
@@ -205,120 +188,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 
-  Widget _buildOtpForm() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Enter OTP',
-          style: Theme.of(
-            context,
-          ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Check your authenticator app for the 6-digit code',
-          style: Theme.of(context).textTheme.bodyLarge,
-        ),
-        const SizedBox(height: 32),
-
-        // Error Message
-        if (_errorMessage != null)
-          Container(
-            padding: const EdgeInsets.all(12),
-            margin: const EdgeInsets.only(bottom: 16),
-            decoration: BoxDecoration(
-              color: Colors.red.shade50,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.red.shade200),
-            ),
-            child: Text(
-              _errorMessage!,
-              style: TextStyle(color: Colors.red.shade800),
-            ),
-          ),
-
-        // OTP Field
-        TextFormField(
-          controller: _otpController,
-          autofocus: true,
-          decoration: const InputDecoration(
-            labelText: 'OTP code',
-            border: OutlineInputBorder(),
-            prefixIcon: Icon(Icons.vpn_key),
-          ),
-          keyboardType: TextInputType.number,
-          maxLength: 8,
-          textInputAction: TextInputAction.done,
-          onFieldSubmitted: (_) => _onVerifyOtp(),
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'OTP code is required';
-            }
-            if (value.length < 6) {
-              return 'OTP code must be at least 6 characters';
-            }
-            if (!RegExp(r'^[0-9A-Za-z]*$').hasMatch(value)) {
-              return 'OTP code contains invalid characters';
-            }
-            return null;
-          },
-        ),
-        const SizedBox(height: 24),
-
-        // Verify Button
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: _isLoading ? null : _onVerifyOtp,
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-            ),
-            child: _isLoading
-                ? const CircularProgressIndicator()
-                : const Text('Verify OTP'),
-          ),
-        ),
-
-        const SizedBox(height: 16),
-
-        // Back to Login
-        SizedBox(
-          width: double.infinity,
-          child: OutlinedButton(
-            onPressed: _backToLogin,
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-            ),
-            child: const Text('Back to Login'),
-          ),
-        ),
-
-        const SizedBox(height: 24),
-
-        // Help Text
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.blue.shade50,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.blue.shade200),
-          ),
-          child: const Text(
-            'Enter the 6-digit code from your authenticator app like Google Authenticator or Authy',
-            style: TextStyle(color: Colors.blue),
-          ),
-        ),
-      ],
-    );
-  }
-
   Future<void> _onLogin() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -328,24 +197,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     });
 
     try {
-      final authApi = ref.read(authenticationApiProvider);
-      final dto = LoginDto(
-        (b) => b
-          ..email = _emailController.text
-          ..password = _passwordController.text
-          ..rememberMe = _rememberMe,
-      );
+      // Sign in with Firebase
+      final userCredential = await FirebaseAuth.instance
+          .signInWithEmailAndPassword(
+            email: _emailController.text,
+            password: _passwordController.text,
+          );
 
-      final response = await authApi.authControllerLogin(loginDto: dto);
-      print('Response status: ${response.statusCode}');
-      print('Response data: ${response.data}');
-      print('isMfaRequired: ${response.data?.isMfaRequired}');
-      print('accessToken: ${response.data?.accessToken}');
-      // Check if login was successful with access token (MFA disabled or not required)
-      if (response.statusCode == 200 && response.data != null && response.data!.isMfaRequired != true) {
-        // Ensure access token exists
-        if (response.data!.accessToken != null) {
-          // Store tokens and user data using auth actions
+      // Get ID token
+      final idToken = await userCredential.user?.getIdToken();
+
+      if (idToken != null) {
+        // Send token to backend for verification and user sync
+        final authApi = ref.read(authenticationApiProvider);
+        final response = await authApi.authControllerLoginWithFirebase(
+          firebaseToken: idToken,
+        );
+
+        // Handle response as before
+        if (response.statusCode == 200 && response.data != null) {
           await ref
               .read(authActionsProvider)
               .loginWithTokens(
@@ -355,80 +225,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               );
 
           if (mounted) context.go('/home');
-        } else if (response.data!.user != null) {
-          // Set user data only, assuming authentication via cookies or session
-          await ref.read(userDataProvider.notifier).setUser(response.data!.user!);
-
-          if (mounted) context.go('/home');
         } else {
           setState(() {
-            _errorMessage = 'Login failed. No access token or user data provided.';
+            _errorMessage = 'Login failed.';
           });
         }
-        return;
       }
-
-      // Check if MFA is required using the new isMfaRequired field
-      if (response.statusCode == 200 && response.data?.isMfaRequired == true) {
-        // Store MFA token for verification
-        if (response.data?.mfaToken != null) {
-          setState(() {
-            _mfaToken = response.data!.mfaToken!;
-          });
-        }
-        // MFA is required, show OTP step
-        setState(() {
-          _showOtpStep = true;
-          _errorMessage =
-              response.data?.message ??
-              'MFA verification required. Please enter your OTP code.';
-        });
-        return;
+    } on FirebaseAuthException catch (e) {
+      String errorMessage = 'Login failed.';
+      if (e.code == 'user-not-found') {
+        errorMessage = 'No user found for that email.';
+      } else if (e.code == 'wrong-password') {
+        errorMessage = 'Wrong password provided.';
       }
-
-      // Check if there's a message indicating MFA requirement (fallback)
-      if (response.statusCode == 200 && response.data?.message != null) {
-        setState(() {
-          _errorMessage = response.data!.message!;
-          if (response.data!.message!.contains('MFA') ||
-              response.data!.message!.contains('verification')) {
-            _showOtpStep = true;
-          }
-        });
-        return;
-      }
-
-      // If we get here, something unexpected happened
-      setState(() {
-        _errorMessage = 'Login failed. Please check your credentials.';
-      });
-    } catch (error) {
-      print(error);
-      // Handle network errors or API errors
-      String errorMessage = 'Login failed. Please try again.';
-
-      if (error is DioException) {
-        if (error.response?.statusCode == 401) {
-          errorMessage = 'Invalid email or password.';
-        } else if (error.response?.statusCode == 403) {
-          // Sometimes 403 might indicate MFA required
-          setState(() {
-            _showOtpStep = true;
-          });
-          return;
-        } else if (error.response?.statusCode == 429) {
-          errorMessage = 'Too many login attempts. Please try again later.';
-        } else if (error.type == DioExceptionType.connectionTimeout) {
-          errorMessage =
-              'Connection timeout. Please check your internet connection.';
-        } else if (error.type == DioExceptionType.connectionError) {
-          errorMessage =
-              'Connection error. Please check your internet connection.';
-        }
-      }
-
       setState(() {
         _errorMessage = errorMessage;
+      });
+    } catch (error) {
+      setState(() {
+        _errorMessage = 'Login failed. Please try again.';
       });
     } finally {
       setState(() {
@@ -437,62 +252,63 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
-  Future<void> _onVerifyOtp() async {
-    if (_otpController.text.isEmpty) return;
-
+  Future<void> _loginWithGoogle() async {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
 
     try {
-      final authApi = ref.read(authenticationApiProvider);
-      final dto = MfaVerifyDto(
-        (b) => b
-          ..code = _otpController.text
-          ..rememberMe = _rememberMe,
-      );
-
-      final response = await authApi.authControllerVerifyMfaToken(
-        mfaVerifyDto: dto,
-        headers: _mfaToken != null
-            ? {'Authorization': 'Bearer $_mfaToken'}
-            : null,
-      );
-
-      // Check if MFA verification was successful
-      if (response.statusCode == 200 && response.data?.accessToken != null) {
-        // Store tokens and user data using auth actions
-        await ref
-            .read(authActionsProvider)
-            .loginWithTokens(
-              response.data!.accessToken!,
-              response.data!.refreshToken,
-              response.data!.user,
-            );
-
-        if (mounted) context.go('/home');
-      } else {
+      final GoogleSignIn googleSignIn = GoogleSignIn();
+      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+      print("99999999999999999999999999999");
+      if (googleUser == null) {
         setState(() {
-          _errorMessage =
-              'OTP verification failed. Please check your code and try again.';
+          _errorMessage = 'Google sign-in cancelled';
         });
+        return;
       }
-    } catch (error) {
-      String errorMessage = 'OTP verification failed. Please try again.';
 
-      if (error is DioException) {
-        if (error.response?.statusCode == 401) {
-          errorMessage = 'Invalid OTP code.';
-        } else if (error.response?.statusCode == 403) {
-          errorMessage = 'OTP verification expired. Please login again.';
-        } else if (error.response?.statusCode == 429) {
-          errorMessage = 'Too many attempts. Please try again later.';
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+      final AuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+      print("***************");
+      final userCredential = await FirebaseAuth.instance.signInWithCredential(
+        credential,
+      );
+      final idToken = await userCredential.user?.getIdToken();
+      print("---------------------------");
+      print(idToken);
+      if (idToken != null) {
+        // Send token to backend
+        final authApi = ref.read(authenticationApiProvider);
+        final response = await authApi.authControllerLoginWithFirebase(
+          firebaseToken: idToken,
+        );
+        print("///////////////////////");
+        if (response.statusCode == 200 && response.data != null) {
+          await ref
+              .read(authActionsProvider)
+              .loginWithTokens(
+                response.data!.accessToken!,
+                response.data!.refreshToken,
+                response.data!.user,
+              );
+
+          if (mounted) context.go('/home');
+        } else {
+          setState(() {
+            _errorMessage = 'Login failed.';
+          });
         }
       }
-
+    } catch (error) {
+      print("++++++++++++++++++" + error.toString());
       setState(() {
-        _errorMessage = errorMessage;
+        _errorMessage = 'Google sign-in failed. Please try again.';
       });
     } finally {
       setState(() {
@@ -501,34 +317,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
-  void _backToLogin() {
-    setState(() {
-      _showOtpStep = false;
-      _otpController.clear();
-      _errorMessage = null;
-      _isLoading = false;
-    });
-  }
-
-  Future<void> _loginWithGoogle() async {
-    // TODO: Implement Google OAuth
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Google login not implemented yet')),
-    );
-  }
-
   Future<void> _loginWithGithub() async {
-    // TODO: Implement GitHub OAuth
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('GitHub login not implemented yet')),
-    );
+    // GitHub sign-in with Firebase (requires additional setup)
+    setState(() {
+      _errorMessage = 'GitHub login not implemented yet';
+    });
   }
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
-    _otpController.dispose();
     super.dispose();
   }
 }

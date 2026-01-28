@@ -15,17 +15,16 @@ import { NotificationsService } from './notifications.service';
 import { User } from 'src/Decorator/user.decorator';
 import { Request } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { FirebaseAuthGuard } from 'src/auth/guards/firebase-auth.guard';
 
 @Controller('notifications')
-@UseGuards(JwtAuthGuard)
+@UseGuards(FirebaseAuthGuard)
 export class NotificationsController implements OnModuleInit, OnModuleDestroy {
   private readonly heartbeatInterval = 30000; // Send heartbeat every 30 seconds
   private heartbeat$: Observable<MessageEvent>;
   private destroy$ = new Subject<void>();
 
-  constructor(
-    private readonly notificationsService: NotificationsService,
-  ) {
+  constructor(private readonly notificationsService: NotificationsService) {
     this.heartbeat$ = interval(this.heartbeatInterval).pipe(
       map(() => new MessageEvent('heartbeat', { data: 'ping' })),
       takeUntil(this.destroy$),

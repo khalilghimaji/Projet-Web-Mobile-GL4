@@ -65,7 +65,7 @@ final dioProvider = Provider<Dio>((ref) {
     BaseOptions(
       baseUrl: baseUrl,
       connectTimeout: const Duration(seconds: 5),
-      receiveTimeout: const Duration(seconds: 3),
+      receiveTimeout: const Duration(seconds: 10),
     ),
   );
 

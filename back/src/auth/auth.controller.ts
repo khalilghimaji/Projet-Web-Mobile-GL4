@@ -62,6 +62,7 @@ import { join } from 'path';
 import { RefresResponse } from './dto/refresh-token.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ForgotPasswordResponseDto } from './dto/responses/forgot-password-response.dto';
+import { FirebaseLoginDto } from './dto/firebase-login.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { ResetPasswordResponseDto } from './dto/responses/reset-password-response.dto';
 
@@ -197,6 +198,18 @@ export class AuthController {
 
     // Return only the user data
     return result;
+  }
+
+  @Post('login/firebase')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'User login with Firebase' })
+  @ApiBody({ type: FirebaseLoginDto })
+  @ApiOkResponse({
+    description: 'User has been authenticated successfully',
+    type: LoginResponseDto,
+  })
+  async loginWithFirebase(@Body() firebaseLoginDto: FirebaseLoginDto) {
+    return this.authService.loginWithFirebase(firebaseLoginDto.firebaseToken);
   }
 
   @Post('refresh')

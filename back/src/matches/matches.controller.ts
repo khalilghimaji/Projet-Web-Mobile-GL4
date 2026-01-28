@@ -17,6 +17,7 @@ import { Prediction } from './entities/prediction.entity';
 import { MatchStat } from './dto/get-match-stats-info.dto';
 import { TerminateMatchDto } from './dto/terminate-match.dto';
 import { RedisCacheService } from 'src/Common/cache/redis-cache.service';
+import { FirebaseAuthGuard } from 'src/auth/guards/firebase-auth.guard';
 
 @Controller('matches')
 @UseGuards(JwtAuthGuard)
@@ -61,6 +62,7 @@ export class MatchesController {
     @Body()
     boy: CanPredictMatchDto,
   ): Promise<void> {
+    console.log('+++++++++++++++++' + userId + ' ' + boy.numberOfDiamondsBet);
     return this.matchesService.addDiamond(userId, boy.numberOfDiamondsBet);
   }
 

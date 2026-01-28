@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:openapi/openapi.dart' as api;
 import 'package:mobile/providers/notifications_provider.dart';
+import 'package:mobile/widgets/app_drawer.dart';
 
 class NotificationsScreen extends ConsumerStatefulWidget {
   const NotificationsScreen({super.key});
@@ -87,6 +88,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
           ),
         ],
       ),
+      drawer: const AppDrawer(),
       body: RefreshIndicator(
         onRefresh: () =>
             ref.read(notificationsProvider.notifier).loadNotifications(),

@@ -17,29 +17,21 @@ async function bootstrap() {
 
   // Add Helmet for security headers but allow images to be loaded from the same origin
   app.use(
-      helmet({
-        contentSecurityPolicy: {
-          directives: {
-            defaultSrc: ["'self'"],
-            scriptSrc: [
-              "'self'",
-            ],
-            styleSrc: [
-              "'self'",
-              "'unsafe-inline'",
-            ],
-            imgSrc: [
-              "'self'",
-              'data:',
-            ],
-            connectSrc: ["'self'"],
-            fontSrc: ["'self'"],
-          },
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: ["'self'"],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          imgSrc: ["'self'", 'data:'],
+          connectSrc: ["'self'"],
+          fontSrc: ["'self'"],
         },
-        crossOriginResourcePolicy: {
-          policy: 'cross-origin',
-        },
-      }),
+      },
+      crossOriginResourcePolicy: {
+        policy: 'cross-origin',
+      },
+    }),
   );
 
   // Serve static assets with appropriate prefixes
@@ -64,19 +56,28 @@ async function bootstrap() {
     },
   });
   app.useStaticAssets(join(__dirname, '..', '.upload', 'book'), {
-    prefix: '/public/uploads/books', 
+    prefix: '/public/uploads/books',
   });
 
-  
   // Enable CORS with credentials
   app.enableCors({
     origin: [
       configService.get<string>('FRONTEND_URL') || 'http://localhost:4200',
       'http://localhost:4200',
+      'http://localhost:3000', // Flutter web default
+      'http://localhost:8080', // Common Flutter web port
+      'http://localhost:3003', // Backend port (for testing)
+      'http://10.0.2.2:3003', // Android emulator
+      'http://127.0.0.1:3003', // Alternative localhost
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Cookie'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Requested-With',
+      'Cookie',
+    ],
     exposedHeaders: ['Content-Disposition'],
   });
 

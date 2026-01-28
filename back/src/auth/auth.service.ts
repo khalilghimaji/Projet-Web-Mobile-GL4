@@ -26,9 +26,7 @@ import { MailService } from '../Common/Emailing/mail.service';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { SignUpResponseDto } from './dto/responses/sign-up-response.dto';
 import { VerifyEmailResponseDto } from './dto/responses/verify-email-response.dto';
-import {
-  LoginResponseDto,
-} from './dto/responses/login-response.dto';
+import { LoginResponseDto } from './dto/responses/login-response.dto';
 import { RefreshTokenResponseDto } from './dto/responses/refresh-token-response.dto';
 import { LogoutResponseDto } from './dto/responses/logout-response.dto';
 import { MfaVerifyResponseDto } from './dto/responses/mfa-verify-response.dto';
@@ -40,6 +38,7 @@ import { RedisCacheService } from '../Common/cache/redis-cache.service';
 import { Response } from 'express';
 import { DisableMfaDto } from './dto/disable-mfa.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import * as admin from 'firebase-admin';
 import { ForgotPasswordResponseDto } from './dto/responses/forgot-password-response.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { ResetPasswordResponseDto } from './dto/responses/reset-password-response.dto';
@@ -48,7 +47,7 @@ import { GenericService } from 'src/Common/generic/generic.service';
 @Injectable()
 export class AuthService extends GenericService<User> {
   private readonly logger = new Logger(AuthService.name);
-  // Email verification token expiry in seconds (24 hours)
+  // Email verification token expiry in seconds (24 hours
   private readonly EMAIL_VERIFICATION_EXPIRY = 24 * 60 * 60;
   // Password reset token expiry in seconds (30 minutes)
   private readonly PASSWORD_RESET_EXPIRY = 30 * 60;
@@ -62,6 +61,42 @@ export class AuthService extends GenericService<User> {
     private readonly redisCacheService: RedisCacheService,
   ) {
     super(userRepository);
+
+    // Initialize Firebase Admin SDK
+    if (!admin.apps.length) {
+      try {
+        const firebaseProjectId = this.configService.get<string>(
+          'FIREBASE_PROJECT_ID',
+        );
+        const firebaseServiceAccountKey = this.configService.get<string>(
+          'FIREBASE_SERVICE_ACCOUNT_KEY',
+        );
+
+        if (firebaseProjectId && firebaseServiceAccountKey) {
+          // Parse the service account key JSON
+          const serviceAccount = JSON.parse(firebaseServiceAccountKey);
+
+          admin.initializeApp({
+            credential: admin.credential.cert(serviceAccount),
+            projectId: firebaseProjectId,
+          });
+        } else if (firebaseProjectId) {
+          // Use project ID only (for environments with default credentials)
+          admin.initializeApp({
+            projectId: firebaseProjectId,
+          });
+        } else {
+          // Try application default (may work in some environments)
+          admin.initializeApp({
+            credential: admin.credential.applicationDefault(),
+          });
+        }
+      } catch (error) {
+        this.logger.warn(
+          `Firebase Admin SDK initialization failed: ${error.message}. Firebase login will not work.`,
+        );
+      }
+    }
   }
 
   // Sign up function with automatic email verification
@@ -163,9 +198,7 @@ export class AuthService extends GenericService<User> {
   }
 
   // Login function with email verification and MFA check
-  async login(
-    loginDto: LoginDto,
-  ): Promise<LoginResponseDto> {
+  async login(loginDto: LoginDto): Promise<LoginResponseDto> {
     const { email, password, rememberMe = false } = loginDto;
 
     // Find user
@@ -329,6 +362,73 @@ export class AuthService extends GenericService<User> {
         diamonds: user.diamonds,
       },
     };
+  }
+
+  async loginWithFirebase(firebaseToken: string): Promise<LoginResponseDto> {
+    try {
+      // Check if Firebase is initialized
+      if (!admin.apps.length) {
+        throw new InternalServerErrorException(
+          'Firebase authentication is not configured',
+        );
+      }
+
+      // Verify Firebase token
+      const decodedToken = await admin.auth().verifyIdToken(firebaseToken);
+
+      // Extract user information from the token
+      const { uid, email, name, picture } = decodedToken;
+
+      // Find user by Firebase UID
+      let user = await this.userRepository.findOneBy({ firebaseUid: uid });
+
+      if (!user) {
+        // Try to find by email if UID not found (for linking accounts)
+        user = await this.userRepository.findOneBy({ email });
+
+        if (user) {
+          // Link Firebase UID to existing user
+          user.firebaseUid = uid;
+          await this.userRepository.save(user);
+        } else {
+          // Create new user with Firebase information
+          const [firstName, lastName] = name
+            ? name.split(' ')
+            : ['Firebase', 'User'];
+
+          user = this.userRepository.create({
+            email,
+            firstName,
+            lastName: lastName || 'User',
+            imageUrl: picture,
+            firebaseUid: uid,
+            isEmailVerified: true,
+            isMFAEnabled: false,
+            password: 'firebase-auth', // Placeholder, not used for Firebase auth
+          });
+          await this.userRepository.save(user);
+        }
+      }
+
+      // Generate access token
+      const accessToken = await this.generateAccessToken(user);
+
+      return {
+        accessToken,
+        user: {
+          id: user.id.toString(),
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          isMFAEnabled: user.isMFAEnabled,
+          imgUrl: user.imageUrl || '',
+          diamonds: user.diamonds,
+        },
+      };
+    } catch (error) {
+      this.logger.error(`Firebase login error: ${error.message}`);
+      throw new UnauthorizedException('Invalid Firebase token');
+    }
   }
 
   // Verify MFA code during login

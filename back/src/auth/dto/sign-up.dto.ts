@@ -5,7 +5,7 @@ import {
   IsOptional,
   IsString,
   IsStrongPassword,
-  IsUrl
+  IsUrl,
 } from 'class-validator';
 
 export class SignUpDto {

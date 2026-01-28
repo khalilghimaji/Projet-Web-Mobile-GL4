@@ -41,6 +41,9 @@ export class User extends CommonEntity {
   @Column({ nullable: true })
   githubId: string;
 
+  @Column({ nullable: true, unique: true })
+  firebaseUid: string;
+
   @Column({ default: 0 })
   diamonds: number;
 
