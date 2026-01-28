@@ -42,10 +42,7 @@ import {
 import { FullAuthGuard } from './guards/full-auth.guard';
 import { SignUpResponseDto } from './dto/responses/sign-up-response.dto';
 import { VerifyEmailResponseDto } from './dto/responses/verify-email-response.dto';
-import {
-  LoginResponseDto,
-  MfaRequiredResponseDto,
-} from './dto/responses/login-response.dto';
+import { LoginResponseDto } from './dto/responses/login-response.dto';
 import { LogoutResponseDto } from './dto/responses/logout-response.dto';
 import {
   MfaVerifyResponseDto,
@@ -166,10 +163,6 @@ export class AuthController {
   @ApiOkResponse({
     description: 'User has been authenticated successfully',
     type: LoginResponseDto,
-  })
-  @ApiOkResponse({
-    description: 'MFA verification required',
-    type: MfaRequiredResponseDto,
   })
   async login(
     @Body() loginDto: LoginDto,

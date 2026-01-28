@@ -28,7 +28,6 @@ import { SignUpResponseDto } from './dto/responses/sign-up-response.dto';
 import { VerifyEmailResponseDto } from './dto/responses/verify-email-response.dto';
 import {
   LoginResponseDto,
-  MfaRequiredResponseDto,
 } from './dto/responses/login-response.dto';
 import { RefreshTokenResponseDto } from './dto/responses/refresh-token-response.dto';
 import { LogoutResponseDto } from './dto/responses/logout-response.dto';
@@ -166,7 +165,7 @@ export class AuthService extends GenericService<User> {
   // Login function with email verification and MFA check
   async login(
     loginDto: LoginDto,
-  ): Promise<LoginResponseDto | MfaRequiredResponseDto> {
+  ): Promise<LoginResponseDto> {
     const { email, password, rememberMe = false } = loginDto;
 
     // Find user

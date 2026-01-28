@@ -142,6 +142,7 @@ export class AuthService {
       .authControllerLogin({ email, password, rememberMe: rememberMe })
       .pipe(
         map((response) => {
+          console.log(response);
           if ('isMfaRequired' in response) {
             return {
               requiresOtp: true,
