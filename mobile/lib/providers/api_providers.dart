@@ -187,16 +187,26 @@ class RefreshTokenNotifier extends StateNotifier<String?> {
 // User data notifier
 class UserDataNotifier extends StateNotifier<UserDto?> {
   final Ref _ref;
+  int _gainedDiamonds = 0;
 
   UserDataNotifier(this._ref) : super(null) {
     _loadUser();
   }
 
   static const String _userKey = 'user_data';
+  static const String _gainedDiamondsKey = 'gained_diamonds';
+
+  int get gainedDiamonds => _gainedDiamonds;
 
   Future<void> _loadUser() async {
     final prefs = await _ref.read(sharedPreferencesProvider.future);
     final userJson = prefs.getString(_userKey);
+    final gainedDiamondsStr = prefs.getString(_gainedDiamondsKey);
+
+    if (gainedDiamondsStr != null) {
+      _gainedDiamonds = int.tryParse(gainedDiamondsStr) ?? 0;
+    }
+
     if (userJson != null) {
       try {
         final userMap = jsonDecode(userJson) as Map<String, dynamic>;
@@ -220,9 +230,24 @@ class UserDataNotifier extends StateNotifier<UserDto?> {
     state = user;
   }
 
+  Future<void> updateDiamonds(int newDiamonds) async {
+    if (state != null) {
+      final updatedUser = state!.rebuild((b) => b.diamonds = newDiamonds);
+      await setUser(updatedUser);
+    }
+  }
+
+  Future<void> updateGainedDiamonds(int gain) async {
+    _gainedDiamonds = gain;
+    final prefs = await _ref.read(sharedPreferencesProvider.future);
+    await prefs.setString(_gainedDiamondsKey, gain.toString());
+  }
+
   Future<void> clearUser() async {
     final prefs = await _ref.read(sharedPreferencesProvider.future);
     await prefs.remove(_userKey);
+    await prefs.remove(_gainedDiamondsKey);
+    _gainedDiamonds = 0;
     state = null;
   }
 }

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:mobile/providers/api_providers.dart';
+import 'package:mobile/services/realtime_updates_service.dart';
 import 'package:mobile/screens/login_screen.dart';
 import 'package:mobile/screens/signup_screen.dart';
 import 'package:mobile/screens/notifications_screen.dart';
@@ -22,11 +23,17 @@ void main() async {
   runApp(const ProviderScope(child: MainApp()));
 }
 
-class MainApp extends StatelessWidget {
+class MainApp extends ConsumerWidget {
   const MainApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Watch authentication state and update realtime service
+    ref.listen<AuthState>(authStateProvider, (previous, next) {
+      final realtimeService = ref.read(realtimeUpdatesServiceProvider);
+      realtimeService.updateAuthenticationStatus(next);
+    });
+
     return MaterialApp.router(
       routerConfig: _router,
       theme: ThemeData(
@@ -37,47 +44,75 @@ class MainApp extends StatelessWidget {
   }
 }
 
+class AuthGuard extends ConsumerWidget {
+  final Widget child;
+
+  const AuthGuard({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(authStateProvider);
+
+    if (!authState.isAuthenticated) {
+      // If not authenticated, redirect to login
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        context.go('/login');
+      });
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    return child;
+  }
+}
+
 final _router = GoRouter(
   routes: [
     GoRoute(
       path: '/',
-      redirect: (context, state) => '/login', // Redirect to login for now
+      redirect: (context, state) {
+        // This will be handled by a redirect based on auth state
+        // For now, default to login
+        return '/login';
+      },
     ),
     // Auth routes
     GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
     GoRoute(path: '/signup', builder: (context, state) => const SignupScreen()),
-    // Other pages
+    // Protected routes
     GoRoute(
       path: '/notifications',
-      builder: (context, state) => const NotificationsScreen(),
+      builder: (context, state) =>
+          const AuthGuard(child: NotificationsScreen()),
     ),
     GoRoute(
       path: '/ranking',
-      builder: (context, state) => const RankingScreen(),
+      builder: (context, state) => const AuthGuard(child: RankingScreen()),
     ),
     GoRoute(
       path: '/diamond-store',
-      builder: (context, state) => const DiamondStoreScreen(),
+      builder: (context, state) => const AuthGuard(child: DiamondStoreScreen()),
     ),
     // Standings routes
     GoRoute(
       path: '/standings',
-      builder: (context, state) => const StandingsScreen(),
+      builder: (context, state) => const AuthGuard(child: StandingsScreen()),
     ),
     GoRoute(
       path: '/leagues',
-      builder: (context, state) => const LeaguesListScreen(),
+      builder: (context, state) => const AuthGuard(child: LeaguesListScreen()),
     ),
     // Match and team details
     GoRoute(
       path: '/match/:matchId',
-      builder: (context, state) =>
-          MatchDetailScreen(matchId: state.pathParameters['matchId']!),
+      builder: (context, state) => AuthGuard(
+        child: MatchDetailScreen(matchId: state.pathParameters['matchId']!),
+      ),
     ),
     GoRoute(
       path: '/team/:id',
-      builder: (context, state) =>
-          TeamDetailScreen(teamId: state.pathParameters['id']!),
+      builder: (context, state) => AuthGuard(
+        child: TeamDetailScreen(teamId: state.pathParameters['id']!),
+      ),
     ),
     // Error routes
     GoRoute(path: '/error', builder: (context, state) => const ErrorScreen()),
@@ -87,7 +122,10 @@ final _router = GoRouter(
           ErrorScreen(errorCode: state.pathParameters['errorCode']),
     ),
     // Home
-    GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
+    GoRoute(
+      path: '/home',
+      builder: (context, state) => const AuthGuard(child: HomeScreen()),
+    ),
     // Catch all
     GoRoute(path: '/:path', redirect: (context, state) => '/error/404'),
   ],

@@ -37,10 +37,6 @@ export class NotificationsService {
   ) {}
 
   subscribe(userId: string): Observable<MessageEvent> {
-    const client = this.clients.get(userId);
-    if (client) {
-      return client.asObservable();
-    }
     const subject = new Subject<MessageEvent>();
     this.clients.set(userId, subject);
     console.log(`User ${userId} subscribed to SSE`);

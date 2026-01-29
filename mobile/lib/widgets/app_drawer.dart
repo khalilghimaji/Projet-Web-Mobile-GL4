@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile/providers/api_providers.dart';
+import 'package:mobile/providers/notifications_provider.dart';
 
 class AppDrawer extends ConsumerWidget {
   const AppDrawer({super.key});
@@ -9,6 +10,7 @@ class AppDrawer extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(userDataProvider);
+    final notificationsState = ref.watch(notificationsProvider);
 
     return Drawer(
       child: Container(
@@ -113,15 +115,7 @@ class AppDrawer extends ConsumerWidget {
                       context.go('/home');
                     },
                   ),
-                  _buildNavItem(
-                    context,
-                    icon: Icons.notifications_rounded,
-                    title: 'Notifications',
-                    onTap: () {
-                      Navigator.of(context).pop();
-                      context.go('/notifications');
-                    },
-                  ),
+                  _buildNotificationsNavItem(context, notificationsState),
                   _buildNavItem(
                     context,
                     icon: Icons.leaderboard_rounded,
@@ -369,6 +363,62 @@ class AppDrawer extends ConsumerWidget {
           ),
         ),
         onTap: onTap,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      ),
+    );
+  }
+
+  Widget _buildNotificationsNavItem(
+    BuildContext context,
+    NotificationsState notificationsState,
+  ) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        color: Colors.white.withOpacity(0.1),
+      ),
+      child: ListTile(
+        leading: const Icon(
+          Icons.notifications_rounded,
+          color: Colors.white,
+          size: 24,
+        ),
+        title: Row(
+          children: [
+            const Text(
+              'Notifications',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            if (notificationsState.unreadCount > 0) ...[
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.red,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  notificationsState.unreadCount.toString(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+        onTap: () {
+          Navigator.of(context).pop();
+          context.go('/notifications');
+        },
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       ),

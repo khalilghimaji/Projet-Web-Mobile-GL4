@@ -1,9 +1,6 @@
-import 'dart:async';
-import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:openapi/openapi.dart' as api;
 import 'package:mobile/providers/api_providers.dart';
-import 'package:dio/dio.dart';
 
 // State class for notifications
 class NotificationsState {
@@ -60,29 +57,14 @@ class NotificationItem {
 final notificationsProvider =
     StateNotifierProvider<NotificationsNotifier, NotificationsState>((ref) {
       final api = ref.watch(notificationsApiProvider);
-      final dio = ref.watch(dioProvider);
-      return NotificationsNotifier(api, dio);
+      return NotificationsNotifier(api);
     });
 
 class NotificationsNotifier extends StateNotifier<NotificationsState> {
   final api.NotificationsApi _api;
-  final Dio _dio;
 
-  StreamSubscription<String>? _sseSubscription;
-  bool _shouldReconnect = true;
-  int _reconnectAttempts = 0;
-  static const int _maxReconnectAttempts = 10;
-  Timer? _reconnectTimer;
-
-  NotificationsNotifier(this._api, this._dio)
-    : super(const NotificationsState()) {
+  NotificationsNotifier(this._api) : super(const NotificationsState()) {
     loadNotifications();
-  }
-
-  @override
-  void dispose() {
-    _disconnectSSE();
-    super.dispose();
   }
 
   Future<void> loadNotifications() async {
@@ -104,9 +86,6 @@ class NotificationsNotifier extends StateNotifier<NotificationsState> {
           isLoading: false,
           unreadCount: unreadCount,
         );
-
-        // Start SSE connection after loading initial notifications
-        _connectSSE();
       } else {
         state = state.copyWith(
           isLoading: false,
@@ -118,181 +97,25 @@ class NotificationsNotifier extends StateNotifier<NotificationsState> {
     }
   }
 
-  void _connectSSE() {
-    if (_sseSubscription != null) return;
-
-    _shouldReconnect = true;
-    _reconnectAttempts = 0;
-
-    try {
-      // Create SSE stream using Dio
-      final request = RequestOptions(
-        path: '/notifications/sse',
-        method: 'GET',
-        responseType: ResponseType.stream,
-      );
-
-      _dio
-          .fetch(request)
-          .then((response) {
-            if (response.data is ResponseBody) {
-              final stream = response.data.stream;
-              _sseSubscription = stream
-                  .transform(utf8.decoder)
-                  .transform(LineSplitter())
-                  .listen(
-                    _handleSSEMessage,
-                    onError: _handleSSEError,
-                    onDone: _handleSSEDone,
-                    cancelOnError: false,
-                  );
-
-              state = state.copyWith(isConnected: true);
-            }
-          })
-          .catchError((error) {
-            _handleSSEError(error);
-          });
-    } catch (error) {
-      _handleSSEError(error);
-    }
+  void updateConnectionStatus(bool isConnected) {
+    state = state.copyWith(isConnected: isConnected);
   }
 
-  void _disconnectSSE() {
-    _shouldReconnect = false;
-    _reconnectTimer?.cancel();
-
-    if (_sseSubscription != null) {
-      _sseSubscription!.cancel();
-      _sseSubscription = null;
-    }
-
-    state = state.copyWith(isConnected: false);
-  }
-
-  void _handleSSEMessage(String line) {
-    if (line.trim().isEmpty || line.startsWith(':')) return;
-
-    try {
-      // Parse SSE format: "data: {json}"
-      if (line.startsWith('data: ')) {
-        final data = line.substring(6).trim();
-        if (data != 'ping' && data.isNotEmpty) {
-          // For now, create a simple notification from the data
-          // In a real implementation, you'd use proper deserialization
-          final notificationJson = json.decode(data);
-
-          // Create notification using builder pattern
-          final notification = api.Notification(
-            (b) => b
-              ..id = notificationJson['id'] ?? ''
-              ..userId = notificationJson['userId'] ?? ''
-              ..type = _parseNotificationType(notificationJson['type'])
-              ..message = notificationJson['message'] ?? ''
-              ..read = notificationJson['read'] ?? false
-              ..createdAt = DateTime.parse(
-                notificationJson['createdAt'] ??
-                    DateTime.now().toIso8601String(),
-              )
-              ..updatedAt = DateTime.parse(
-                notificationJson['updatedAt'] ??
-                    DateTime.now().toIso8601String(),
-              )
-              ..version = notificationJson['version'] ?? 0
-              ..data = null,
-          ); // TODO: Handle notification data parsing
-
-          // Handle different notification types
-          _handleNotification(notification);
-
-          // Add to notifications list if not a ranking update
-          if (notification.type != api.NotificationTypeEnum.RANKING_UPDATE) {
-            final newItem = NotificationItem(
-              notification: notification,
-              isRealTime: true,
-            );
-
-            final updatedNotifications = [newItem, ...state.notifications];
-            final unreadCount = updatedNotifications
-                .where((item) => !item.notification.read)
-                .length;
-
-            state = state.copyWith(
-              notifications: updatedNotifications,
-              unreadCount: unreadCount,
-            );
-          }
-        }
-      }
-    } catch (error) {
-      // Ignore parsing errors for individual messages
-    }
-  }
-
-  api.NotificationTypeEnum _parseNotificationType(String? typeString) {
-    switch (typeString) {
-      case 'CHANGE_OF_POSSESSED_GEMS':
-        return api.NotificationTypeEnum.CHANGE_OF_POSSESSED_GEMS;
-      case 'DIAMOND_UPDATE':
-        return api.NotificationTypeEnum.DIAMOND_UPDATE;
-      case 'RANKING_UPDATE':
-        return api.NotificationTypeEnum.RANKING_UPDATE;
-      default:
-        return api.NotificationTypeEnum.CHANGE_OF_POSSESSED_GEMS;
-    }
-  }
-
-  void _handleSSEError(Object error) {
-    state = state.copyWith(isConnected: false);
-
-    if (_sseSubscription != null) {
-      _sseSubscription!.cancel();
-      _sseSubscription = null;
-    }
-
-    _attemptReconnect();
-  }
-
-  void _handleSSEDone() {
-    state = state.copyWith(isConnected: false);
-
-    if (_shouldReconnect) {
-      _attemptReconnect();
-    }
-  }
-
-  void _attemptReconnect() {
-    if (!_shouldReconnect || _reconnectAttempts >= _maxReconnectAttempts) {
-      return;
-    }
-
-    _reconnectAttempts++;
-    final delay = Duration(
-      milliseconds: (1000 * (1 << (_reconnectAttempts - 1))).clamp(0, 30000),
+  void addRealtimeNotification(api.Notification notification) {
+    final newItem = NotificationItem(
+      notification: notification,
+      isRealTime: true,
     );
 
-    _reconnectTimer?.cancel();
-    _reconnectTimer = Timer(delay, () {
-      if (_shouldReconnect) {
-        _connectSSE();
-      }
-    });
-  }
+    final updatedNotifications = [newItem, ...state.notifications];
+    final unreadCount = updatedNotifications
+        .where((item) => !item.notification.read)
+        .length;
 
-  void _handleNotification(api.Notification notification) {
-    // Handle different notification types
-    // This could be extended to update other state like diamonds, rankings, etc.
-    switch (notification.type) {
-      case api.NotificationTypeEnum.CHANGE_OF_POSSESSED_GEMS:
-        // Could update user diamonds here
-        break;
-      case api.NotificationTypeEnum.DIAMOND_UPDATE:
-        // Could update gained diamonds here
-        break;
-      case api.NotificationTypeEnum.RANKING_UPDATE:
-        // Could update rankings here
-        break;
-    }
+    state = state.copyWith(
+      notifications: updatedNotifications,
+      unreadCount: unreadCount,
+    );
   }
 
   Future<void> markAsRead(String notificationId) async {

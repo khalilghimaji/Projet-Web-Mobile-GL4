@@ -1,14 +1,5 @@
-import {
-  Controller,
-  Post,
-  Param,
-  Body,
-  UseGuards,
-  Get,
-  Patch,
-} from '@nestjs/common';
+import { Controller, Post, Param, Body, Get, Patch } from '@nestjs/common';
 import { MatchesService } from './matches.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { User } from '../Decorator/user.decorator';
 import { PredictDto } from './dto/predict.dto';
 import { CanPredictMatchDto } from './dto/can-predict-match.dto';
@@ -17,10 +8,8 @@ import { Prediction } from './entities/prediction.entity';
 import { MatchStat } from './dto/get-match-stats-info.dto';
 import { TerminateMatchDto } from './dto/terminate-match.dto';
 import { RedisCacheService } from 'src/Common/cache/redis-cache.service';
-import { FirebaseAuthGuard } from 'src/auth/guards/firebase-auth.guard';
 
 @Controller('matches')
-@UseGuards(JwtAuthGuard)
 export class MatchesController {
   constructor(
     private readonly matchesService: MatchesService,
@@ -62,7 +51,6 @@ export class MatchesController {
     @Body()
     boy: CanPredictMatchDto,
   ): Promise<void> {
-    console.log('+++++++++++++++++' + userId + ' ' + boy.numberOfDiamondsBet);
     return this.matchesService.addDiamond(userId, boy.numberOfDiamondsBet);
   }
 

@@ -82,6 +82,7 @@ export class MatchesService {
     await notifyUsersAboutRankingUpdate(
       this.userRepository,
       this.notificationsService,
+      true,
     );
   }
 

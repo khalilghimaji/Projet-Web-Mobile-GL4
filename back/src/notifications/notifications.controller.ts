@@ -18,7 +18,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { FirebaseAuthGuard } from 'src/auth/guards/firebase-auth.guard';
 
 @Controller('notifications')
-@UseGuards(FirebaseAuthGuard)
+@UseGuards(JwtAuthGuard)
 export class NotificationsController implements OnModuleInit, OnModuleDestroy {
   private readonly heartbeatInterval = 30000; // Send heartbeat every 30 seconds
   private heartbeat$: Observable<MessageEvent>;
@@ -43,6 +43,7 @@ export class NotificationsController implements OnModuleInit, OnModuleDestroy {
         (notificationStream: Observable<MessageEvent>) => {
           return new Observable<MessageEvent>((subscriber) => {
             // Subscribe to notifications
+            console.log('AAAAAAAAAAAAAAAAAAAAAAAAAAAAA' + userId);
             const notificationSubscription = notificationStream.subscribe({
               next: (notification) => subscriber.next(notification),
               error: (error) => subscriber.error(error),

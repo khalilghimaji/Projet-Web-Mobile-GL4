@@ -176,6 +176,7 @@ async function updateRankingScore(
 export async function notifyUsersAboutRankingUpdate(
   userRepository: Repository<User>,
   notificationsService: NotificationsService,
+  save = false,
 ) {
   const usersWithRankingsWithIds = await userRepository.find({
     order: { score: 'DESC' },
@@ -198,7 +199,7 @@ export async function notifyUsersAboutRankingUpdate(
         message: `You are now at rank ${rank}.`,
         data: { rankings: usersWithRankings },
       },
-      false,
+      save
     );
   }
 }
