@@ -13,7 +13,6 @@ class NotificationsScreen extends ConsumerStatefulWidget {
 }
 
 class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
-
   @override
   Widget build(BuildContext context) {
     final notificationsState = ref.watch(notificationsProvider);
@@ -225,7 +224,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
             if (direction == DismissDirection.startToEnd) {
               // Swipe right - Mark as read
               if (!item.isRead) {
-                ref
+                await ref
                     .read(notificationsProvider.notifier)
                     .markAsRead(item.notification.id);
               }
@@ -297,14 +296,14 @@ class NotificationCard extends StatelessWidget {
                   child: Text(
                     notification.message,
                     style: TextStyle(
-                      fontWeight: notification.read
+                      fontWeight: item.isRead
                           ? FontWeight.normal
                           : FontWeight.bold,
                       fontSize: 16,
                     ),
                   ),
                 ),
-                if (!notification.read)
+                if (!item.isRead)
                   Container(
                     width: 8,
                     height: 8,

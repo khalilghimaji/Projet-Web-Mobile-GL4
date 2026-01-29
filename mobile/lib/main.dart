@@ -39,7 +39,25 @@ class MainApp extends ConsumerWidget {
       // Load notifications when user becomes authenticated
       if (next.isAuthenticated &&
           (previous == null || !previous.isAuthenticated)) {
-        ref.read(notificationsProvider.notifier).loadNotifications();
+        final notificationsState = ref.read(notificationsProvider);
+        print(
+          '[APP] User authenticated, checking notification state: loading=${notificationsState.isLoading}, count=${notificationsState.notifications.length}',
+        );
+        // Reset any stuck loading state first
+        if (notificationsState.isLoading) {
+          print('[APP] Resetting stuck loading state');
+          ref.read(notificationsProvider.notifier).resetLoadingState();
+        }
+        // Only load if not already loading and no notifications loaded yet
+        if (!notificationsState.isLoading &&
+            notificationsState.notifications.isEmpty) {
+          print('[APP] Loading notifications on app start...');
+          ref.read(notificationsProvider.notifier).loadNotifications();
+        } else {
+          print(
+            '[APP] Skipping notification load: loading=${notificationsState.isLoading}, hasData=${notificationsState.notifications.isNotEmpty}',
+          );
+        }
       }
     });
 

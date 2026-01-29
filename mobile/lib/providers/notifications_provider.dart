@@ -70,14 +70,54 @@ final notificationsProvider =
 class NotificationsNotifier extends StateNotifier<NotificationsState> {
   final api.NotificationsApi _api;
 
-  NotificationsNotifier(this._api) : super(const NotificationsState());
+  NotificationsNotifier(this._api) : super(const NotificationsState()) {
+    print('[NOTIFICATIONS] NotificationsNotifier initialized');
+    // Reset loading state in case it was stuck from previous app session
+    _resetLoadingStateIfNeeded();
+  }
+
+  void _resetLoadingStateIfNeeded() {
+    // If the state shows loading but we just initialized, reset it
+    if (state.isLoading) {
+      print(
+        '[NOTIFICATIONS] Resetting stuck loading state from previous session',
+      );
+      state = state.copyWith(
+        isLoading: false,
+        error: 'Loading was interrupted. Please try again.',
+      );
+    } else {
+      print('[NOTIFICATIONS] Loading state is clean');
+    }
+  }
+
+  // Method to manually reset loading state if needed
+  void resetLoadingState() {
+    if (state.isLoading) {
+      state = state.copyWith(isLoading: false);
+    }
+  }
 
   Future<void> loadNotifications() async {
-    if (state.isLoading) return;
+    // If already loading, don't start another request
+    if (state.isLoading) {
+      print('[NOTIFICATIONS] Already loading, skipping duplicate request');
+      return;
+    }
+
+    print('[NOTIFICATIONS] Starting to load notifications...');
     state = state.copyWith(isLoading: true, error: null);
 
     try {
-      final response = await _api.notificationsControllerGetUserNotifications();
+      final response = await _api
+          .notificationsControllerGetUserNotifications()
+          .timeout(
+            const Duration(seconds: 10),
+            onTimeout: () {
+              throw Exception('Request timed out after 10 seconds');
+            },
+          );
+
       if (response.statusCode == 200 && response.data != null) {
         final notificationItems = response.data!
             .map((n) => NotificationItem(notification: n, isRealTime: false))
@@ -92,14 +132,24 @@ class NotificationsNotifier extends StateNotifier<NotificationsState> {
           isLoading: false,
           unreadCount: unreadCount,
         );
+        print(
+          '[NOTIFICATIONS] Successfully loaded ${notificationItems.length} notifications',
+        );
       } else {
         state = state.copyWith(
           isLoading: false,
-          error: 'Failed to load notifications',
+          error: 'Failed to load notifications: HTTP ${response.statusCode}',
+        );
+        print(
+          '[NOTIFICATIONS] Failed to load notifications: HTTP ${response.statusCode}',
         );
       }
     } catch (error) {
-      state = state.copyWith(isLoading: false, error: error.toString());
+      print('[NOTIFICATIONS] Error loading notifications: $error');
+      state = state.copyWith(
+        isLoading: false,
+        error: 'Failed to load notifications: ${error.toString()}',
+      );
     }
   }
 
@@ -162,7 +212,7 @@ class NotificationsNotifier extends StateNotifier<NotificationsState> {
           .toList();
 
       final unreadCount = updatedNotifications
-          .where((item) => !item.notification.read)
+          .where((item) => !item.isRead)
           .length;
 
       state = state.copyWith(
