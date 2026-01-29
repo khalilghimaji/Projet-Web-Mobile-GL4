@@ -15,6 +15,7 @@ import 'package:mobile/screens/leagues_list_screen.dart';
 import 'package:mobile/screens/match_detail_screen.dart';
 import 'package:mobile/screens/team_detail_screen.dart';
 import 'package:mobile/screens/error_screen.dart';
+import 'package:mobile/screens/score_prediction_page.dart';
 import 'package:mobile/widgets/app_drawer.dart';
 
 // Static router instance
@@ -66,6 +67,7 @@ final _router = GoRouter(
         child: TeamDetailScreen(teamId: state.pathParameters['id']!),
       ),
     ),
+
     // Error routes
     GoRoute(path: '/error', builder: (context, state) => const ErrorScreen()),
     GoRoute(
@@ -212,11 +214,83 @@ class AuthGuard extends ConsumerWidget {
   }
 }
 
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _matchIdController = TextEditingController();
+  final _team1NameController = TextEditingController();
+  final _team2NameController = TextEditingController();
+  final _team1FlagController = TextEditingController();
+  final _team2FlagController = TextEditingController();
+  final _score1Controller = TextEditingController();
+  final _score2Controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _matchIdController.dispose();
+    _team1NameController.dispose();
+    _team2NameController.dispose();
+    _team1FlagController.dispose();
+    _team2FlagController.dispose();
+    _score1Controller.dispose();
+    _score2Controller.dispose();
+    super.dispose();
+  }
+
+  void _navigateToPrediction() {
+    if (!_formKey.currentState!.validate()) return;
+
+    final matchId = _matchIdController.text.trim();
+    final extra = <String, dynamic>{
+      'team1Name': _team1NameController.text.trim(),
+      'team2Name': _team2NameController.text.trim(),
+    };
+
+    final team1Flag = _team1FlagController.text.trim();
+    if (team1Flag.isNotEmpty) extra['team1Flag'] = team1Flag;
+
+    final team2Flag = _team2FlagController.text.trim();
+    if (team2Flag.isNotEmpty) extra['team2Flag'] = team2Flag;
+
+    final score1Text = _score1Controller.text.trim();
+    if (score1Text.isNotEmpty) {
+      final score1 = int.tryParse(score1Text);
+      if (score1 != null) extra['score1'] = score1;
+    }
+
+    final score2Text = _score2Controller.text.trim();
+    if (score2Text.isNotEmpty) {
+      final score2 = int.tryParse(score2Text);
+      if (score2 != null) extra['score2'] = score2;
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) => ScorePredictionDialog(
+        team1Name: extra['team1Name'],
+        team2Name: extra['team2Name'],
+        team1Flag: extra['team1Flag'],
+        team2Flag: extra['team2Flag'],
+        score1: extra['score1'],
+        score2: extra['score2'],
+        matchId: matchId,
+      ),
+    ).then((result) {
+      if (result != null) {
+        // Handle the prediction result if needed
+        print('Prediction submitted: $result');
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('KickStream Mobile'),
@@ -232,20 +306,116 @@ class HomeScreen extends ConsumerWidget {
           ),
         ],
       ),
-      drawer: const AppDrawer(),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text('Welcome to KickStream!'),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                NotificationService().showTestNotification();
-              },
-              child: const Text('Test Notification'),
+      drawer: AppDrawer(),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Score Prediction Test',
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 20),
+                TextFormField(
+                  controller: _matchIdController,
+                  decoration: const InputDecoration(
+                    labelText: 'Match ID',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Match ID is required';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _team1NameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Team 1 Name',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Team 1 Name is required';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _team2NameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Team 2 Name',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Team 2 Name is required';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _team1FlagController,
+                  decoration: const InputDecoration(
+                    labelText: 'Team 1 Flag URL (optional)',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _team2FlagController,
+                  decoration: const InputDecoration(
+                    labelText: 'Team 2 Flag URL (optional)',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _score1Controller,
+                  decoration: const InputDecoration(
+                    labelText: 'Team 1 Score (optional, for update)',
+                    border: OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.number,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _score2Controller,
+                  decoration: const InputDecoration(
+                    labelText: 'Team 2 Score (optional, for update)',
+                    border: OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.number,
+                ),
+                const SizedBox(height: 32),
+                Center(
+                  child: ElevatedButton(
+                    onPressed: _navigateToPrediction,
+                    child: const Text('Go to Score Prediction'),
+                  ),
+                ),
+                const SizedBox(height: 40),
+                const Divider(),
+                const SizedBox(height: 20),
+                Center(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      NotificationService().showTestNotification();
+                    },
+                    child: const Text('Test Notification'),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

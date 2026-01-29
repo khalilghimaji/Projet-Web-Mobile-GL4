@@ -19,7 +19,6 @@ import 'package:openapi/src/model/terminate_match_dto.dart';
 import 'package:openapi/src/model/update_prediction_dto.dart';
 
 class MatchesApi {
-
   final Dio _dio;
 
   final Serializers _serializers;
@@ -27,10 +26,10 @@ class MatchesApi {
   const MatchesApi(this._dio, this._serializers);
 
   /// matchesControllerAddDiamond
-  /// 
+  ///
   ///
   /// Parameters:
-  /// * [canPredictMatchDto] 
+  /// * [canPredictMatchDto]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request
@@ -40,7 +39,7 @@ class MatchesApi {
   ///
   /// Returns a [Future]
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<void>> matchesControllerAddDiamond({ 
+  Future<Response<void>> matchesControllerAddDiamond({
     required CanPredictMatchDto canPredictMatchDto,
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
@@ -52,13 +51,8 @@ class MatchesApi {
     final _path = r'/matches/add-diamond';
     final _options = Options(
       method: r'POST',
-      headers: <String, dynamic>{
-        ...?headers,
-      },
-      extra: <String, dynamic>{
-        'secure': <Map<String, String>>[],
-        ...?extra,
-      },
+      headers: <String, dynamic>{...?headers},
+      extra: <String, dynamic>{'secure': <Map<String, String>>[], ...?extra},
       contentType: 'application/json',
       validateStatus: validateStatus,
     );
@@ -67,14 +61,13 @@ class MatchesApi {
 
     try {
       const _type = FullType(CanPredictMatchDto);
-      _bodyData = _serializers.serialize(canPredictMatchDto, specifiedType: _type);
-
-    } catch(error, stackTrace) {
+      _bodyData = _serializers.serialize(
+        canPredictMatchDto,
+        specifiedType: _type,
+      );
+    } catch (error, stackTrace) {
       throw DioException(
-         requestOptions: _options.compose(
-          _dio.options,
-          _path,
-        ),
+        requestOptions: _options.compose(_dio.options, _path),
         type: DioExceptionType.unknown,
         error: error,
         stackTrace: stackTrace,
@@ -94,11 +87,11 @@ class MatchesApi {
   }
 
   /// matchesControllerCanPredict
-  /// 
+  ///
   ///
   /// Parameters:
-  /// * [id] 
-  /// * [canPredictMatchDto] 
+  /// * [id]
+  /// * [canPredictMatchDto]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request
@@ -108,7 +101,7 @@ class MatchesApi {
   ///
   /// Returns a [Future] containing a [Response] with a [bool] as data
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<bool>> matchesControllerCanPredict({ 
+  Future<Response<bool>> matchesControllerCanPredict({
     required String id,
     required CanPredictMatchDto canPredictMatchDto,
     CancelToken? cancelToken,
@@ -118,16 +111,16 @@ class MatchesApi {
     ProgressCallback? onSendProgress,
     ProgressCallback? onReceiveProgress,
   }) async {
-    final _path = r'/matches/can-predict/{id}'.replaceAll('{' r'id' '}', encodeQueryParameter(_serializers, id, const FullType(String)).toString());
+    final _path = r'/matches/can-predict/{id}'.replaceAll(
+      '{'
+      r'id'
+      '}',
+      encodeQueryParameter(_serializers, id, const FullType(String)).toString(),
+    );
     final _options = Options(
       method: r'POST',
-      headers: <String, dynamic>{
-        ...?headers,
-      },
-      extra: <String, dynamic>{
-        'secure': <Map<String, String>>[],
-        ...?extra,
-      },
+      headers: <String, dynamic>{...?headers},
+      extra: <String, dynamic>{'secure': <Map<String, String>>[], ...?extra},
       contentType: 'application/json',
       validateStatus: validateStatus,
     );
@@ -136,14 +129,13 @@ class MatchesApi {
 
     try {
       const _type = FullType(CanPredictMatchDto);
-      _bodyData = _serializers.serialize(canPredictMatchDto, specifiedType: _type);
-
-    } catch(error, stackTrace) {
+      _bodyData = _serializers.serialize(
+        canPredictMatchDto,
+        specifiedType: _type,
+      );
+    } catch (error, stackTrace) {
       throw DioException(
-         requestOptions: _options.compose(
-          _dio.options,
-          _path,
-        ),
+        requestOptions: _options.compose(_dio.options, _path),
         type: DioExceptionType.unknown,
         error: error,
         stackTrace: stackTrace,
@@ -163,8 +155,17 @@ class MatchesApi {
 
     try {
       final rawResponse = _response.data;
-      _responseData = rawResponse == null ? null : rawResponse as bool;
-
+      dynamic value;
+      if (rawResponse is Map) {
+        value = rawResponse['data'];
+      } else {
+        value = rawResponse;
+      }
+      _responseData = value == null
+          ? null
+          : (value is bool
+                ? value
+                : (value is String ? value.toLowerCase() == 'true' : false));
     } catch (error, stackTrace) {
       throw DioException(
         requestOptions: _response.requestOptions,
@@ -188,11 +189,11 @@ class MatchesApi {
   }
 
   /// matchesControllerEndMatch
-  /// 
+  ///
   ///
   /// Parameters:
-  /// * [id] 
-  /// * [terminateMatchDto] 
+  /// * [id]
+  /// * [terminateMatchDto]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request
@@ -202,7 +203,7 @@ class MatchesApi {
   ///
   /// Returns a [Future]
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<void>> matchesControllerEndMatch({ 
+  Future<Response<void>> matchesControllerEndMatch({
     required String id,
     required TerminateMatchDto terminateMatchDto,
     CancelToken? cancelToken,
@@ -212,16 +213,16 @@ class MatchesApi {
     ProgressCallback? onSendProgress,
     ProgressCallback? onReceiveProgress,
   }) async {
-    final _path = r'/matches/{id}/end-match'.replaceAll('{' r'id' '}', encodeQueryParameter(_serializers, id, const FullType(String)).toString());
+    final _path = r'/matches/{id}/end-match'.replaceAll(
+      '{'
+      r'id'
+      '}',
+      encodeQueryParameter(_serializers, id, const FullType(String)).toString(),
+    );
     final _options = Options(
       method: r'POST',
-      headers: <String, dynamic>{
-        ...?headers,
-      },
-      extra: <String, dynamic>{
-        'secure': <Map<String, String>>[],
-        ...?extra,
-      },
+      headers: <String, dynamic>{...?headers},
+      extra: <String, dynamic>{'secure': <Map<String, String>>[], ...?extra},
       contentType: 'application/json',
       validateStatus: validateStatus,
     );
@@ -230,14 +231,13 @@ class MatchesApi {
 
     try {
       const _type = FullType(TerminateMatchDto);
-      _bodyData = _serializers.serialize(terminateMatchDto, specifiedType: _type);
-
-    } catch(error, stackTrace) {
+      _bodyData = _serializers.serialize(
+        terminateMatchDto,
+        specifiedType: _type,
+      );
+    } catch (error, stackTrace) {
       throw DioException(
-         requestOptions: _options.compose(
-          _dio.options,
-          _path,
-        ),
+        requestOptions: _options.compose(_dio.options, _path),
         type: DioExceptionType.unknown,
         error: error,
         stackTrace: stackTrace,
@@ -257,10 +257,10 @@ class MatchesApi {
   }
 
   /// matchesControllerGetPredictionsStatsForMatch
-  /// 
+  ///
   ///
   /// Parameters:
-  /// * [id] 
+  /// * [id]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request
@@ -270,7 +270,7 @@ class MatchesApi {
   ///
   /// Returns a [Future] containing a [Response] with a [MatchStat] as data
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<MatchStat>> matchesControllerGetPredictionsStatsForMatch({ 
+  Future<Response<MatchStat>> matchesControllerGetPredictionsStatsForMatch({
     required String id,
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
@@ -279,16 +279,16 @@ class MatchesApi {
     ProgressCallback? onSendProgress,
     ProgressCallback? onReceiveProgress,
   }) async {
-    final _path = r'/matches/match-stats-info/{id}'.replaceAll('{' r'id' '}', encodeQueryParameter(_serializers, id, const FullType(String)).toString());
+    final _path = r'/matches/match-stats-info/{id}'.replaceAll(
+      '{'
+      r'id'
+      '}',
+      encodeQueryParameter(_serializers, id, const FullType(String)).toString(),
+    );
     final _options = Options(
       method: r'GET',
-      headers: <String, dynamic>{
-        ...?headers,
-      },
-      extra: <String, dynamic>{
-        'secure': <Map<String, String>>[],
-        ...?extra,
-      },
+      headers: <String, dynamic>{...?headers},
+      extra: <String, dynamic>{'secure': <Map<String, String>>[], ...?extra},
       validateStatus: validateStatus,
     );
 
@@ -304,11 +304,13 @@ class MatchesApi {
 
     try {
       final rawResponse = _response.data;
-      _responseData = rawResponse == null ? null : _serializers.deserialize(
-        rawResponse,
-        specifiedType: const FullType(MatchStat),
-      ) as MatchStat;
-
+      _responseData = rawResponse == null
+          ? null
+          : _serializers.deserialize(
+                  rawResponse,
+                  specifiedType: const FullType(MatchStat),
+                )
+                as MatchStat;
     } catch (error, stackTrace) {
       throw DioException(
         requestOptions: _response.requestOptions,
@@ -332,7 +334,7 @@ class MatchesApi {
   }
 
   /// matchesControllerGetUserGains
-  /// 
+  ///
   ///
   /// Parameters:
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
@@ -344,7 +346,7 @@ class MatchesApi {
   ///
   /// Returns a [Future] containing a [Response] with a [num] as data
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<num>> matchesControllerGetUserGains({ 
+  Future<Response<num>> matchesControllerGetUserGains({
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
     Map<String, dynamic>? extra,
@@ -355,13 +357,8 @@ class MatchesApi {
     final _path = r'/matches/user/gains';
     final _options = Options(
       method: r'GET',
-      headers: <String, dynamic>{
-        ...?headers,
-      },
-      extra: <String, dynamic>{
-        'secure': <Map<String, String>>[],
-        ...?extra,
-      },
+      headers: <String, dynamic>{...?headers},
+      extra: <String, dynamic>{'secure': <Map<String, String>>[], ...?extra},
       validateStatus: validateStatus,
     );
 
@@ -378,7 +375,6 @@ class MatchesApi {
     try {
       final rawResponse = _response.data;
       _responseData = rawResponse == null ? null : rawResponse as num;
-
     } catch (error, stackTrace) {
       throw DioException(
         requestOptions: _response.requestOptions,
@@ -402,10 +398,10 @@ class MatchesApi {
   }
 
   /// matchesControllerGetUserPrediction
-  /// 
+  ///
   ///
   /// Parameters:
-  /// * [id] 
+  /// * [id]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request
@@ -415,7 +411,7 @@ class MatchesApi {
   ///
   /// Returns a [Future] containing a [Response] with a [JsonObject] as data
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<JsonObject>> matchesControllerGetUserPrediction({ 
+  Future<Response<JsonObject>> matchesControllerGetUserPrediction({
     required String id,
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
@@ -424,16 +420,16 @@ class MatchesApi {
     ProgressCallback? onSendProgress,
     ProgressCallback? onReceiveProgress,
   }) async {
-    final _path = r'/matches/{id}/prediction'.replaceAll('{' r'id' '}', encodeQueryParameter(_serializers, id, const FullType(String)).toString());
+    final _path = r'/matches/{id}/prediction'.replaceAll(
+      '{'
+      r'id'
+      '}',
+      encodeQueryParameter(_serializers, id, const FullType(String)).toString(),
+    );
     final _options = Options(
       method: r'GET',
-      headers: <String, dynamic>{
-        ...?headers,
-      },
-      extra: <String, dynamic>{
-        'secure': <Map<String, String>>[],
-        ...?extra,
-      },
+      headers: <String, dynamic>{...?headers},
+      extra: <String, dynamic>{'secure': <Map<String, String>>[], ...?extra},
       validateStatus: validateStatus,
     );
 
@@ -449,11 +445,13 @@ class MatchesApi {
 
     try {
       final rawResponse = _response.data;
-      _responseData = rawResponse == null ? null : _serializers.deserialize(
-        rawResponse,
-        specifiedType: const FullType(JsonObject),
-      ) as JsonObject;
-
+      _responseData = rawResponse == null
+          ? null
+          : _serializers.deserialize(
+                  rawResponse,
+                  specifiedType: const FullType(JsonObject),
+                )
+                as JsonObject;
     } catch (error, stackTrace) {
       throw DioException(
         requestOptions: _response.requestOptions,
@@ -477,11 +475,11 @@ class MatchesApi {
   }
 
   /// matchesControllerMakePrediction
-  /// 
+  ///
   ///
   /// Parameters:
-  /// * [id] 
-  /// * [predictDto] 
+  /// * [id]
+  /// * [predictDto]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request
@@ -491,7 +489,7 @@ class MatchesApi {
   ///
   /// Returns a [Future] containing a [Response] with a [Prediction] as data
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<Prediction>> matchesControllerMakePrediction({ 
+  Future<Response<Prediction>> matchesControllerMakePrediction({
     required String id,
     required PredictDto predictDto,
     CancelToken? cancelToken,
@@ -501,16 +499,16 @@ class MatchesApi {
     ProgressCallback? onSendProgress,
     ProgressCallback? onReceiveProgress,
   }) async {
-    final _path = r'/matches/{id}/predict'.replaceAll('{' r'id' '}', encodeQueryParameter(_serializers, id, const FullType(String)).toString());
+    final _path = r'/matches/{id}/predict'.replaceAll(
+      '{'
+      r'id'
+      '}',
+      encodeQueryParameter(_serializers, id, const FullType(String)).toString(),
+    );
     final _options = Options(
       method: r'POST',
-      headers: <String, dynamic>{
-        ...?headers,
-      },
-      extra: <String, dynamic>{
-        'secure': <Map<String, String>>[],
-        ...?extra,
-      },
+      headers: <String, dynamic>{...?headers},
+      extra: <String, dynamic>{'secure': <Map<String, String>>[], ...?extra},
       contentType: 'application/json',
       validateStatus: validateStatus,
     );
@@ -520,13 +518,9 @@ class MatchesApi {
     try {
       const _type = FullType(PredictDto);
       _bodyData = _serializers.serialize(predictDto, specifiedType: _type);
-
-    } catch(error, stackTrace) {
+    } catch (error, stackTrace) {
       throw DioException(
-         requestOptions: _options.compose(
-          _dio.options,
-          _path,
-        ),
+        requestOptions: _options.compose(_dio.options, _path),
         type: DioExceptionType.unknown,
         error: error,
         stackTrace: stackTrace,
@@ -546,11 +540,13 @@ class MatchesApi {
 
     try {
       final rawResponse = _response.data;
-      _responseData = rawResponse == null ? null : _serializers.deserialize(
-        rawResponse,
-        specifiedType: const FullType(Prediction),
-      ) as Prediction;
-
+      _responseData = rawResponse == null
+          ? null
+          : _serializers.deserialize(
+                  rawResponse,
+                  specifiedType: const FullType(Prediction),
+                )
+                as Prediction;
     } catch (error, stackTrace) {
       throw DioException(
         requestOptions: _response.requestOptions,
@@ -574,11 +570,11 @@ class MatchesApi {
   }
 
   /// matchesControllerUpdateMatch
-  /// 
+  ///
   ///
   /// Parameters:
-  /// * [id] 
-  /// * [terminateMatchDto] 
+  /// * [id]
+  /// * [terminateMatchDto]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request
@@ -588,7 +584,7 @@ class MatchesApi {
   ///
   /// Returns a [Future]
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<void>> matchesControllerUpdateMatch({ 
+  Future<Response<void>> matchesControllerUpdateMatch({
     required String id,
     required TerminateMatchDto terminateMatchDto,
     CancelToken? cancelToken,
@@ -598,16 +594,16 @@ class MatchesApi {
     ProgressCallback? onSendProgress,
     ProgressCallback? onReceiveProgress,
   }) async {
-    final _path = r'/matches/{id}/update-match'.replaceAll('{' r'id' '}', encodeQueryParameter(_serializers, id, const FullType(String)).toString());
+    final _path = r'/matches/{id}/update-match'.replaceAll(
+      '{'
+      r'id'
+      '}',
+      encodeQueryParameter(_serializers, id, const FullType(String)).toString(),
+    );
     final _options = Options(
       method: r'POST',
-      headers: <String, dynamic>{
-        ...?headers,
-      },
-      extra: <String, dynamic>{
-        'secure': <Map<String, String>>[],
-        ...?extra,
-      },
+      headers: <String, dynamic>{...?headers},
+      extra: <String, dynamic>{'secure': <Map<String, String>>[], ...?extra},
       contentType: 'application/json',
       validateStatus: validateStatus,
     );
@@ -616,14 +612,13 @@ class MatchesApi {
 
     try {
       const _type = FullType(TerminateMatchDto);
-      _bodyData = _serializers.serialize(terminateMatchDto, specifiedType: _type);
-
-    } catch(error, stackTrace) {
+      _bodyData = _serializers.serialize(
+        terminateMatchDto,
+        specifiedType: _type,
+      );
+    } catch (error, stackTrace) {
       throw DioException(
-         requestOptions: _options.compose(
-          _dio.options,
-          _path,
-        ),
+        requestOptions: _options.compose(_dio.options, _path),
         type: DioExceptionType.unknown,
         error: error,
         stackTrace: stackTrace,
@@ -643,11 +638,11 @@ class MatchesApi {
   }
 
   /// matchesControllerUpdatePrediction
-  /// 
+  ///
   ///
   /// Parameters:
-  /// * [id] 
-  /// * [updatePredictionDto] 
+  /// * [id]
+  /// * [updatePredictionDto]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request
@@ -657,7 +652,7 @@ class MatchesApi {
   ///
   /// Returns a [Future] containing a [Response] with a [Prediction] as data
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<Prediction>> matchesControllerUpdatePrediction({ 
+  Future<Response<Prediction>> matchesControllerUpdatePrediction({
     required String id,
     required UpdatePredictionDto updatePredictionDto,
     CancelToken? cancelToken,
@@ -667,16 +662,16 @@ class MatchesApi {
     ProgressCallback? onSendProgress,
     ProgressCallback? onReceiveProgress,
   }) async {
-    final _path = r'/matches/{id}/prediction'.replaceAll('{' r'id' '}', encodeQueryParameter(_serializers, id, const FullType(String)).toString());
+    final _path = r'/matches/{id}/prediction'.replaceAll(
+      '{'
+      r'id'
+      '}',
+      encodeQueryParameter(_serializers, id, const FullType(String)).toString(),
+    );
     final _options = Options(
       method: r'PATCH',
-      headers: <String, dynamic>{
-        ...?headers,
-      },
-      extra: <String, dynamic>{
-        'secure': <Map<String, String>>[],
-        ...?extra,
-      },
+      headers: <String, dynamic>{...?headers},
+      extra: <String, dynamic>{'secure': <Map<String, String>>[], ...?extra},
       contentType: 'application/json',
       validateStatus: validateStatus,
     );
@@ -685,14 +680,13 @@ class MatchesApi {
 
     try {
       const _type = FullType(UpdatePredictionDto);
-      _bodyData = _serializers.serialize(updatePredictionDto, specifiedType: _type);
-
-    } catch(error, stackTrace) {
+      _bodyData = _serializers.serialize(
+        updatePredictionDto,
+        specifiedType: _type,
+      );
+    } catch (error, stackTrace) {
       throw DioException(
-         requestOptions: _options.compose(
-          _dio.options,
-          _path,
-        ),
+        requestOptions: _options.compose(_dio.options, _path),
         type: DioExceptionType.unknown,
         error: error,
         stackTrace: stackTrace,
@@ -712,11 +706,13 @@ class MatchesApi {
 
     try {
       final rawResponse = _response.data;
-      _responseData = rawResponse == null ? null : _serializers.deserialize(
-        rawResponse,
-        specifiedType: const FullType(Prediction),
-      ) as Prediction;
-
+      _responseData = rawResponse == null
+          ? null
+          : _serializers.deserialize(
+                  rawResponse,
+                  specifiedType: const FullType(Prediction),
+                )
+                as Prediction;
     } catch (error, stackTrace) {
       throw DioException(
         requestOptions: _response.requestOptions,
@@ -738,5 +734,4 @@ class MatchesApi {
       extra: _response.extra,
     );
   }
-
 }

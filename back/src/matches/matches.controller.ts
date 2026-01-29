@@ -1,4 +1,12 @@
-import { Controller, Post, Param, Body, Get, Patch } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Param,
+  Body,
+  Get,
+  Patch,
+  UseGuards,
+} from '@nestjs/common';
 import { MatchesService } from './matches.service';
 import { User } from '../Decorator/user.decorator';
 import { PredictDto } from './dto/predict.dto';
@@ -8,8 +16,10 @@ import { Prediction } from './entities/prediction.entity';
 import { MatchStat } from './dto/get-match-stats-info.dto';
 import { TerminateMatchDto } from './dto/terminate-match.dto';
 import { RedisCacheService } from 'src/Common/cache/redis-cache.service';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 
 @Controller('matches')
+@UseGuards(JwtAuthGuard)
 export class MatchesController {
   constructor(
     private readonly matchesService: MatchesService,
@@ -23,6 +33,9 @@ export class MatchesController {
     @Body()
     boy: CanPredictMatchDto,
   ): Promise<boolean> {
+    console.log(
+      '//////////////////' + userId + ' ' + matchId + ' ' + JSON.stringify(boy),
+    );
     return this.matchesService.canPredict(
       userId,
       matchId,
@@ -60,6 +73,7 @@ export class MatchesController {
     @Param('id') id: string,
     @Body() body: PredictDto,
   ): Promise<Prediction> {
+    console.log('Making prediction for user:', user.id, 'on match:', id, body);
     return this.matchesService.makePrediction(
       user.id,
       id,
