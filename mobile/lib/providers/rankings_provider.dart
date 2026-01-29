@@ -147,4 +147,9 @@ class RankingsNotifier extends StateNotifier<RankingsState> {
 
     state = state.copyWith(rankings: rankedUsers);
   }
+
+  // Clear all rankings (used on logout)
+  void clearAllRankings() {
+    state = const RankingsState();
+  }
 }

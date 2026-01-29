@@ -9,6 +9,8 @@ import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'dart:convert';
 import 'package:openapi/openapi.dart';
 import 'dart:async';
+import 'package:mobile/providers/notifications_provider.dart';
+import 'package:mobile/providers/rankings_provider.dart';
 
 // Token validation interceptor
 class TokenValidationInterceptor extends Interceptor {
@@ -418,6 +420,10 @@ class AuthActions {
     await _ref.read(refreshTokenProvider.notifier).clearToken();
     await _ref.read(userDataProvider.notifier).clearUser();
     await _ref.read(gainedDiamondsProvider.notifier).clearGainedDiamonds();
+
+    // Clear user-specific data
+    _ref.read(notificationsProvider.notifier).clearAllNotifications();
+    _ref.read(rankingsProvider.notifier).clearAllRankings();
   }
 
   Future<void> loginWithTokens(

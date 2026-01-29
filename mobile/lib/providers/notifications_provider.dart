@@ -224,4 +224,9 @@ class NotificationsNotifier extends StateNotifier<NotificationsState> {
       // Could add error handling later
     }
   }
+
+  // Clear all notifications (used on logout)
+  void clearAllNotifications() {
+    state = const NotificationsState();
+  }
 }
