@@ -1,4 +1,4 @@
-// @dart=2.19
+// @dart=3.9
 //
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
@@ -27,6 +27,7 @@ part 'user.g.dart';
 /// * [recoveryCodes] 
 /// * [googleId] 
 /// * [githubId] 
+/// * [firebaseUid] 
 /// * [diamonds] 
 /// * [score] 
 /// * [refreshToken] 
@@ -73,6 +74,9 @@ abstract class User implements Built<User, UserBuilder> {
 
   @BuiltValueField(wireName: r'githubId')
   String get githubId;
+
+  @BuiltValueField(wireName: r'firebaseUid')
+  String get firebaseUid;
 
   @BuiltValueField(wireName: r'diamonds')
   num get diamonds;
@@ -182,6 +186,11 @@ class _$UserSerializer implements PrimitiveSerializer<User> {
     yield r'githubId';
     yield serializers.serialize(
       object.githubId,
+      specifiedType: const FullType(String),
+    );
+    yield r'firebaseUid';
+    yield serializers.serialize(
+      object.firebaseUid,
       specifiedType: const FullType(String),
     );
     yield r'diamonds';
@@ -341,6 +350,13 @@ class _$UserSerializer implements PrimitiveSerializer<User> {
           ) as String;
           result.githubId = valueDes;
           break;
+        case r'firebaseUid':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType(String),
+          ) as String;
+          result.firebaseUid = valueDes;
+          break;
         case r'diamonds':
           final valueDes = serializers.deserialize(
             value,
@@ -432,4 +448,5 @@ class _$UserSerializer implements PrimitiveSerializer<User> {
     return result.build();
   }
 }
+
 

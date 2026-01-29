@@ -19,6 +19,7 @@ Method | HTTP request | Description
 [**authControllerGoogleAuth**](AuthenticationApi.md#authcontrollergoogleauth) | **GET** /auth/google | Initiate Google OAuth login flow
 [**authControllerGoogleAuthCallback**](AuthenticationApi.md#authcontrollergoogleauthcallback) | **GET** /auth/google/callback | Handle Google OAuth callback
 [**authControllerLogin**](AuthenticationApi.md#authcontrollerlogin) | **POST** /auth/login | User login
+[**authControllerLoginWithFirebase**](AuthenticationApi.md#authcontrollerloginwithfirebase) | **POST** /auth/login/firebase | User login with Firebase
 [**authControllerLogout**](AuthenticationApi.md#authcontrollerlogout) | **POST** /auth/logout | User logout
 [**authControllerRefreshToken**](AuthenticationApi.md#authcontrollerrefreshtoken) | **POST** /auth/refresh | Refresh access token
 [**authControllerResetPassword**](AuthenticationApi.md#authcontrollerresetpassword) | **POST** /auth/reset-password | Reset password with token
@@ -395,6 +396,47 @@ try {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **loginDto** | [**LoginDto**](LoginDto.md)|  | 
+
+### Return type
+
+[**LoginResponseDto**](LoginResponseDto.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **authControllerLoginWithFirebase**
+> LoginResponseDto authControllerLoginWithFirebase(firebaseLoginDto)
+
+User login with Firebase
+
+### Example
+```dart
+import 'package:openapi/api.dart';
+
+final api = Openapi().getAuthenticationApi();
+final FirebaseLoginDto firebaseLoginDto = ; // FirebaseLoginDto | 
+
+try {
+    final response = api.authControllerLoginWithFirebase(firebaseLoginDto);
+    print(response);
+} on DioException catch (e) {
+    print('Exception when calling AuthenticationApi->authControllerLoginWithFirebase: $e\n');
+}
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **firebaseLoginDto** | [**FirebaseLoginDto**](FirebaseLoginDto.md)|  | 
 
 ### Return type
 

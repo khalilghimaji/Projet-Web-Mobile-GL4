@@ -1,4 +1,4 @@
-// @dart=2.19
+// @dart=3.9
 //
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
@@ -74,4 +74,5 @@ class _$NotificationDataSerializer implements PrimitiveSerializer<NotificationDa
     return result.build();
   }
 }
+
 

@@ -20,6 +20,7 @@ Name | Type | Description | Notes
 **recoveryCodes** | **BuiltList&lt;String&gt;** |  | 
 **googleId** | **String** |  | 
 **githubId** | **String** |  | 
+**firebaseUid** | **String** |  | 
 **diamonds** | **num** |  | 
 **score** | **num** |  | 
 **refreshToken** | **String** |  | [optional] 

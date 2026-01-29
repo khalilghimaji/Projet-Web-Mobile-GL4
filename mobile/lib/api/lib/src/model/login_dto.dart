@@ -1,4 +1,4 @@
-// @dart=2.19
+// @dart=3.9
 //
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
@@ -138,4 +138,5 @@ class _$LoginDtoSerializer implements PrimitiveSerializer<LoginDto> {
     return result.build();
   }
 }
+
 

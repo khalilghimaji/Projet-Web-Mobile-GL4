@@ -1,4 +1,4 @@
-// @dart=2.19
+// @dart=3.9
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
 part of 'mfa_generate_response_dto.dart';
@@ -132,3 +132,4 @@ class MfaGenerateResponseDtoBuilder
 }
 
 // ignore_for_file: deprecated_member_use_from_same_package,type=lint
+

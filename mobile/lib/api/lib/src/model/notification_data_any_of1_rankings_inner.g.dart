@@ -1,4 +1,4 @@
-// @dart=2.19
+// @dart=3.9
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
 part of 'notification_data_any_of1_rankings_inner.dart';
@@ -140,3 +140,4 @@ class NotificationDataAnyOf1RankingsInnerBuilder
 }
 
 // ignore_for_file: deprecated_member_use_from_same_package,type=lint
+

@@ -10,7 +10,6 @@ import { WebSocketClientService } from './websocket-client.service';
 import { MatchesController } from './matches.controller';
 import { TestController } from './test.controller';
 
-
 @Module({
   imports: [
     TypeOrmModule.forFeature([Prediction, User]),

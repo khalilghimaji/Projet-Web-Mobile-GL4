@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:dio/dio.dart';
 import 'package:mobile/providers/api_providers.dart';
 import 'package:openapi/openapi.dart' as api;
 import 'package:built_collection/built_collection.dart';
@@ -68,51 +67,65 @@ class RankedUser {
 
 // Provider for rankings state
 final rankingsProvider = StateNotifierProvider<RankingsNotifier, RankingsState>(
-  (ref) {
-    final dio = ref.watch(dioProvider);
-    return RankingsNotifier(dio);
-  },
+  (ref) => RankingsNotifier(ref),
 );
 
 class RankingsNotifier extends StateNotifier<RankingsState> {
-  final Dio _dio;
+  final Ref _ref;
 
-  RankingsNotifier(this._dio) : super(const RankingsState()) {
-    loadRankings();
-  }
+  RankingsNotifier(this._ref) : super(const RankingsState());
 
   Future<void> loadRankings() async {
+    // Prevent multiple simultaneous calls
+    if (state.isLoading) return;
+
     state = state.copyWith(isLoading: true, error: null);
 
     try {
-      final response = await _dio.get('/user/rankings');
-      print("Rankings response: ${response.data}");
+      print("Starting rankings API call...");
+      // Use Dio directly to avoid deserialization issues with the User model
+      final dio = _ref.read(dioProvider);
+      final response = await dio
+          .get('/user/rankings')
+          .timeout(
+            const Duration(seconds: 10),
+            onTimeout: () {
+              throw Exception('Request timed out after 10 seconds');
+            },
+          );
+      print("Rankings API call completed with status: ${response.statusCode}");
+      print("Rankings response data: ${response.data}");
       if (response.statusCode == 200 && response.data != null) {
-        final users = response.data as List;
-        final rankedUsers = users.asMap().entries.map((entry) {
+        final usersData = response.data as List<dynamic>;
+        print("Processing ${usersData.length} users from rankings");
+        final rankedUsers = usersData.asMap().entries.map((entry) {
           final index = entry.key;
           final userData = entry.value as Map<String, dynamic>;
-          final user = RankingUser(
-            id: userData['id']?.toString() ?? '',
-            firstName: userData['firstName'] ?? '',
-            lastName: userData['lastName'] ?? '',
-            email: userData['email'] ?? '',
+          final rankingUser = RankingUser(
+            id: userData['id'] as String?,
+            firstName: userData['firstName'] as String? ?? 'Unknown',
+            lastName: userData['lastName'] as String? ?? 'User',
+            email: userData['email'] as String?,
             score: (userData['score'] as num?)?.toInt() ?? 0,
             imageUrl: userData['imageUrl'] as String?,
           );
-          return RankedUser(user: user, rank: index + 1);
+          return RankedUser(user: rankingUser, rank: index + 1);
         }).toList();
 
+        print("Successfully processed ${rankedUsers.length} ranked users");
         state = state.copyWith(rankings: rankedUsers, isLoading: false);
       } else {
-        state = state.copyWith(
-          isLoading: false,
-          error: 'Failed to load rankings',
-        );
+        final errorMsg = 'Failed to load rankings: HTTP ${response.statusCode}';
+        print(errorMsg);
+        state = state.copyWith(isLoading: false, error: errorMsg);
       }
     } catch (error) {
       print("Rankings error: $error");
-      state = state.copyWith(isLoading: false, error: error.toString());
+      print("Error type: ${error.runtimeType}");
+      state = state.copyWith(
+        isLoading: false,
+        error: 'Failed to load rankings: ${error.toString()}',
+      );
     }
   }
 

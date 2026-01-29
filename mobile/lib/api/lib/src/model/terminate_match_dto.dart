@@ -1,4 +1,4 @@
-// @dart=2.19
+// @dart=3.9
 //
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
@@ -120,4 +120,5 @@ class _$TerminateMatchDtoSerializer implements PrimitiveSerializer<TerminateMatc
     return result.build();
   }
 }
+
 

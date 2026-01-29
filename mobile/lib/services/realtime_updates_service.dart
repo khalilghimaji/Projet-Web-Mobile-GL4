@@ -1,12 +1,15 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/providers/rankings_provider.dart';
 import 'package:openapi/openapi.dart' as api;
 import 'package:mobile/providers/api_providers.dart';
 import 'package:mobile/providers/notifications_provider.dart';
 import 'package:dio/dio.dart';
 import 'package:built_collection/built_collection.dart';
-import 'package:one_of/any_of.dart';
+import 'package:mobile/models/custom_notification_models.dart';
+
+// ignore_for_file: unchecked_use_of_nullable_value, instantiate_abstract_class, undefined_method
 
 // Provider for the realtime updates service
 final realtimeUpdatesServiceProvider = Provider<RealtimeUpdatesService>((ref) {
@@ -21,6 +24,7 @@ class RealtimeUpdatesService {
   AuthState _authState;
   late final NotificationsNotifier _notificationsNotifier;
   late final UserDataNotifier _userDataNotifier;
+  late final RankingsNotifier _rankingsNotifier;
 
   StreamSubscription<String>? _sseSubscription;
   bool _shouldReconnect = true;
@@ -28,11 +32,14 @@ class RealtimeUpdatesService {
   static const int _maxReconnectAttempts = 10;
   Timer? _reconnectTimer;
 
+  // Store custom data for easier access
+  final Map<String, NotificationDataUnion> _customDataCache = {};
+
   RealtimeUpdatesService(this._dio, this._ref, this._authState) {
     // Store reference to notifier to avoid Riverpod ref issues in async callbacks
     _notificationsNotifier = _ref.read(notificationsProvider.notifier);
     _userDataNotifier = _ref.read(userDataProvider.notifier);
-
+    _rankingsNotifier = _ref.read(rankingsProvider.notifier);
     // Start connection if authenticated
     if (_authState.isAuthenticated && _authState.accessToken != null) {
       print(
@@ -172,32 +179,39 @@ class RealtimeUpdatesService {
           print('[SSE] Processing notification data: $data');
           final notificationJson = json.decode(data);
 
-          final parsedData = _parseNotificationData(
+          // Simplified parsing using custom models for internal logic
+          final customData = _parseNotificationDataSimple(
             notificationJson['data'],
             notificationJson['type'],
+          );
+
+          print(
+            '[SSE] Parsed custom data: $customData for notification type: ${notificationJson['type']}',
           );
 
           // Create notification using builder pattern
           final notification = api.Notification(
             (b) => b
-              ..id = notificationJson['id'] ?? ''
-              ..userId = notificationJson['userId'] ?? ''
-              ..type = _parseNotificationType(notificationJson['type'])
-              ..message = notificationJson['message'] ?? ''
-              ..read = notificationJson['read'] ?? false
+              ..id = (notificationJson['id'] as String?) ?? ''
+              ..userId = (notificationJson['userId'] as String?) ?? ''
+              ..type = _parseNotificationType(
+                notificationJson['type'] as String?,
+              )
+              ..message = (notificationJson['message'] as String?) ?? ''
+              ..read = (notificationJson['read'] as bool?) ?? false
               ..createdAt = DateTime.parse(
-                notificationJson['createdAt'] ??
+                (notificationJson['createdAt'] as String?) ??
                     DateTime.now().toIso8601String(),
               )
               ..updatedAt = DateTime.parse(
-                notificationJson['updatedAt'] ??
+                (notificationJson['updatedAt'] as String?) ??
                     DateTime.now().toIso8601String(),
               )
-              ..version = notificationJson['version'] ?? 0
-              ..data = parsedData != null
-                  ? (api.NotificationDataBuilder()..anyOf = parsedData)
-                  : null,
+              ..version = ((notificationJson['version'] as num?)?.toInt()) ?? 0,
           );
+
+          // Store custom data for easier access in handlers
+          _storeCustomDataForNotification(notification, customData);
 
           print(
             '[SSE] Created notification: ${notification.id} - ${notification.type} - ${notification.message} - ${notification.data}',
@@ -226,77 +240,83 @@ class RealtimeUpdatesService {
     }
   }
 
-  dynamic _parseNotificationData(dynamic dataJson, String? typeString) {
-    if (dataJson == null) return null;
-
+  NotificationDataUnion? _parseNotificationDataSimple(
+    dynamic dataJson,
+    String? typeString,
+  ) {
+    if (dataJson == null || dataJson is! Map<String, dynamic>) return null;
+    print(
+      '[SSE] Parsing notification data for type: $typeString with data: $dataJson',
+    );
     try {
       switch (typeString) {
-        case 'DIAMOND_UPDATE':
         case 'CHANGE_OF_POSSESSED_GEMS':
-          // Parse DataMessage: { gain: number, newDiamonds: number }
-          if (dataJson is Map<String, dynamic>) {
-            final gain = dataJson['gain'] as num?;
-            final newDiamonds = dataJson['newDiamonds'] as num?;
-            if (gain != null && newDiamonds != null) {
-              return AnyOf<api.NotificationDataAnyOf, api.NotificationDataAnyOf1>.left(api.NotificationDataAnyOf(
-                (b) => b
-                  ..gain = gain
-                  ..newDiamonds = newDiamonds,
-              ));
-            }
-          }
-          break;
+        case 'DIAMOND_UPDATE':
+          return NotificationDataUnion(
+            (b) => b
+              ..gain = dataJson['gain'] as num?
+              ..newDiamonds = dataJson['newDiamonds'] as num?,
+          );
 
         case 'RANKING_UPDATE':
-          // Parse UserRankingMessage: { rankings: UserRanking[] }
-          if (dataJson is Map<String, dynamic> &&
-              dataJson['rankings'] is List) {
-            final rankingsJson = dataJson['rankings'] as List;
-            final rankings = rankingsJson
-                .map((rankingJson) {
-                  if (rankingJson is Map<String, dynamic>) {
-                    return api.NotificationDataAnyOf1RankingsInner(
-                      (b) => b
-                        ..firstName = rankingJson['firstName'] ?? ''
-                        ..lastName = rankingJson['lastName'] ?? ''
-                        ..score = rankingJson['score'] ?? 0
-                        ..imageUrl = rankingJson['imageUrl'] ?? '',
-                    );
-                  }
-                  return null;
-                })
-                .whereType<api.NotificationDataAnyOf1RankingsInner>()
+          final rankingsData = dataJson['rankings'] as List<dynamic>?;
+          if (rankingsData != null) {
+            final rankings = rankingsData
+                .map(
+                  (item) => RankingEntry(
+                    (b) => b
+                      ..firstName = item['firstName'] as String?
+                      ..lastName = item['lastName'] as String?
+                      ..score = item['score'] as num?
+                      ..imageUrl = item['imageUrl'] as String?,
+                  ),
+                )
                 .toList();
 
-            return AnyOf<api.NotificationDataAnyOf, api.NotificationDataAnyOf1>.right(api.NotificationDataAnyOf1(
-              (b) => b
-                ..rankings =
-                    ListBuilder<api.NotificationDataAnyOf1RankingsInner>(
-                      rankings,
-                    ),
-            ));
+            return NotificationDataUnion(
+              (b) => b.rankings = ListBuilder<RankingEntry>(rankings),
+            );
+          } else {
+            return NotificationDataUnion((b) => b.rankings = null);
           }
-          break;
+
+        default:
+          print('[SSE] Unknown notification type: $typeString');
+          return null;
       }
     } catch (error) {
       print('[SSE] Error parsing notification data: $error');
+      return null;
     }
+  }
 
-    return null;
+  void _storeCustomDataForNotification(
+    api.Notification notification,
+    NotificationDataUnion? customData,
+  ) {
+    if (customData != null) {
+      _customDataCache[notification.id] = customData;
+    }
+  }
+
+  NotificationDataUnion? _getCustomDataForNotification(
+    api.Notification notification,
+  ) {
+    return _customDataCache[notification.id];
   }
 
   void _handleRealtimeUpdate(api.Notification notification) {
     print(
-      '[SSE] Processing realtime notification: ${notification.type} - ${notification.message}',
+      '[SSE] Processing realtime notification: ${notification.type} - ${notification.message} - ${notification.data}',
     );
 
     // Handle different notification types
     switch (notification.type) {
       case api.NotificationTypeEnum.DIAMOND_UPDATE:
-        _handleDiamondUpdate(notification);
-        break;
-      case api.NotificationTypeEnum.RANKING_UPDATE:
       case api.NotificationTypeEnum.CHANGE_OF_POSSESSED_GEMS:
+        _handleDiamondUpdate(notification);
+      case api.NotificationTypeEnum.RANKING_UPDATE:
+        _handleRankingUpdate(notification);
       default:
         // For other types, just add as notification
         _notificationsNotifier.addRealtimeNotification(notification);
@@ -306,23 +326,49 @@ class RealtimeUpdatesService {
     print('[SSE] Notification processed');
   }
 
-  void _handleDiamondUpdate(api.Notification notification) {
-    print('[SSE] Handling diamond update notification');
+  void _handleRankingUpdate(api.Notification notification) {
+    // Get the custom data from cache
+    final customData = _getCustomDataForNotification(notification);
 
-    // Try to get new diamond count from the parsed notification data first
-    if (notification.data != null &&
-        notification.data!.anyOf is api.NotificationDataAnyOf) {
-      final dataMessage = notification.data!.anyOf as api.NotificationDataAnyOf;
-      final newDiamonds = dataMessage.newDiamonds?.toInt();
+    print(
+      '[SSE] Handling ranking update notification with custom data: $customData',
+    );
+
+    // Update the internal rankings table with the rankings from custom data
+    if (customData != null && customData.rankings != null) {
+      print(
+        '[SSE] Updating internal rankings table with ${customData.rankings!.length} entries',
+      );
+      _rankingsNotifier.updateRankings(customData.rankings!);
+    } else {
+      print('[SSE] No rankings data available in custom data');
+    }
+
+    // Also add the notification to the list
+    _notificationsNotifier.addRealtimeNotification(notification);
+  }
+
+  void _handleDiamondUpdate(api.Notification notification) {
+    // Get the custom data from cache
+    final customData = _getCustomDataForNotification(notification);
+
+    print(
+      '[SSE] Handling diamond update notification with custom data: $customData',
+    );
+
+    // Try to get new diamond count from the cached custom data
+    if (customData != null &&
+        (customData.gain != null || customData.newDiamonds != null)) {
+      final newDiamonds = customData.newDiamonds?.toInt();
       if (newDiamonds != null) {
-        print('[SSE] Updating user diamonds to: $newDiamonds from data');
+        print('[SSE] Updating user diamonds to: $newDiamonds from custom data');
         _userDataNotifier.updateDiamonds(newDiamonds);
       } else {
-        print('[SSE] newDiamonds is null in notification data');
+        print('[SSE] newDiamonds is null in custom data');
       }
     } else {
       // Fallback: Try to extract from message if data parsing failed
-      print('[SSE] Data not available, falling back to message parsing');
+      print('[SSE] Custom data not available, falling back to message parsing');
       final message = notification.message.toLowerCase();
       final diamondRegex = RegExp(r'(\d+)');
       final match = diamondRegex.firstMatch(message);

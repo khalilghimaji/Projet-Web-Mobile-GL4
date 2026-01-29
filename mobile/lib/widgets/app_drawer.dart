@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile/providers/api_providers.dart';
 import 'package:mobile/providers/notifications_provider.dart';
+import 'package:mobile/utils/url_utils.dart';
 
 class AppDrawer extends ConsumerWidget {
   const AppDrawer({super.key});
@@ -194,7 +195,9 @@ class AppDrawer extends ConsumerWidget {
                             radius: 24,
                             backgroundColor: Colors.transparent,
                             backgroundImage: user.imgUrl != null
-                                ? NetworkImage(user.imgUrl!)
+                                ? NetworkImage(
+                                    UrlUtils.transformUrl(user.imgUrl!),
+                                  )
                                 : null,
                             child: user.imgUrl == null
                                 ? Text(

@@ -1,4 +1,5 @@
-// @dart=2.19
+// @dart=3.9
+// @dart=3.9
 //
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
@@ -15,12 +16,13 @@ part 'login_response_dto.g.dart';
 /// Properties:
 /// * [accessToken] - JWT access token
 /// * [refreshToken] - JWT refresh token
-/// * [user] 
+/// * [user]
 /// * [message] - Message indicating MFA verification is required
 /// * [mfaToken] - Temporary token for MFA verification
 /// * [isMfaRequired] - Flag indicating MFA is required
 @BuiltValue()
-abstract class LoginResponseDto implements Built<LoginResponseDto, LoginResponseDtoBuilder> {
+abstract class LoginResponseDto
+    implements Built<LoginResponseDto, LoginResponseDtoBuilder> {
   /// JWT access token
   @BuiltValueField(wireName: r'accessToken')
   String? get accessToken;
@@ -46,16 +48,19 @@ abstract class LoginResponseDto implements Built<LoginResponseDto, LoginResponse
 
   LoginResponseDto._();
 
-  factory LoginResponseDto([void updates(LoginResponseDtoBuilder b)]) = _$LoginResponseDto;
+  factory LoginResponseDto([void updates(LoginResponseDtoBuilder b)]) =
+      _$LoginResponseDto;
 
   @BuiltValueHook(initializeBuilder: true)
   static void _defaults(LoginResponseDtoBuilder b) => b;
 
   @BuiltValueSerializer(custom: true)
-  static Serializer<LoginResponseDto> get serializer => _$LoginResponseDtoSerializer();
+  static Serializer<LoginResponseDto> get serializer =>
+      _$LoginResponseDtoSerializer();
 }
 
-class _$LoginResponseDtoSerializer implements PrimitiveSerializer<LoginResponseDto> {
+class _$LoginResponseDtoSerializer
+    implements PrimitiveSerializer<LoginResponseDto> {
   @override
   final Iterable<Type> types = const [LoginResponseDto, _$LoginResponseDto];
 
@@ -117,7 +122,11 @@ class _$LoginResponseDtoSerializer implements PrimitiveSerializer<LoginResponseD
     LoginResponseDto object, {
     FullType specifiedType = FullType.unspecified,
   }) {
-    return _serializeProperties(serializers, object, specifiedType: specifiedType).toList();
+    return _serializeProperties(
+      serializers,
+      object,
+      specifiedType: specifiedType,
+    ).toList();
   }
 
   void _deserializeProperties(
@@ -133,45 +142,57 @@ class _$LoginResponseDtoSerializer implements PrimitiveSerializer<LoginResponseD
       final value = serializedList[i + 1];
       switch (key) {
         case r'accessToken':
-          final valueDes = serializers.deserialize(
-            value,
-            specifiedType: const FullType(String),
-          ) as String;
+          final valueDes =
+              serializers.deserialize(
+                    value,
+                    specifiedType: const FullType(String),
+                  )
+                  as String;
           result.accessToken = valueDes;
           break;
         case r'refreshToken':
-          final valueDes = serializers.deserialize(
-            value,
-            specifiedType: const FullType(String),
-          ) as String;
+          final valueDes =
+              serializers.deserialize(
+                    value,
+                    specifiedType: const FullType(String),
+                  )
+                  as String;
           result.refreshToken = valueDes;
           break;
         case r'user':
-          final valueDes = serializers.deserialize(
-            value,
-            specifiedType: const FullType(UserDto),
-          ) as UserDto;
+          final valueDes =
+              serializers.deserialize(
+                    value,
+                    specifiedType: const FullType(UserDto),
+                  )
+                  as UserDto;
           result.user.replace(valueDes);
           break;
         case r'message':
-          final valueDes = serializers.deserialize(
-            value,
-            specifiedType: const FullType(String),
-          ) as String;
+          final valueDes =
+              serializers.deserialize(
+                    value,
+                    specifiedType: const FullType(String),
+                  )
+                  as String;
           result.message = valueDes;
           break;
         case r'mfaToken':
-          final valueDes = serializers.deserialize(
-            value,
-            specifiedType: const FullType(String),
-          ) as String;
+          final valueDes =
+              serializers.deserialize(
+                    value,
+                    specifiedType: const FullType(String),
+                  )
+                  as String;
           result.mfaToken = valueDes;
           break;
         case r'isMfaRequired':
-          final valueDes = serializers.deserialize(
-            value,
-            specifiedType: const FullType(bool),
-          ) as bool;
+          final valueDes =
+              serializers.deserialize(
+                    value,
+                    specifiedType: const FullType(bool),
+                  )
+                  as bool;
           result.isMfaRequired = valueDes;
           break;
         default:
@@ -202,4 +223,3 @@ class _$LoginResponseDtoSerializer implements PrimitiveSerializer<LoginResponseD
     return result.build();
   }
 }
-

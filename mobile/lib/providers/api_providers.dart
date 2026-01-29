@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cookie_jar/cookie_jar.dart';
+import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'dart:convert';
 import 'package:openapi/openapi.dart';
 
@@ -14,6 +16,11 @@ final secureStorageProvider = Provider<FlutterSecureStorage>((ref) {
 
 final sharedPreferencesProvider = FutureProvider<SharedPreferences>((ref) {
   return SharedPreferences.getInstance();
+});
+
+// Cookie jar provider for managing HTTP cookies
+final cookieJarProvider = Provider<CookieJar>((ref) {
+  return CookieJar();
 });
 
 // Auth token providers
@@ -40,7 +47,7 @@ final authStateProvider = Provider<AuthState>((ref) {
   final accessToken = ref.watch(accessTokenProvider);
   final user = ref.watch(userDataProvider);
   return AuthState(
-    isAuthenticated: accessToken != null && user != null,
+    isAuthenticated: accessToken != null || user != null,
     accessToken: accessToken,
     user: user,
   );
@@ -69,25 +76,63 @@ final dioProvider = Provider<Dio>((ref) {
     ),
   );
 
+  // Add cookie manager for automatic cookie handling
+  final cookieJar = ref.read(cookieJarProvider);
+  dio.interceptors.add(CookieManager(cookieJar));
+
   // Add interceptors
   dio.interceptors.add(
     InterceptorsWrapper(
       onRequest: (options, handler) {
-        // Add auth token if available
+        // Add Authorization header if access token is available
         final accessToken = ref.read(accessTokenProvider);
         if (accessToken != null) {
           options.headers['Authorization'] = 'Bearer $accessToken';
         }
+        // Cookies are automatically managed by CookieManager for other purposes
         return handler.next(options);
       },
-      onError: (error, handler) {
+      onError: (error, handler) async {
         // Handle token refresh on 401 errors
         if (error.response?.statusCode == 401) {
-          // TODO: Implement token refresh logic
-          // For now, just clear tokens
-          ref.read(accessTokenProvider.notifier).clearToken();
-          ref.read(refreshTokenProvider.notifier).clearToken();
-          ref.read(userDataProvider.notifier).clearUser();
+          try {
+            // Get the refresh token
+            final refreshToken = ref.read(refreshTokenProvider);
+            if (refreshToken != null) {
+              // Attempt to refresh the token
+              final refreshResponse = await dio.post(
+                '/auth/refresh',
+                data: {'refreshToken': refreshToken},
+              );
+
+              if (refreshResponse.statusCode == 200) {
+                // Get new tokens from response
+                final newAccessToken = refreshResponse.data['accessToken'];
+                final newRefreshToken = refreshResponse.data['refreshToken'];
+
+                if (newAccessToken != null) {
+                  await ref
+                      .read(accessTokenProvider.notifier)
+                      .setToken(newAccessToken);
+                }
+                if (newRefreshToken != null) {
+                  await ref
+                      .read(refreshTokenProvider.notifier)
+                      .setToken(newRefreshToken);
+                }
+
+                // Retry the original request
+                final retryResponse = await dio.fetch(error.requestOptions);
+                return handler.resolve(retryResponse);
+              }
+            }
+          } catch (refreshError) {
+            // Refresh failed, logout
+            print('Token refresh failed: $refreshError');
+            ref.read(accessTokenProvider.notifier).clearToken();
+            ref.read(refreshTokenProvider.notifier).clearToken();
+            ref.read(userDataProvider.notifier).clearUser();
+          }
         }
         return handler.next(error);
       },
@@ -263,6 +308,19 @@ class AuthActions {
   AuthActions(this._ref);
 
   Future<void> logout() async {
+    try {
+      // Call the logout API endpoint to clear server-side cookies
+      final authApi = _ref.read(authenticationApiProvider);
+      await authApi.authControllerLogout();
+    } catch (error) {
+      // Even if the API call fails, we should still clear local data
+      print('Logout API call failed: $error');
+    }
+
+    // Clear local cookie storage
+    final cookieJar = _ref.read(cookieJarProvider);
+    await cookieJar.deleteAll();
+
     // Clear all stored authentication data
     await _ref.read(accessTokenProvider.notifier).clearToken();
     await _ref.read(refreshTokenProvider.notifier).clearToken();
@@ -270,11 +328,13 @@ class AuthActions {
   }
 
   Future<void> loginWithTokens(
-    String accessToken,
+    String? accessToken,
     String? refreshToken,
     UserDto? user,
   ) async {
-    await _ref.read(accessTokenProvider.notifier).setToken(accessToken);
+    if (accessToken != null) {
+      await _ref.read(accessTokenProvider.notifier).setToken(accessToken);
+    }
     if (refreshToken != null) {
       await _ref.read(refreshTokenProvider.notifier).setToken(refreshToken);
     }

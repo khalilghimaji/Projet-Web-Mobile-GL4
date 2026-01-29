@@ -5,6 +5,7 @@ doc/AppApi.md
 doc/AuthenticationApi.md
 doc/CanPredictMatchDto.md
 doc/DisableMfaDto.md
+doc/FirebaseLoginDto.md
 doc/ForgotPasswordDto.md
 doc/ForgotPasswordResponseDto.md
 doc/LoginDto.md
@@ -32,6 +33,7 @@ doc/ResetPasswordDto.md
 doc/ResetPasswordResponseDto.md
 doc/SignUpResponseDto.md
 doc/TerminateMatchDto.md
+doc/TestApi.md
 doc/UpdatePredictionDto.md
 doc/User.md
 doc/UserApi.md
@@ -44,6 +46,7 @@ lib/src/api/app_api.dart
 lib/src/api/authentication_api.dart
 lib/src/api/matches_api.dart
 lib/src/api/notifications_api.dart
+lib/src/api/test_api.dart
 lib/src/api/user_api.dart
 lib/src/api_util.dart
 lib/src/auth/api_key_auth.dart
@@ -55,6 +58,7 @@ lib/src/date_serializer.dart
 lib/src/model/can_predict_match_dto.dart
 lib/src/model/date.dart
 lib/src/model/disable_mfa_dto.dart
+lib/src/model/firebase_login_dto.dart
 lib/src/model/forgot_password_dto.dart
 lib/src/model/forgot_password_response_dto.dart
 lib/src/model/login_dto.dart

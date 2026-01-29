@@ -1,3 +1,4 @@
+// @dart=3.9
 import 'package:test/test.dart';
 import 'package:openapi/openapi.dart';
 

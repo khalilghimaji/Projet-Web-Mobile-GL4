@@ -1,4 +1,4 @@
-// @dart=2.19
+// @dart=3.9
 //
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
@@ -105,4 +105,5 @@ class _$LogoutResponseDtoSerializer implements PrimitiveSerializer<LogoutRespons
     return result.build();
   }
 }
+
 

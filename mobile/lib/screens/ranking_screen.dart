@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mobile/providers/rankings_provider.dart';
+import 'package:mobile/providers/api_providers.dart';
 import 'package:mobile/widgets/app_drawer.dart';
+import 'package:mobile/utils/url_utils.dart';
 
 class RankingScreen extends ConsumerStatefulWidget {
   const RankingScreen({super.key});
@@ -12,8 +15,53 @@ class RankingScreen extends ConsumerStatefulWidget {
 
 class _RankingScreenState extends ConsumerState<RankingScreen> {
   @override
+  void initState() {
+    super.initState();
+    // Load rankings when the screen is first opened (only if authenticated)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authState = ref.read(authStateProvider);
+      if (authState.isAuthenticated) {
+        ref.read(rankingsProvider.notifier).loadRankings();
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final rankingsState = ref.watch(rankingsProvider);
+    final authState = ref.watch(authStateProvider);
+
+    // Check if user is authenticated
+    if (!authState.isAuthenticated) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('User Rankings')),
+        drawer: const AppDrawer(),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.login, size: 64, color: Colors.grey),
+              const SizedBox(height: 16),
+              const Text(
+                'Authentication Required',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Please log in to view user rankings',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.grey),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () => context.go('/login'),
+                child: const Text('Go to Login'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -241,7 +289,6 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
                 return Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: topThree.asMap().entries.map((entry) {
-                    final index = entry.key;
                     final rankedUser = entry.value;
                     return SizedBox(
                       width: itemWidth,
@@ -272,7 +319,7 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
             boxShadow: isFirstPlace
                 ? [
                     BoxShadow(
-                      color: Colors.amber.withOpacity(0.3),
+                      color: Colors.amber.withAlpha((0.3 * 255).round()),
                       blurRadius: 8,
                       spreadRadius: 2,
                     ),
@@ -309,7 +356,7 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
             backgroundImage:
                 rankedUser.user.imageUrl != null &&
                     rankedUser.user.imageUrl!.isNotEmpty
-                ? NetworkImage(rankedUser.user.imageUrl!)
+                ? NetworkImage(UrlUtils.transformUrl(rankedUser.user.imageUrl!))
                 : null,
             child:
                 rankedUser.user.imageUrl == null ||
@@ -449,7 +496,7 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
             backgroundImage:
                 rankedUser.user.imageUrl != null &&
                     rankedUser.user.imageUrl!.isNotEmpty
-                ? NetworkImage(rankedUser.user.imageUrl!)
+                ? NetworkImage(UrlUtils.transformUrl(rankedUser.user.imageUrl!))
                 : null,
             child:
                 rankedUser.user.imageUrl == null ||

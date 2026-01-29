@@ -1,4 +1,4 @@
-// @dart=2.19
+// @dart=3.9
 //
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
@@ -255,4 +255,5 @@ class NotificationTypeEnum extends EnumClass {
   static BuiltSet<NotificationTypeEnum> get values => _$notificationTypeEnumValues;
   static NotificationTypeEnum valueOf(String name) => _$notificationTypeEnumValueOf(name);
 }
+
 

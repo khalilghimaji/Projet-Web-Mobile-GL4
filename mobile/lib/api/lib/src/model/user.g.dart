@@ -1,4 +1,4 @@
-// @dart=2.19
+// @dart=3.9
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
 part of 'user.dart';
@@ -32,6 +32,8 @@ class _$User extends User {
   final String googleId;
   @override
   final String githubId;
+  @override
+  final String firebaseUid;
   @override
   final num diamonds;
   @override
@@ -67,6 +69,7 @@ class _$User extends User {
     this.recoveryCodes,
     required this.googleId,
     required this.githubId,
+    required this.firebaseUid,
     required this.diamonds,
     required this.score,
     this.refreshToken,
@@ -100,6 +103,7 @@ class _$User extends User {
         recoveryCodes == other.recoveryCodes &&
         googleId == other.googleId &&
         githubId == other.githubId &&
+        firebaseUid == other.firebaseUid &&
         diamonds == other.diamonds &&
         score == other.score &&
         refreshToken == other.refreshToken &&
@@ -126,6 +130,7 @@ class _$User extends User {
     _$hash = $jc(_$hash, recoveryCodes.hashCode);
     _$hash = $jc(_$hash, googleId.hashCode);
     _$hash = $jc(_$hash, githubId.hashCode);
+    _$hash = $jc(_$hash, firebaseUid.hashCode);
     _$hash = $jc(_$hash, diamonds.hashCode);
     _$hash = $jc(_$hash, score.hashCode);
     _$hash = $jc(_$hash, refreshToken.hashCode);
@@ -154,6 +159,7 @@ class _$User extends User {
           ..add('recoveryCodes', recoveryCodes)
           ..add('googleId', googleId)
           ..add('githubId', githubId)
+          ..add('firebaseUid', firebaseUid)
           ..add('diamonds', diamonds)
           ..add('score', score)
           ..add('refreshToken', refreshToken)
@@ -222,6 +228,10 @@ class UserBuilder implements Builder<User, UserBuilder> {
   String? get githubId => _$this._githubId;
   set githubId(String? githubId) => _$this._githubId = githubId;
 
+  String? _firebaseUid;
+  String? get firebaseUid => _$this._firebaseUid;
+  set firebaseUid(String? firebaseUid) => _$this._firebaseUid = firebaseUid;
+
   num? _diamonds;
   num? get diamonds => _$this._diamonds;
   set diamonds(num? diamonds) => _$this._diamonds = diamonds;
@@ -281,6 +291,7 @@ class UserBuilder implements Builder<User, UserBuilder> {
       _recoveryCodes = $v.recoveryCodes?.toBuilder();
       _googleId = $v.googleId;
       _githubId = $v.githubId;
+      _firebaseUid = $v.firebaseUid;
       _diamonds = $v.diamonds;
       _score = $v.score;
       _refreshToken = $v.refreshToken;
@@ -362,6 +373,11 @@ class UserBuilder implements Builder<User, UserBuilder> {
               r'User',
               'githubId',
             ),
+            firebaseUid: BuiltValueNullFieldError.checkNotNull(
+              firebaseUid,
+              r'User',
+              'firebaseUid',
+            ),
             diamonds: BuiltValueNullFieldError.checkNotNull(
               diamonds,
               r'User',
@@ -413,3 +429,4 @@ class UserBuilder implements Builder<User, UserBuilder> {
 }
 
 // ignore_for_file: deprecated_member_use_from_same_package,type=lint
+

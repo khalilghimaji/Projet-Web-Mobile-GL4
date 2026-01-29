@@ -1,4 +1,4 @@
-// @dart=2.19
+// @dart=3.9
 //
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
@@ -17,6 +17,7 @@ import 'package:openapi/src/model/date.dart';
 
 import 'package:openapi/src/model/can_predict_match_dto.dart';
 import 'package:openapi/src/model/disable_mfa_dto.dart';
+import 'package:openapi/src/model/firebase_login_dto.dart';
 import 'package:openapi/src/model/forgot_password_dto.dart';
 import 'package:openapi/src/model/forgot_password_response_dto.dart';
 import 'package:openapi/src/model/login_dto.dart';
@@ -53,6 +54,7 @@ part 'serializers.g.dart';
 @SerializersFor([
   CanPredictMatchDto,
   DisableMfaDto,
+  FirebaseLoginDto,
   ForgotPasswordDto,
   ForgotPasswordResponseDto,
   LoginDto,
@@ -84,20 +86,17 @@ part 'serializers.g.dart';
   VerifyEmailDto,
   VerifyEmailResponseDto,
 ])
-Serializers serializers = (_$serializers.toBuilder()
-      ..addBuilderFactory(
-        const FullType(BuiltList, [FullType(User)]),
-        () => ListBuilder<User>(),
-      )
-      ..addBuilderFactory(
-        const FullType(BuiltList, [FullType(Notification)]),
-        () => ListBuilder<Notification>(),
-      )
-      ..add(const OneOfSerializer())
-      ..add(const AnyOfSerializer())
-      ..add(const DateSerializer())
-      ..add(Iso8601DateTimeSerializer())
-    ).build();
+Serializers serializers =
+    (_$serializers.toBuilder()
+          ..addBuilderFactory(
+            const FullType(BuiltList, [FullType(Notification)]),
+            () => ListBuilder<Notification>(),
+          )
+          ..add(const OneOfSerializer())
+          ..add(const AnyOfSerializer())
+          ..add(const DateSerializer())
+          ..add(Iso8601DateTimeSerializer()))
+        .build();
 
 Serializers standardSerializers =
     (serializers.toBuilder()..addPlugin(StandardJsonPlugin())).build();

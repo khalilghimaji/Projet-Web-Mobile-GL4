@@ -1,0 +1,6 @@
+targets:
+  $default:
+    builders:
+      built_value_generator:built_value:
+        options:
+          language_version: 3.9

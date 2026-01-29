@@ -35,20 +35,27 @@ class NotificationsState {
   }
 }
 
-// Wrapper class for notifications with real-time flag
+// Wrapper class for notifications with real-time flag and local read state
 class NotificationItem {
   final api.Notification notification;
   final bool isRealTime;
+  final bool isRead;
 
-  const NotificationItem({required this.notification, this.isRealTime = false});
+  NotificationItem({
+    required this.notification,
+    this.isRealTime = false,
+    bool? isRead,
+  }) : isRead = isRead ?? notification.read;
 
   NotificationItem copyWith({
     api.Notification? notification,
     bool? isRealTime,
+    bool? isRead,
   }) {
     return NotificationItem(
       notification: notification ?? this.notification,
       isRealTime: isRealTime ?? this.isRealTime,
+      isRead: isRead ?? this.isRead,
     );
   }
 }
@@ -78,7 +85,7 @@ class NotificationsNotifier extends StateNotifier<NotificationsState> {
             .toList();
 
         final unreadCount = notificationItems
-            .where((item) => !item.notification.read)
+            .where((item) => !item.isRead)
             .length;
 
         state = state.copyWith(
@@ -109,7 +116,7 @@ class NotificationsNotifier extends StateNotifier<NotificationsState> {
 
     final updatedNotifications = [newItem, ...state.notifications];
     final unreadCount = updatedNotifications
-        .where((item) => !item.notification.read)
+        .where((item) => !item.isRead)
         .length;
 
     state = state.copyWith(
@@ -127,15 +134,13 @@ class NotificationsNotifier extends StateNotifier<NotificationsState> {
       // Update local state
       final updatedNotifications = state.notifications.map((item) {
         if (item.notification.id == notificationId) {
-          return item.copyWith(
-            notification: item.notification.rebuild((b) => b.read = true),
-          );
+          return item.copyWith(isRead: true);
         }
         return item;
       }).toList();
 
       final unreadCount = updatedNotifications
-          .where((item) => !item.notification.read)
+          .where((item) => !item.isRead)
           .length;
 
       state = state.copyWith(

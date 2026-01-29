@@ -1,3 +1,4 @@
+// @dart=3.9
 import 'package:dio/dio.dart';
 
 class ApiClient {

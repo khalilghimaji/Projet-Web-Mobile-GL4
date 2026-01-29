@@ -13,7 +13,7 @@ Method | HTTP request | Description
 
 
 # **userControllerGetRankings**
-> BuiltList<User> userControllerGetRankings()
+> JsonObject userControllerGetRankings()
 
 
 
@@ -36,7 +36,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-[**BuiltList&lt;User&gt;**](User.md)
+[**JsonObject**](JsonObject.md)
 
 ### Authorization
 

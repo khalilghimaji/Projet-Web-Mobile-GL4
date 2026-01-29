@@ -199,7 +199,7 @@ export async function notifyUsersAboutRankingUpdate(
         message: `You are now at rank ${rank}.`,
         data: { rankings: usersWithRankings },
       },
-      save
+      save,
     );
   }
 }

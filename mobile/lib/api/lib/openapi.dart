@@ -1,3 +1,4 @@
+// @dart=3.9
 //
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
@@ -14,10 +15,12 @@ export 'package:openapi/src/api/app_api.dart';
 export 'package:openapi/src/api/authentication_api.dart';
 export 'package:openapi/src/api/matches_api.dart';
 export 'package:openapi/src/api/notifications_api.dart';
+export 'package:openapi/src/api/test_api.dart';
 export 'package:openapi/src/api/user_api.dart';
 
 export 'package:openapi/src/model/can_predict_match_dto.dart';
 export 'package:openapi/src/model/disable_mfa_dto.dart';
+export 'package:openapi/src/model/firebase_login_dto.dart';
 export 'package:openapi/src/model/forgot_password_dto.dart';
 export 'package:openapi/src/model/forgot_password_response_dto.dart';
 export 'package:openapi/src/model/login_dto.dart';

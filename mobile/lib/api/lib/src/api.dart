@@ -1,3 +1,4 @@
+// @dart=3.9
 //
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
@@ -13,6 +14,7 @@ import 'package:openapi/src/api/app_api.dart';
 import 'package:openapi/src/api/authentication_api.dart';
 import 'package:openapi/src/api/matches_api.dart';
 import 'package:openapi/src/api/notifications_api.dart';
+import 'package:openapi/src/api/test_api.dart';
 import 'package:openapi/src/api/user_api.dart';
 
 class Openapi {
@@ -91,6 +93,12 @@ class Openapi {
   /// by doing that all interceptors will not be executed
   NotificationsApi getNotificationsApi() {
     return NotificationsApi(dio, serializers);
+  }
+
+  /// Get TestApi instance, base route and serializer can be overridden by a given but be careful,
+  /// by doing that all interceptors will not be executed
+  TestApi getTestApi() {
+    return TestApi(dio, serializers);
   }
 
   /// Get UserApi instance, base route and serializer can be overridden by a given but be careful,

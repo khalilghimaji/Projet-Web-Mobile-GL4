@@ -185,18 +185,18 @@ export class AuthController {
     // At this point, we know it's a LoginResponseDto with accessToken
     if ('accessToken' in result && result.accessToken) {
       this.authService.setAccessTokenCookie(res, result.accessToken);
-      // Don't include the token in the response
-      delete result.accessToken;
+      // Include the token in the response for mobile apps
+      // delete result.accessToken;
     }
 
     // Store the refresh token in an HTTP-only cookie if available
     if ('refreshToken' in result && result.refreshToken) {
       this.authService.setRefreshTokenCookie(res, result.refreshToken);
-      // Don't include the token in the response
-      delete result.refreshToken;
+      // Include the token in the response for mobile apps
+      // delete result.refreshToken;
     }
 
-    // Return only the user data
+    // Return the result with tokens for mobile
     return result;
   }
 
@@ -220,9 +220,16 @@ export class AuthController {
     description: 'Access token has been refreshed',
     type: RefresResponse,
   })
-  async refreshToken(@Req() req, @Res({ passthrough: true }) res: Response) {
-    // Get the refresh token from the cookie
-    const refreshToken = req.cookies['refresh_token'];
+  async refreshToken(
+    @Req() req,
+    @Res({ passthrough: true }) res: Response,
+    @Body() body?: { refreshToken?: string },
+  ) {
+    // Get the refresh token from the cookie or body
+    let refreshToken = req.cookies['refresh_token'];
+    if (!refreshToken && body?.refreshToken) {
+      refreshToken = body.refreshToken;
+    }
     if (!refreshToken) {
       throw new UnauthorizedException('Refresh token not found');
     }
@@ -234,8 +241,12 @@ export class AuthController {
     // Set new cookies
     this.authService.setAccessTokenCookie(res, result.accessToken);
 
-    // Return a success message (without tokens)
-    return { message: 'Token refreshed successfully' };
+    // Return the new tokens for mobile apps
+    return {
+      message: 'Token refreshed successfully',
+      accessToken: result.accessToken,
+      refreshToken: result.refreshToken,
+    };
   }
 
   @Post('logout')

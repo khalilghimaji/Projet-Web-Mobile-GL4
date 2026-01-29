@@ -1,4 +1,4 @@
-// @dart=2.19
+// @dart=3.9
 //
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
@@ -123,4 +123,5 @@ class _$MfaEnableResponseDtoSerializer implements PrimitiveSerializer<MfaEnableR
     return result.build();
   }
 }
+
 

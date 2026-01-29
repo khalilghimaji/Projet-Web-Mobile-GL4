@@ -1,4 +1,4 @@
-// @dart=2.19
+// @dart=3.9
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
 part of 'serializers.dart';
@@ -11,6 +11,7 @@ Serializers _$serializers =
     (Serializers().toBuilder()
           ..add(CanPredictMatchDto.serializer)
           ..add(DisableMfaDto.serializer)
+          ..add(FirebaseLoginDto.serializer)
           ..add(ForgotPasswordDto.serializer)
           ..add(ForgotPasswordResponseDto.serializer)
           ..add(LoginDto.serializer)
@@ -67,3 +68,4 @@ Serializers _$serializers =
         .build();
 
 // ignore_for_file: deprecated_member_use_from_same_package,type=lint
+
