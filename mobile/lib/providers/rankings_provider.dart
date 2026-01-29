@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile/providers/api_providers.dart';
 import 'package:openapi/openapi.dart' as api;
 import 'package:built_collection/built_collection.dart';
+import 'package:mobile/models/custom_notification_models.dart';
 
 // State class for rankings
 class RankingsState {
@@ -129,9 +130,7 @@ class RankingsNotifier extends StateNotifier<RankingsState> {
     }
   }
 
-  void updateRankings(
-    BuiltList<api.NotificationDataAnyOf1RankingsInner> rankings,
-  ) {
+  void updateRankings(BuiltList<RankingEntry> rankings) {
     final rankedUsers = rankings.asMap().entries.map((entry) {
       final index = entry.key;
       final userData = entry.value;
