@@ -11,6 +11,7 @@ class AppDrawer extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(userDataProvider);
+    final gainedDiamonds = ref.watch(gainedDiamondsProvider);
     final notificationsState = ref.watch(notificationsProvider);
 
     return Drawer(
@@ -265,6 +266,51 @@ class AppDrawer extends ConsumerWidget {
                               fontSize: 14,
                             ),
                           ),
+                          if (gainedDiamonds != 0) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: gainedDiamonds > 0
+                                    ? Colors.green.withOpacity(0.1)
+                                    : Colors.red.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: gainedDiamonds > 0
+                                      ? Colors.green.withOpacity(0.3)
+                                      : Colors.red.withOpacity(0.3),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    gainedDiamonds > 0
+                                        ? Icons.arrow_upward_rounded
+                                        : Icons.arrow_downward_rounded,
+                                    color: gainedDiamonds > 0
+                                        ? Colors.green
+                                        : Colors.red,
+                                    size: 14,
+                                  ),
+                                  const SizedBox(width: 2),
+                                  Text(
+                                    '${gainedDiamonds.abs()}',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: gainedDiamonds > 0
+                                          ? Colors.green
+                                          : Colors.red,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                           if (user.isMFAEnabled == true) ...[
                             const SizedBox(width: 12),
                             Container(

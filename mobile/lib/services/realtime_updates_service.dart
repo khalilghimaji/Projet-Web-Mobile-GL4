@@ -26,6 +26,7 @@ class RealtimeUpdatesService {
   late final NotificationsNotifier _notificationsNotifier;
   late final UserDataNotifier _userDataNotifier;
   late final RankingsNotifier _rankingsNotifier;
+  late final GainedDiamondsNotifier _gainedDiamondsNotifier;
   final NotificationService _notificationService = NotificationService();
 
   StreamSubscription<String>? _sseSubscription;
@@ -42,6 +43,7 @@ class RealtimeUpdatesService {
     _notificationsNotifier = _ref.read(notificationsProvider.notifier);
     _userDataNotifier = _ref.read(userDataProvider.notifier);
     _rankingsNotifier = _ref.read(rankingsProvider.notifier);
+    _gainedDiamondsNotifier = _ref.read(gainedDiamondsProvider.notifier);
     // Start connection if authenticated
     if (_authState.isAuthenticated && _authState.accessToken != null) {
       print(
@@ -256,8 +258,8 @@ class RealtimeUpdatesService {
         case 'DIAMOND_UPDATE':
           return NotificationDataUnion(
             (b) => b
-              ..gain = dataJson['gain'] as num?
-              ..newDiamonds = dataJson['newDiamonds'] as num?,
+              ..gain = _safeParseNum(dataJson['gain'])
+              ..newDiamonds = _safeParseNum(dataJson['newDiamonds']),
           );
 
         case 'RANKING_UPDATE':
@@ -269,7 +271,7 @@ class RealtimeUpdatesService {
                     (b) => b
                       ..firstName = item['firstName'] as String?
                       ..lastName = item['lastName'] as String?
-                      ..score = item['score'] as num?
+                      ..score = _safeParseNum(item['score'])
                       ..imageUrl = item['imageUrl'] as String?,
                   ),
                 )
@@ -292,6 +294,16 @@ class RealtimeUpdatesService {
     }
   }
 
+  // Helper method to safely parse numbers from JSON (handles both strings and numbers)
+  num? _safeParseNum(dynamic value) {
+    if (value == null) return null;
+    if (value is num) return value;
+    if (value is String) {
+      return num.tryParse(value);
+    }
+    return null;
+  }
+
   void _storeCustomDataForNotification(
     api.Notification notification,
     NotificationDataUnion? customData,
@@ -308,8 +320,9 @@ class RealtimeUpdatesService {
   }
 
   void _handleRealtimeUpdate(api.Notification notification) {
+    final customData = _getCustomDataForNotification(notification);
     print(
-      '[SSE] Processing realtime notification: ${notification.type} - ${notification.message} - ${notification.data}',
+      '[SSE] Processing realtime notification: ${notification.type} - ${notification.message} - ${customData.toString()}',
     );
 
     // Handle different notification types
@@ -370,7 +383,7 @@ class RealtimeUpdatesService {
         print(
           '[SSE] Updating user gained diamonds to: $newDiamonds from custom data',
         );
-        _userDataNotifier.updateGainedDiamonds(newDiamonds);
+        _gainedDiamondsNotifier.updateGainedDiamonds(newDiamonds);
 
         // Show system notification
         _notificationService.showGenericNotification(

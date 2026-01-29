@@ -186,6 +186,12 @@ final userDataProvider = StateNotifierProvider<UserDataNotifier, UserDto?>((
   return UserDataNotifier(ref);
 });
 
+// Gained diamonds provider
+final gainedDiamondsProvider =
+    StateNotifierProvider<GainedDiamondsNotifier, int>((ref) {
+      return GainedDiamondsNotifier(ref);
+    });
+
 // Authentication state provider
 final authStateProvider = Provider<AuthState>((ref) {
   final accessToken = ref.watch(accessTokenProvider);
@@ -335,25 +341,16 @@ class RefreshTokenNotifier extends StateNotifier<String?> {
 // User data notifier
 class UserDataNotifier extends StateNotifier<UserDto?> {
   final Ref _ref;
-  int _gainedDiamonds = 0;
 
   UserDataNotifier(this._ref) : super(null) {
     _loadUser();
   }
 
   static const String _userKey = 'user_data';
-  static const String _gainedDiamondsKey = 'gained_diamonds';
-
-  int get gainedDiamonds => _gainedDiamonds;
 
   Future<void> _loadUser() async {
     final prefs = await _ref.read(sharedPreferencesProvider.future);
     final userJson = prefs.getString(_userKey);
-    final gainedDiamondsStr = prefs.getString(_gainedDiamondsKey);
-
-    if (gainedDiamondsStr != null) {
-      _gainedDiamonds = int.tryParse(gainedDiamondsStr) ?? 0;
-    }
 
     if (userJson != null) {
       try {
@@ -385,17 +382,9 @@ class UserDataNotifier extends StateNotifier<UserDto?> {
     }
   }
 
-  Future<void> updateGainedDiamonds(int gain) async {
-    _gainedDiamonds = gain;
-    final prefs = await _ref.read(sharedPreferencesProvider.future);
-    await prefs.setString(_gainedDiamondsKey, gain.toString());
-  }
-
   Future<void> clearUser() async {
     final prefs = await _ref.read(sharedPreferencesProvider.future);
     await prefs.remove(_userKey);
-    await prefs.remove(_gainedDiamondsKey);
-    _gainedDiamonds = 0;
     state = null;
   }
 }
@@ -428,6 +417,7 @@ class AuthActions {
     await _ref.read(accessTokenProvider.notifier).clearToken();
     await _ref.read(refreshTokenProvider.notifier).clearToken();
     await _ref.read(userDataProvider.notifier).clearUser();
+    await _ref.read(gainedDiamondsProvider.notifier).clearGainedDiamonds();
   }
 
   Future<void> loginWithTokens(
@@ -444,5 +434,46 @@ class AuthActions {
     if (user != null) {
       await _ref.read(userDataProvider.notifier).setUser(user);
     }
+  }
+}
+
+// Gained diamonds notifier
+class GainedDiamondsNotifier extends StateNotifier<int> {
+  final Ref _ref;
+
+  GainedDiamondsNotifier(this._ref) : super(0) {
+    _loadGainedDiamonds();
+  }
+
+  static const String _gainedDiamondsKey = 'gained_diamonds';
+
+  Future<void> _loadGainedDiamonds() async {
+    final prefs = await _ref.read(sharedPreferencesProvider.future);
+    final gainedDiamondsStr = prefs.getString(_gainedDiamondsKey);
+    if (gainedDiamondsStr != null) {
+      state = int.tryParse(gainedDiamondsStr) ?? 0;
+    }
+  }
+
+  void updateGainedDiamonds(int gain) {
+    state = gain;
+    // Persist asynchronously without blocking UI update
+    _persistGainedDiamonds(gain);
+  }
+
+  Future<void> setGainedDiamonds(int gain) async {
+    state = gain;
+    await _persistGainedDiamonds(gain);
+  }
+
+  Future<void> _persistGainedDiamonds(int gain) async {
+    final prefs = await _ref.read(sharedPreferencesProvider.future);
+    await prefs.setString(_gainedDiamondsKey, gain.toString());
+  }
+
+  Future<void> clearGainedDiamonds() async {
+    state = 0;
+    final prefs = await _ref.read(sharedPreferencesProvider.future);
+    await prefs.remove(_gainedDiamondsKey);
   }
 }
