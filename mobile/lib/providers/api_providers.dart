@@ -439,6 +439,24 @@ class AuthActions {
     }
     if (user != null) {
       await _ref.read(userDataProvider.notifier).setUser(user);
+
+      // Fetch user gains after successful login
+      try {
+        final dio = _ref.read(dioProvider);
+        final response = await dio.get('/matches/user/gains');
+        if (response.statusCode == 200 && response.data != null) {
+          final gains = response.data is int
+              ? response.data
+              : int.tryParse(response.data.toString()) ?? 0;
+          print('Fetched user gains: $gains');
+          await _ref
+              .read(gainedDiamondsProvider.notifier)
+              .setGainedDiamonds(gains);
+        }
+      } catch (error) {
+        print('Failed to fetch user gains: $error');
+        // Don't fail login if gains fetch fails
+      }
     }
   }
 }
