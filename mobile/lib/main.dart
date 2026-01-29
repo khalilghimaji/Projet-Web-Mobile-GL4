@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile/providers/api_providers.dart';
 import 'package:mobile/services/realtime_updates_service.dart';
+import 'package:mobile/services/notification_service.dart';
 import 'package:mobile/screens/login_screen.dart';
 import 'package:mobile/screens/signup_screen.dart';
 import 'package:mobile/screens/notifications_screen.dart';
@@ -17,6 +18,10 @@ import 'package:mobile/widgets/app_drawer.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize notification service
+  await NotificationService().initialize();
+
   runApp(const ProviderScope(child: MainApp()));
 }
 
@@ -149,7 +154,21 @@ class HomeScreen extends ConsumerWidget {
         ],
       ),
       drawer: const AppDrawer(),
-      body: const Center(child: Text('Welcome to KickStream!')),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text('Welcome to KickStream!'),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                NotificationService().showTestNotification();
+              },
+              child: const Text('Test Notification'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

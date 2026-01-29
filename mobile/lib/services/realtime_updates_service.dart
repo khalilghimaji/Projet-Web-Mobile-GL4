@@ -8,6 +8,7 @@ import 'package:mobile/providers/notifications_provider.dart';
 import 'package:dio/dio.dart';
 import 'package:built_collection/built_collection.dart';
 import 'package:mobile/models/custom_notification_models.dart';
+import 'package:mobile/services/notification_service.dart';
 
 // ignore_for_file: unchecked_use_of_nullable_value, instantiate_abstract_class, undefined_method
 
@@ -25,6 +26,7 @@ class RealtimeUpdatesService {
   late final NotificationsNotifier _notificationsNotifier;
   late final UserDataNotifier _userDataNotifier;
   late final RankingsNotifier _rankingsNotifier;
+  final NotificationService _notificationService = NotificationService();
 
   StreamSubscription<String>? _sseSubscription;
   bool _shouldReconnect = true;
@@ -313,8 +315,9 @@ class RealtimeUpdatesService {
     // Handle different notification types
     switch (notification.type) {
       case api.NotificationTypeEnum.DIAMOND_UPDATE:
-      case api.NotificationTypeEnum.CHANGE_OF_POSSESSED_GEMS:
         _handleDiamondUpdate(notification);
+      case api.NotificationTypeEnum.CHANGE_OF_POSSESSED_GEMS:
+        _handleChangeOfPossessedGems(notification);
       case api.NotificationTypeEnum.RANKING_UPDATE:
         _handleRankingUpdate(notification);
       default:
@@ -340,6 +343,9 @@ class RealtimeUpdatesService {
         '[SSE] Updating internal rankings table with ${customData.rankings!.length} entries',
       );
       _rankingsNotifier.updateRankings(customData.rankings!);
+
+      // Show system notification
+      _notificationService.showRankingUpdateNotification();
     } else {
       print('[SSE] No rankings data available in custom data');
     }
@@ -359,10 +365,18 @@ class RealtimeUpdatesService {
     // Try to get new diamond count from the cached custom data
     if (customData != null &&
         (customData.gain != null || customData.newDiamonds != null)) {
-      final newDiamonds = customData.newDiamonds?.toInt();
+      final newDiamonds = customData.gain?.toInt();
       if (newDiamonds != null) {
-        print('[SSE] Updating user diamonds to: $newDiamonds from custom data');
-        _userDataNotifier.updateDiamonds(newDiamonds);
+        print(
+          '[SSE] Updating user gained diamonds to: $newDiamonds from custom data',
+        );
+        _userDataNotifier.updateGainedDiamonds(newDiamonds);
+
+        // Show system notification
+        _notificationService.showGenericNotification(
+          '💎 Diamonds Earned!',
+          'You earned $newDiamonds diamonds!',
+        );
       } else {
         print('[SSE] newDiamonds is null in custom data');
       }
@@ -378,6 +392,65 @@ class RealtimeUpdatesService {
         if (newDiamonds != null) {
           print('[SSE] Updating user diamonds to: $newDiamonds from message');
           _userDataNotifier.updateDiamonds(newDiamonds);
+
+          // Show system notification
+          _notificationService.showGenericNotification(
+            '💎 Diamonds Updated!',
+            'You now have $newDiamonds diamonds!',
+          );
+        } else {
+          print('[SSE] Could not parse diamond count from message: $message');
+        }
+      } else {
+        print('[SSE] No diamond count found in message: $message');
+      }
+    }
+
+    // Also add the notification to the list
+    _notificationsNotifier.addRealtimeNotification(notification);
+  }
+
+  void _handleChangeOfPossessedGems(api.Notification notification) {
+    // Get the custom data from cache
+    final customData = _getCustomDataForNotification(notification);
+    print(
+      '[SSE] Handling change of possessed gems notification with custom data: $customData',
+    );
+
+    // Try to get new diamond count from the cached custom data
+    if (customData != null &&
+        (customData.gain != null || customData.newDiamonds != null)) {
+      final newDiamonds = customData.newDiamonds?.toInt();
+      if (newDiamonds != null) {
+        print('[SSE] Updating user diamonds to: $newDiamonds from custom data');
+        _userDataNotifier.updateDiamonds(newDiamonds);
+
+        // Show system notification
+        _notificationService.showGenericNotification(
+          '💎 Diamonds Updated!',
+          'You now have $newDiamonds diamonds!',
+        );
+      } else {
+        print('[SSE] newDiamonds is null in custom data');
+      }
+    } else {
+      // Fallback: Try to extract from message if data parsing failed
+      print('[SSE] Custom data not available, falling back to message parsing');
+      final message = notification.message.toLowerCase();
+      final diamondRegex = RegExp(r'(\d+)');
+      final match = diamondRegex.firstMatch(message);
+
+      if (match != null) {
+        final newDiamonds = int.tryParse(match.group(1) ?? '');
+        if (newDiamonds != null) {
+          print('[SSE] Updating user diamonds to: $newDiamonds from message');
+          _userDataNotifier.updateDiamonds(newDiamonds);
+
+          // Show system notification
+          _notificationService.showGenericNotification(
+            '💎 Diamonds Updated!',
+            'You now have $newDiamonds diamonds!',
+          );
         } else {
           print('[SSE] Could not parse diamond count from message: $message');
         }

@@ -35,6 +35,9 @@ dependencies:
   # Image picker
   image_picker: ^1.1.2
 
+  # Local notifications
+  flutter_local_notifications: ^17.2.2
+
   # OpenAPI generated
   openapi:
     path: lib/api
