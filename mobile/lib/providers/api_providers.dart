@@ -8,6 +8,150 @@ import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'dart:convert';
 import 'package:openapi/openapi.dart';
+import 'dart:async';
+
+// Token validation interceptor
+class TokenValidationInterceptor extends Interceptor {
+  final Dio _dio;
+  final Ref _ref;
+  bool _isRefreshing = false;
+  final _refreshTokenSubject = StreamController<bool>.broadcast();
+
+  TokenValidationInterceptor(this._dio, this._ref);
+
+  @override
+  void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
+    // Skip token validation for auth endpoints
+    if (_isAuthEndpoint(options.path)) {
+      return handler.next(options);
+    }
+    return handler.next(options);
+  }
+
+  @override
+  void onError(DioException err, ErrorInterceptorHandler handler) async {
+    if (err.response?.statusCode == 401 &&
+        !_isAuthEndpoint(err.requestOptions.path)) {
+      if (!_isRefreshing) {
+        _isRefreshing = true;
+
+        try {
+          // Attempt to refresh the token
+          final success = await _refreshToken();
+
+          if (success) {
+            // Retry the original request with new token
+            final newOptions = err.requestOptions;
+            final response = await _dio.fetch(newOptions);
+            _isRefreshing = false;
+            _refreshTokenSubject.add(true);
+            return handler.resolve(response);
+          } else {
+            // Refresh failed, logout
+            await _logoutUser();
+            _isRefreshing = false;
+            return handler.next(err);
+          }
+        } catch (refreshError) {
+          // Refresh failed, logout
+          await _logoutUser();
+          _isRefreshing = false;
+          return handler.next(err);
+        }
+      } else {
+        // Wait for token refresh to complete
+        await _refreshTokenSubject.stream.first;
+        // Retry the original request
+        try {
+          final response = await _dio.fetch(err.requestOptions);
+          return handler.resolve(response);
+        } catch (retryError) {
+          // Retry failed, logout
+          await _logoutUser();
+          return handler.next(err);
+        }
+      }
+    }
+
+    return handler.next(err);
+  }
+
+  bool _isAuthEndpoint(String path) {
+    // Skip token validation for login, signup and refresh endpoints
+    const skipPaths = [
+      '/auth/login',
+      '/auth/signup',
+      '/auth/refresh',
+      '/auth/verify-email',
+      '/auth/profile',
+    ];
+
+    return skipPaths.any((endpoint) => path.contains(endpoint));
+  }
+
+  Future<bool> _refreshToken() async {
+    try {
+      print('[TOKEN] Attempting to refresh token...');
+
+      final refreshToken = _ref.read(refreshTokenProvider);
+      if (refreshToken == null) {
+        print('[TOKEN] No refresh token available');
+        return false;
+      }
+
+      final response = await _dio.post(
+        '/auth/refresh',
+        data: {'refreshToken': refreshToken},
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        final data = response.data;
+        final newAccessToken = data['accessToken'];
+        final newRefreshToken = data['refreshToken'];
+
+        if (newAccessToken != null) {
+          // Update stored tokens
+          await _ref
+              .read(accessTokenProvider.notifier)
+              .setToken(newAccessToken);
+          if (newRefreshToken != null) {
+            await _ref
+                .read(refreshTokenProvider.notifier)
+                .setToken(newRefreshToken);
+          }
+
+          print('[TOKEN] Token refreshed successfully');
+          return true;
+        }
+      }
+
+      print('[TOKEN] Token refresh failed - invalid response');
+      return false;
+    } catch (e) {
+      print('[TOKEN] Token refresh error: $e');
+      return false;
+    }
+  }
+
+  Future<void> _logoutUser() async {
+    try {
+      print('[TOKEN] Logging out user due to token refresh failure');
+
+      // Clear stored tokens and user data
+      await _ref.read(accessTokenProvider.notifier).clearToken();
+      await _ref.read(refreshTokenProvider.notifier).clearToken();
+      await _ref.read(userDataProvider.notifier).clearUser();
+
+      print('[TOKEN] User logged out successfully');
+    } catch (e) {
+      print('[TOKEN] Logout failed: $e');
+    }
+  }
+
+  void dispose() {
+    _refreshTokenSubject.close();
+  }
+}
 
 // Storage providers
 final secureStorageProvider = Provider<FlutterSecureStorage>((ref) {
@@ -80,7 +224,11 @@ final dioProvider = Provider<Dio>((ref) {
   final cookieJar = ref.read(cookieJarProvider);
   dio.interceptors.add(CookieManager(cookieJar));
 
-  // Add interceptors
+  // Add token validation interceptor
+  final tokenInterceptor = TokenValidationInterceptor(dio, ref);
+  dio.interceptors.add(tokenInterceptor);
+
+  // Add auth interceptor for adding tokens to requests
   dio.interceptors.add(
     InterceptorsWrapper(
       onRequest: (options, handler) {
@@ -89,52 +237,7 @@ final dioProvider = Provider<Dio>((ref) {
         if (accessToken != null) {
           options.headers['Authorization'] = 'Bearer $accessToken';
         }
-        // Cookies are automatically managed by CookieManager for other purposes
         return handler.next(options);
-      },
-      onError: (error, handler) async {
-        // Handle token refresh on 401 errors
-        if (error.response?.statusCode == 401) {
-          try {
-            // Get the refresh token
-            final refreshToken = ref.read(refreshTokenProvider);
-            if (refreshToken != null) {
-              // Attempt to refresh the token
-              final refreshResponse = await dio.post(
-                '/auth/refresh',
-                data: {'refreshToken': refreshToken},
-              );
-
-              if (refreshResponse.statusCode == 200) {
-                // Get new tokens from response
-                final newAccessToken = refreshResponse.data['accessToken'];
-                final newRefreshToken = refreshResponse.data['refreshToken'];
-
-                if (newAccessToken != null) {
-                  await ref
-                      .read(accessTokenProvider.notifier)
-                      .setToken(newAccessToken);
-                }
-                if (newRefreshToken != null) {
-                  await ref
-                      .read(refreshTokenProvider.notifier)
-                      .setToken(newRefreshToken);
-                }
-
-                // Retry the original request
-                final retryResponse = await dio.fetch(error.requestOptions);
-                return handler.resolve(retryResponse);
-              }
-            }
-          } catch (refreshError) {
-            // Refresh failed, logout
-            print('Token refresh failed: $refreshError');
-            ref.read(accessTokenProvider.notifier).clearToken();
-            ref.read(refreshTokenProvider.notifier).clearToken();
-            ref.read(userDataProvider.notifier).clearUser();
-          }
-        }
-        return handler.next(error);
       },
     ),
   );

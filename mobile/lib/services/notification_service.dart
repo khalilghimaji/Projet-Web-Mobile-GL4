@@ -1,5 +1,6 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -8,6 +9,13 @@ class NotificationService {
 
   final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
+
+  // Store router instance for navigation
+  static GoRouter? _router;
+
+  static void setRouter(GoRouter router) {
+    _router = router;
+  }
 
   Future<void> initialize() async {
     print('[NOTIFICATION] Initializing notification service...');
@@ -31,8 +39,7 @@ class NotificationService {
     await _flutterLocalNotificationsPlugin.initialize(
       initializationSettings,
       onDidReceiveNotificationResponse: (NotificationResponse response) {
-        // Handle notification tap if needed
-        print('Notification tapped: ${response.payload}');
+        _handleNotificationTap(response);
       },
     );
 
@@ -108,16 +115,31 @@ class NotificationService {
       title,
       body,
       notificationDetails,
-      payload: payload,
+      payload: payload ?? '/notifications', // Default to notifications screen
     );
 
     print('[NOTIFICATION] Notification sent successfully');
+  }
+
+  void _handleNotificationTap(NotificationResponse response) {
+    print(
+      '[NOTIFICATION] Notification tapped with payload: ${response.payload}',
+    );
+
+    if (_router != null && response.payload != null) {
+      // Navigate to the specified route
+      _router!.go(response.payload!);
+    } else if (_router != null) {
+      // Default navigation to notifications screen
+      _router!.go('/notifications');
+    }
   }
 
   Future<void> showDiamondUpdateNotification(int newDiamonds) async {
     await showNotification(
       title: '💎 Diamonds Updated!',
       body: 'You now have $newDiamonds diamonds!',
+      payload: '/diamond-store', // Navigate to diamond store
     );
   }
 
@@ -125,11 +147,16 @@ class NotificationService {
     await showNotification(
       title: '🏆 Rankings Updated!',
       body: 'The leaderboard has been updated with the latest scores.',
+      payload: '/ranking', // Navigate to rankings
     );
   }
 
   Future<void> showGenericNotification(String title, String message) async {
-    await showNotification(title: title, body: message);
+    await showNotification(
+      title: title,
+      body: message,
+      payload: '/notifications', // Navigate to notifications
+    );
   }
 
   // Test method to verify notifications work
