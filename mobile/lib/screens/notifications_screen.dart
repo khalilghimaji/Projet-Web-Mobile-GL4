@@ -13,10 +13,14 @@ class NotificationsScreen extends ConsumerStatefulWidget {
 }
 
 class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
+
   @override
   Widget build(BuildContext context) {
     final notificationsState = ref.watch(notificationsProvider);
-
+    print(
+      "/////////////////////////////////" +
+          notificationsState.isLoading.toString(),
+    );
     return Scaffold(
       appBar: AppBar(
         title: Row(
@@ -177,14 +181,94 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       itemCount: notifications.length,
       itemBuilder: (context, index) {
         final item = notifications[index];
-        return NotificationCard(
-          item: item,
-          onMarkAsRead: () => ref
-              .read(notificationsProvider.notifier)
-              .markAsRead(item.notification.id),
-          onDelete: () => ref
-              .read(notificationsProvider.notifier)
-              .deleteNotification(item.notification.id),
+        return Dismissible(
+          key: Key(item.notification.id),
+          direction: DismissDirection.horizontal,
+          background: Container(
+            alignment: Alignment.centerLeft,
+            padding: const EdgeInsets.only(left: 20),
+            color: Colors.blue,
+            child: const Row(
+              children: [
+                Icon(Icons.check, color: Colors.white),
+                SizedBox(width: 8),
+                Text(
+                  'Mark as Read',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          secondaryBackground: Container(
+            alignment: Alignment.centerRight,
+            padding: const EdgeInsets.only(right: 20),
+            color: Colors.red,
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Text(
+                  'Delete',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(width: 8),
+                Icon(Icons.delete, color: Colors.white),
+              ],
+            ),
+          ),
+          confirmDismiss: (direction) async {
+            if (direction == DismissDirection.startToEnd) {
+              // Swipe right - Mark as read
+              if (!item.isRead) {
+                ref
+                    .read(notificationsProvider.notifier)
+                    .markAsRead(item.notification.id);
+              }
+              return false; // Don't dismiss, just mark as read
+            } else if (direction == DismissDirection.endToStart) {
+              // Swipe left - Delete
+              final confirmed = await showDialog<bool>(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: const Text('Delete Notification'),
+                    content: const Text(
+                      'Are you sure you want to delete this notification?',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(false),
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(true),
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.red,
+                        ),
+                        child: const Text('Delete'),
+                      ),
+                    ],
+                  );
+                },
+              );
+              return confirmed ?? false;
+            }
+            return false;
+          },
+          onDismissed: (direction) {
+            if (direction == DismissDirection.endToStart) {
+              // Delete the notification
+              ref
+                  .read(notificationsProvider.notifier)
+                  .deleteNotification(item.notification.id);
+            }
+          },
+          child: NotificationCard(item: item),
         );
       },
     );
@@ -193,15 +277,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
 
 class NotificationCard extends StatelessWidget {
   final NotificationItem item;
-  final VoidCallback onMarkAsRead;
-  final VoidCallback onDelete;
 
-  const NotificationCard({
-    super.key,
-    required this.item,
-    required this.onMarkAsRead,
-    required this.onDelete,
-  });
+  const NotificationCard({super.key, required this.item});
 
   @override
   Widget build(BuildContext context) {
@@ -268,24 +345,20 @@ class NotificationCard extends StatelessWidget {
               _formatDate(notification.createdAt),
               style: const TextStyle(color: Colors.grey, fontSize: 12),
             ),
-            if (!notification.read) ...[
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: onMarkAsRead,
-                    child: const Text('Mark as Read'),
-                  ),
-                  const SizedBox(width: 8),
-                  TextButton(
-                    onPressed: onDelete,
-                    style: TextButton.styleFrom(foregroundColor: Colors.red),
-                    child: const Text('Delete'),
-                  ),
-                ],
-              ),
-            ],
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.swipe_left, size: 16, color: Colors.grey.shade400),
+                const SizedBox(width: 4),
+                Text(
+                  'Swipe left to delete • Swipe right to mark as read',
+                  style: TextStyle(color: Colors.grey.shade400, fontSize: 10),
+                ),
+                const SizedBox(width: 4),
+                Icon(Icons.swipe_right, size: 16, color: Colors.grey.shade400),
+              ],
+            ),
           ],
         ),
       ),

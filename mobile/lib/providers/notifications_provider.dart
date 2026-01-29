@@ -70,11 +70,10 @@ final notificationsProvider =
 class NotificationsNotifier extends StateNotifier<NotificationsState> {
   final api.NotificationsApi _api;
 
-  NotificationsNotifier(this._api) : super(const NotificationsState()) {
-    loadNotifications();
-  }
+  NotificationsNotifier(this._api) : super(const NotificationsState());
 
   Future<void> loadNotifications() async {
+    if (state.isLoading) return;
     state = state.copyWith(isLoading: true, error: null);
 
     try {

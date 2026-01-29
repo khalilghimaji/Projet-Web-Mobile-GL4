@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mobile/providers/api_providers.dart';
 import 'package:mobile/services/realtime_updates_service.dart';
 import 'package:mobile/services/notification_service.dart';
+import 'package:mobile/providers/notifications_provider.dart';
 import 'package:mobile/screens/login_screen.dart';
 import 'package:mobile/screens/signup_screen.dart';
 import 'package:mobile/screens/notifications_screen.dart';
@@ -34,6 +35,12 @@ class MainApp extends ConsumerWidget {
     ref.listen<AuthState>(authStateProvider, (previous, next) {
       final realtimeService = ref.read(realtimeUpdatesServiceProvider);
       realtimeService.updateAuthenticationStatus(next);
+
+      // Load notifications when user becomes authenticated
+      if (next.isAuthenticated &&
+          (previous == null || !previous.isAuthenticated)) {
+        ref.read(notificationsProvider.notifier).loadNotifications();
+      }
     });
 
     return MaterialApp.router(
