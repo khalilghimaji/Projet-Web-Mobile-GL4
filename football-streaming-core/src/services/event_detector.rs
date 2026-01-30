@@ -108,6 +108,31 @@ impl EventDetector {
             }
         }
 
+        // Half time
+        if old.event_status != "Half Time" && new_match.event_status == "Half Time" {
+            events.push(MatchEvent::HalfTime {
+                match_id: new_match.event_key.clone(),
+                home_team: new_match.event_home_team.clone(),
+                away_team: new_match.event_away_team.clone(),
+                halftime_score: new_match.event_halftime_result.clone(),
+                league_id: new_match.league_key.clone(),
+                timestamp: Utc::now(),
+            });
+        }
+
+        // Second half started (reprise après mi-temps)
+        if old.event_status == "Half Time" &&
+           new_match.event_status != "Half Time" &&
+           new_match.event_status != "Finished" {
+            events.push(MatchEvent::SecondHalfStarted {
+                match_id: new_match.event_key.clone(),
+                home_team: new_match.event_home_team.clone(),
+                away_team: new_match.event_away_team.clone(),
+                league_id: new_match.league_key.clone(),
+                timestamp: Utc::now(),
+            });
+        }
+
         // Match ended
         if old.event_status != "Finished" && new_match.event_status == "Finished" {
             events.push(MatchEvent::MatchEnded {
