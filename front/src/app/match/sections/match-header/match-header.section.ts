@@ -1,8 +1,9 @@
-import {Component, ChangeDetectionStrategy, input, computed, Input, Signal} from '@angular/core';
+import {Component, ChangeDetectionStrategy, computed, Input, Signal} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { StatusBadgeComponent, MatchStatus } from '../../components/status-badge/status-badge.component';
 import { TeamDisplayComponent, Team } from '../../components/team-display/team-display.component';
 import { ScoreDisplayComponent, Score } from '../../components/score-display/score-display.component';
+import { MatchTimerComponent } from '../../components/match-timer/match-timer.component';
 
 export interface MatchHeader {
   status: MatchStatus;
@@ -18,7 +19,8 @@ export interface MatchHeader {
     CommonModule,
     StatusBadgeComponent,
     TeamDisplayComponent,
-    ScoreDisplayComponent
+    ScoreDisplayComponent,
+    MatchTimerComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -27,6 +29,11 @@ export interface MatchHeader {
         <!-- Status Badge -->
         <div class="mb-4">
           <app-status-badge [statusSignal]="statusSignal" />
+        </div>
+
+        <!-- Match Timer -->
+        <div class="mb-3">
+          <app-match-timer [statusSignal]="timerStatusSignal()" />
         </div>
 
         <!-- Teams and Score -->
@@ -58,4 +65,14 @@ export class MatchHeaderSection {
   homeTeamSignal = computed(() => this.matchHeaderSignal().homeTeam);
   awayTeamSignal = computed(() => this.matchHeaderSignal().awayTeam);
   scoreSignal = computed(() => this.matchHeaderSignal().score);
+
+  // Timer signal with required minute property
+  timerStatusSignal = computed(() => {
+    const status = this.matchHeaderSignal().status;
+    return {
+      status: status.status,
+      minute: status.minute || 0,
+      isLive: status.isLive
+    };
+  });
 }

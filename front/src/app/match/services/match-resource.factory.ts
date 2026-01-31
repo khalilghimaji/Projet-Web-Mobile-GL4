@@ -2,7 +2,7 @@ import {MatchApiService} from './match-api.service';
 import {LiveEventsService} from './live-events.service';
 import {inject, Injectable, Signal, signal } from '@angular/core';
 import {rxResource} from '@angular/core/rxjs-interop';
-import {concat, tap} from 'rxjs';
+import {concat, tap, of, catchError} from 'rxjs';
 import {filter} from 'rxjs/operators';
 import {MatchEvent} from '../types/timeline.types';
 import {MatchHeader} from '../sections/match-header/match-header.section';
@@ -12,6 +12,33 @@ import {HeadToHead} from '../types/h2h.types';
 import {VideoHighlight} from '../types/highlight.types';
 import {mapPlayersToFormation} from '../utils/formation.util';
 import {PlayerPosition} from '../types/lineup.types';
+
+const MOCK_MATCHES_KEY = 'mock_matches';
+
+interface StoredMatch {
+  event_key: string;
+  event_home_team: string;
+  event_away_team: string;
+  event_final_result: string;
+  event_status: string;
+  event_live: string;
+  league_name: string;
+  home_team_logo?: string;
+  away_team_logo?: string;
+  home_team_key?: string;
+  away_team_key?: string;
+  event_stadium?: string;
+  events?: StoredEvent[];
+  lastUpdate: string;
+}
+
+interface StoredEvent {
+  type: string;
+  minute: string;
+  player: string;
+  team: string;
+  score?: string;
+}
 
 @Injectable({ providedIn: 'root' })
 export class MatchResourceFactory {
@@ -26,20 +53,30 @@ export class MatchResourceFactory {
       params: () => matchId(),
       stream: ({params: matchId}) =>
         concat(
-          // Initial HTTP snapshot  chargement initial des données
           this.api.getMatch(matchId).pipe(
             tap(dto => {
               console.log('Match data loaded:', matchId);
               hydrateFromSnapshot(dto, signals);
+            }),
+            catchError(() => {
+              console.warn('Match not found in API, checking localStorage:', matchId);
+              const cached = loadMatchFromLocalStorage(matchId);
+              if (cached) {
+                console.log('Match found in localStorage:', matchId);
+                hydrateFromLocalStorage(cached, signals);
+              } else {
+                console.warn('Match not in localStorage, waiting for WebSocket:', matchId);
+              }
+              return of(null);
             })
           ),
 
-          // Live WebSocket updates  mises a jour en temps réel
           this.live.events$.pipe(
-            filter(e => e.matchId === matchId),
+            filter(e => e.match_id === matchId),
             tap(e => {
               console.log('Live event received for match:', matchId, e.type);
               applyEvent(e, signals);
+              updateLocalStorageFromEvent(matchId, e, signals);
             })
           )
         ),
@@ -291,6 +328,27 @@ function applyEvent(
         }
       }))
       break;
+    case 'HALF_TIME':
+      s.matchHeaderSignal.update(header => ({
+        ...(header!),
+        status: {
+          ...header!.status,
+          isLive: true,
+          status: 'HT'
+        }
+      }))
+      break;
+    case 'SECOND_HALF_STARTED':
+      s.matchHeaderSignal.update(header => ({
+        ...(header!),
+        status: {
+          ...header!.status,
+          isLive: true,
+          status: 'LIVE',
+          minute: 45, // Redémarrer le timer à 45
+        }
+      }))
+      break;
     case 'MATCH_STARTED':
       s.matchHeaderSignal.update(header => ({
         ...(header!),
@@ -307,8 +365,8 @@ function applyEvent(
         ...(t!),
         score: {
           ...t!.score,
-          home: event.score.split('-')[0],
-          away: event.score.split('-')[1],
+          home: Number(event.score.split('-')[0]) || 0,
+          away: Number(event.score.split('-')[1]) || 0,
         }
       }));
       break;
@@ -378,5 +436,102 @@ function extractShortName(fullName: string): string {
   if (!fullName) return '';
   const parts = fullName.trim().split(' ');
   if (parts.length === 1) return parts[0];
-  return parts[parts.length - 1]; // Return last name
+  return parts[parts.length - 1];
+}
+
+
+function loadMatchFromLocalStorage(matchId: string | undefined): StoredMatch | null {
+  if (!matchId) return null;
+  const cached = localStorage.getItem(MOCK_MATCHES_KEY);
+  if (!cached) return null;
+  const matches: Record<string, StoredMatch> = JSON.parse(cached);
+  return matches[matchId] ?? null;
+}
+
+function hydrateFromLocalStorage(cached: StoredMatch, s: MatchSignals): void {
+  const [homeScore, awayScore] = (cached.event_final_result || '0-0').split('-').map(Number);
+
+  s.matchHeaderSignal.set({
+    status: {
+      isLive: cached.event_live === '1',
+      minute: parseInt(cached.event_status) || 0,
+      status: getEventStatus(cached.event_live, cached.event_status),
+      competition: cached.league_name || '',
+    },
+    homeTeam: {
+      id: cached.home_team_key || '',
+      name: cached.event_home_team || '',
+      shortName: cached.event_home_team || '',
+      logo: cached.home_team_logo || '',
+    },
+    awayTeam: {
+      id: cached.away_team_key || '',
+      name: cached.event_away_team || '',
+      shortName: cached.event_away_team || '',
+      logo: cached.away_team_logo || '',
+    },
+    score: {
+      home: homeScore || 0,
+      away: awayScore || 0,
+      venue: cached.event_stadium || '',
+    },
+  });
+
+  if (cached.events?.length) {
+    s.timelineSignal.set(cached.events.map(e => ({
+      id: `event-${e.type}-${e.minute}-${e.player}`,
+      type: mapEventType(e.type),
+      minute: parseInt(e.minute) || 0,
+      team: e.team as 'home' | 'away',
+      player: e.player,
+    })));
+  }
+}
+
+function mapEventType(type: string): 'GOAL' | 'YELLOW_CARD' | 'RED_CARD' | 'SUBSTITUTION' {
+  switch (type) {
+    case 'GOAL_SCORED': return 'GOAL';
+    case 'CARD_ISSUED': return 'YELLOW_CARD';
+    case 'SUBSTITUTION': return 'SUBSTITUTION';
+    default: return 'GOAL';
+  }
+}
+
+function updateLocalStorageFromEvent(matchId: string | undefined, event: any, signals: MatchSignals): void {
+  if (!matchId) return;
+
+  const cached = localStorage.getItem(MOCK_MATCHES_KEY);
+  const matches: Record<string, StoredMatch> = cached ? JSON.parse(cached) : {};
+
+  const header = signals.matchHeaderSignal();
+  const existing = matches[matchId];
+  const events = existing?.events ?? [];
+
+  if (['GOAL_SCORED', 'CARD_ISSUED', 'SUBSTITUTION'].includes(event.type)) {
+    events.push({
+      type: event.type,
+      minute: event.minute,
+      player: event.scorer || event.player || event.player_in,
+      team: event.team,
+      score: event.score
+    });
+  }
+
+  matches[matchId] = {
+    event_key: matchId,
+    event_home_team: event.home_team || header.homeTeam.name,
+    event_away_team: event.away_team || header.awayTeam.name,
+    event_final_result: event.score || `${header.score.home}-${header.score.away}`,
+    event_status: event.minute?.toString() || String(header.status.minute ?? 0),
+    event_live: header.status.isLive ? '1' : '0',
+    league_name: event.league || header.status.competition,
+    home_team_logo: header.homeTeam.logo,
+    away_team_logo: header.awayTeam.logo,
+    home_team_key: header.homeTeam.id,
+    away_team_key: header.awayTeam.id,
+    events,
+    lastUpdate: new Date().toISOString()
+  };
+
+  localStorage.setItem(MOCK_MATCHES_KEY, JSON.stringify(matches));
 }

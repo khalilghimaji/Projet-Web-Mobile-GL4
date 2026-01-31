@@ -1,0 +1,15 @@
+.match-timer {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #6b7280;
+  transition: color 0.2s;
+}
+
+.match-timer.live {
+  color: #ef4444;
+}
+
+.match-timer.halftime {
+  color: #f59e0b;
+}
+
