@@ -169,6 +169,7 @@ class _DiamondStoreScreenState extends ConsumerState<DiamondStoreScreen>
 
   @override
   Widget build(BuildContext context) {
+    final user = ref.watch(userDataProvider);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Diamond Store'),
@@ -189,7 +190,7 @@ class _DiamondStoreScreenState extends ConsumerState<DiamondStoreScreen>
                 const Icon(Icons.diamond, color: Colors.amber, size: 18),
                 const SizedBox(width: 4),
                 Text(
-                  '1,250', // This would come from user state
+                  user?.diamonds.toString() ?? '0',
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     color: Colors.amber,

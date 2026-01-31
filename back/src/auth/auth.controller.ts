@@ -53,6 +53,7 @@ import { MfaEnableResponseDto } from './dto/responses/mfa-enable-response.dto';
 import { MfaDisableResponseDto } from './dto/responses/mfa-disable-response.dto';
 import { OAuthResponseDto } from './dto/responses/oauth-response.dto';
 import { User } from './entities/user.entity';
+import { User as UserId } from '../Decorator/user.decorator';
 import { Response } from 'express';
 import { DisableMfaDto } from './dto/disable-mfa.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -425,10 +426,13 @@ export class AuthController {
     status: 400,
     description: 'Invalid or expired token',
   })
+  @UseGuards(JwtAuthGuard)
   async resetPassword(
     @Body() resetPasswordDto: ResetPasswordDto,
+    @UserId('id') userId: string,
   ): Promise<ResetPasswordResponseDto> {
-    return this.authService.resetPassword(resetPasswordDto);
+    console.log('RRRRRRRRRRRRRRRRRRRRRRRRRR' + userId);
+    return this.authService.resetPassword(resetPasswordDto, userId);
   }
 
   /**

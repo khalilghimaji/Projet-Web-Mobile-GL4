@@ -778,84 +778,32 @@ export class AuthService extends GenericService<User> {
       );
       return {
         message:
-          'If your email exists in our system, you will receive a password reset link',
+          'If your email exists in our system, you will receive a new password in your inbox shortly',
       };
     }
-
-    // Check if a reset was recently requested - implement rate limiting
-    const resetCooldownKey = `password_reset_cooldown:${user.id}`;
-    const lastResetTime = await this.redisCacheService.get(resetCooldownKey);
-
-    // Use a shorter cooldown period than the token expiry (e.g., 2 minutes)
-    const cooldownPeriod = 120; // 2 minutes in seconds
-
-    if (lastResetTime) {
-      // A reset was recently requested - check if we're in cooldown period
-      const currentTime = Date.now();
-      const lastRequestTime = parseInt(lastResetTime);
-      const timeElapsed = (currentTime - lastRequestTime) / 1000; // convert to seconds
-
-      if (timeElapsed < cooldownPeriod) {
-        // Still in cooldown period - calculate remaining time
-        const remainingTime = Math.ceil(cooldownPeriod - timeElapsed);
-        let timeMessage;
-
-        if (remainingTime > 60) {
-          timeMessage = `${Math.ceil(remainingTime / 60)} minute(s)`;
-        } else {
-          timeMessage = `${remainingTime} second(s)`;
-        }
-
-        this.logger.debug(
-          `Password reset rate limited for user ${user.id}. Can try again in ${timeMessage}`,
-        );
-
-        // Return a specific message for rate limiting, but maintain security by not confirming email exists
-        return {
-          message: `If your email exists in our system, you'll need to wait before requesting another reset. Please try again in ${timeMessage} or check your inbox for the previous email.`,
-        };
-      }
-    }
-
-    // Generate a random token
-    const token = uuidv4();
+    // Generate a new random password
+    const newPassword = this.generateRandomPassword();
 
     try {
-      // 1. Invalidate any existing tokens for this user
-      // This ensures each email has a unique valid token
-      await this.redisCacheService.invalidateUserPasswordResetTokens(email);
+      // Hash the new password
+      const hashedPassword = await this.hashPassword(newPassword);
 
-      // 2. Store token in Redis with expiry
-      await this.redisCacheService.storePasswordResetToken(
-        token,
-        email,
-        this.PASSWORD_RESET_EXPIRY,
-      );
+      // Update user's password
+      user.password = hashedPassword;
+      await this.userRepository.save(user);
 
-      // 3. Set the cooldown for this user
-      await this.redisCacheService.set(
-        resetCooldownKey,
-        Date.now().toString(),
-        cooldownPeriod,
-      );
+      // Invalidate all existing sessions for this user
+      await this.redisCacheService.invalidateAllUserTokens(user.id);
 
-      // 4. Send password reset email
-      const isResend = lastResetTime !== null;
-      await this.mailService.sendPasswordResetEmail(
-        email,
-        token,
-        this.PASSWORD_RESET_EXPIRY / 60, // Convert seconds to minutes
-        isResend,
-      );
+      // Send new password email
+      await this.mailService.sendNewPasswordEmail(email, newPassword);
 
       return {
         message:
-          'If your email exists in our system, you will receive a password reset link',
+          'If your email exists in our system, you will receive a new password in your inbox shortly',
       };
     } catch (error) {
-      this.logger.error(
-        `Failed to send password reset email: ${error.message}`,
-      );
+      this.logger.error(`Failed to send new password email: ${error.message}`);
       throw new InternalServerErrorException('Error sending reset email');
     }
   }
@@ -863,38 +811,29 @@ export class AuthService extends GenericService<User> {
   // Reset password with token
   async resetPassword(
     resetPasswordDto: ResetPasswordDto,
+    userId: string,
   ): Promise<ResetPasswordResponseDto> {
     const { token, password } = resetPasswordDto;
 
-    // Check if token exists in Redis and is valid
-    const email =
-      await this.redisCacheService.getEmailFromPasswordResetToken(token);
-
-    if (!email) {
-      throw new BadRequestException('Invalid or expired reset token');
-    }
-
     // Find the user
-    const user = await this.userRepository.findOneBy({ email });
+    const user = await this.userRepository.findOneBy({ id: userId });
     if (!user) {
       throw new NotFoundException('User not found');
     }
-
+    console.log(userId, token, password);
+    // Check password
+    const isPasswordValid = await bcrypt.compare(token, user.password);
+    if (!isPasswordValid) {
+      console.log('Invalid credentials');
+      throw new UnauthorizedException('Invalid credentials');
+    }
+    console.log('Password valid');
     // Hash the new password
     const hashedPassword = await this.hashPassword(password);
 
     // Update the user's password
     user.password = hashedPassword;
     await this.userRepository.save(user);
-
-    // Invalidate all existing sessions for this user
-    await this.redisCacheService.invalidateAllUserTokens(user.id);
-
-    // Invalidate the password reset token to prevent reuse
-    await this.redisCacheService.invalidatePasswordResetToken(token);
-
-    // Clear any reset cooldown since the reset was successful
-    await this.redisCacheService.del(`password_reset_cooldown:${user.id}`);
 
     this.logger.debug(`Password reset successful for user ${user.id}`);
 
@@ -991,6 +930,18 @@ export class AuthService extends GenericService<User> {
       codes.push(uuidv4().substring(0, 8));
     }
     return codes;
+  }
+
+  // Helper method to generate a random password
+  private generateRandomPassword(): string {
+    const length = 6;
+    const chars =
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+    let password = '';
+    for (let i = 0; i < length; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return password;
   }
 
   // Helper method to send verification email

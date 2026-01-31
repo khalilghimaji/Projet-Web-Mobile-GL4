@@ -138,6 +138,15 @@ class AppDrawer extends ConsumerWidget {
                   ),
                   _buildNavItem(
                     context,
+                    icon: Icons.lock_reset_rounded,
+                    title: 'Change Password',
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      context.go('/change-password');
+                    },
+                  ),
+                  _buildNavItem(
+                    context,
                     icon: Icons.table_chart_rounded,
                     title: 'Standings',
                     onTap: () {
@@ -374,7 +383,10 @@ class AppDrawer extends ConsumerWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFd32f2f),
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 12,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),

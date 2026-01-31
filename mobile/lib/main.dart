@@ -16,6 +16,8 @@ import 'package:mobile/screens/match_detail_screen.dart';
 import 'package:mobile/screens/team_detail_screen.dart';
 import 'package:mobile/screens/error_screen.dart';
 import 'package:mobile/screens/score_prediction_page.dart';
+import 'package:mobile/screens/forget_password_screen.dart';
+import 'package:mobile/screens/change_password_screen.dart';
 import 'package:mobile/widgets/app_drawer.dart';
 
 // Static router instance
@@ -31,6 +33,10 @@ final _router = GoRouter(
     // Auth routes
     GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
     GoRoute(path: '/signup', builder: (context, state) => const SignupScreen()),
+    GoRoute(
+      path: '/forget-password',
+      builder: (context, state) => const ForgetPasswordScreen(),
+    ),
     // Protected routes
     GoRoute(
       path: '/notifications',
@@ -44,6 +50,11 @@ final _router = GoRouter(
     GoRoute(
       path: '/diamond-store',
       builder: (context, state) => const AuthGuard(child: DiamondStoreScreen()),
+    ),
+    GoRoute(
+      path: '/change-password',
+      builder: (context, state) =>
+          const AuthGuard(child: ChangePasswordScreen()),
     ),
     // Standings routes
     GoRoute(
