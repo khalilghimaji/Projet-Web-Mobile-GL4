@@ -23,61 +23,141 @@ class _ForgetPasswordScreenState extends ConsumerState<ForgetPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Forgot Password'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/login'),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              colorScheme.primaryContainer.withOpacity(0.3),
+              colorScheme.surface,
+              colorScheme.secondaryContainer.withOpacity(0.2),
+            ],
+          ),
         ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: _buildForgetPasswordForm(),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: _buildForgetPasswordForm(),
+          ),
+        ),
       ),
     );
   }
 
   Widget _buildForgetPasswordForm() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Form(
       key: _formKey,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            'RESET PASSWORD',
-            style: Theme.of(
-              context,
-            ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
+          const SizedBox(height: 20),
+
+          // Back Button
+          Align(
+            alignment: Alignment.centerLeft,
+            child: IconButton(
+              onPressed: () => context.go('/login'),
+              icon: Icon(Icons.arrow_back, color: colorScheme.primary),
+              style: IconButton.styleFrom(
+                backgroundColor: colorScheme.primaryContainer,
+                padding: const EdgeInsets.all(12),
+              ),
+            ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Enter your email address and we\'ll send you a new password.',
-            style: Theme.of(context).textTheme.bodyLarge,
+
+          const SizedBox(height: 40),
+
+          // Icon
+          Center(
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: colorScheme.primaryContainer,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: colorScheme.primary.withOpacity(0.3),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Icon(
+                Icons.lock_reset,
+                size: 64,
+                color: colorScheme.onPrimaryContainer,
+              ),
+            ),
           ),
+
           const SizedBox(height: 32),
+
+          // Title
+          Text(
+            'Forgot Password?',
+            style: theme.textTheme.headlineLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: colorScheme.onSurface,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'No worries! Enter your email and we\'ll send you a new password.',
+            style: theme.textTheme.bodyLarge?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 48),
 
           // Message Display
           if (_message != null)
             Container(
-              padding: const EdgeInsets.all(12),
-              margin: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.all(16),
+              margin: const EdgeInsets.only(bottom: 24),
               decoration: BoxDecoration(
-                color: _isSuccess ? Colors.green.shade50 : Colors.blue.shade50,
-                borderRadius: BorderRadius.circular(8),
+                color: _isSuccess
+                    ? colorScheme.tertiaryContainer
+                    : colorScheme.primaryContainer,
+                borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: _isSuccess
-                      ? Colors.green.shade200
-                      : Colors.blue.shade200,
+                      ? colorScheme.tertiary.withOpacity(0.5)
+                      : colorScheme.primary.withOpacity(0.5),
+                  width: 1,
                 ),
               ),
-              child: Text(
-                _message!,
-                style: TextStyle(
-                  color: _isSuccess
-                      ? Colors.green.shade800
-                      : Colors.blue.shade800,
-                ),
+              child: Row(
+                children: [
+                  Icon(
+                    _isSuccess
+                        ? Icons.check_circle_outline
+                        : Icons.info_outline,
+                    color: _isSuccess
+                        ? colorScheme.onTertiaryContainer
+                        : colorScheme.onPrimaryContainer,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      _message!,
+                      style: TextStyle(
+                        color: _isSuccess
+                            ? colorScheme.onTertiaryContainer
+                            : colorScheme.onPrimaryContainer,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
 
@@ -85,10 +165,28 @@ class _ForgetPasswordScreenState extends ConsumerState<ForgetPasswordScreen> {
           TextFormField(
             controller: _emailController,
             autofocus: true,
-            decoration: const InputDecoration(
-              labelText: 'Email',
-              border: OutlineInputBorder(),
-              prefixIcon: Icon(Icons.email),
+            decoration: InputDecoration(
+              labelText: 'Email Address',
+              hintText: 'Enter your email',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(
+                  color: colorScheme.outline.withOpacity(0.5),
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(color: colorScheme.primary, width: 2),
+              ),
+              prefixIcon: Icon(
+                Icons.email_outlined,
+                color: colorScheme.primary,
+              ),
+              filled: true,
+              fillColor: colorScheme.surface,
             ),
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.done,
@@ -113,67 +211,140 @@ class _ForgetPasswordScreenState extends ConsumerState<ForgetPasswordScreen> {
             child: ElevatedButton(
               onPressed: _isLoading ? null : _onResetPassword,
               style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                backgroundColor: colorScheme.primary,
+                foregroundColor: colorScheme.onPrimary,
+                padding: const EdgeInsets.symmetric(vertical: 18),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(16),
                 ),
+                elevation: 4,
+                shadowColor: colorScheme.primary.withOpacity(0.4),
               ),
               child: _isLoading
                   ? Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
+                        SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              colorScheme.onPrimary,
+                            ),
+                          ),
                         ),
                         const SizedBox(width: 12),
                         Text(
                           _message == null ? 'Sending...' : 'Processing...',
-                          style: const TextStyle(fontSize: 16),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
                         ),
                       ],
                     )
-                  : const Text('Send New Password'),
+                  : const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.send),
+                        SizedBox(width: 8),
+                        Text(
+                          'Send New Password',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
+                    ),
             ),
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
 
           // Back to Login
           Center(
-            child: TextButton(
-              onPressed: () => context.go('/login'),
-              child: const Text('Back to Login'),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'Remember your password?',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => context.go('/login'),
+                  child: Text(
+                    'Sign In',
+                    style: TextStyle(
+                      color: colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
 
           const SizedBox(height: 32),
 
-          // Info Text
+          // Info Card
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.grey.shade50,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.grey.shade200),
+              color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: colorScheme.outline.withOpacity(0.2)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'What happens next?',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      color: colorScheme.primary,
+                      size: 24,
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'What happens next?',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  '• We\'ll generate a new secure password for your account\n'
-                  '• You\'ll receive an email with your new password\n'
-                  '• Use the new password to log in\n'
-                  '• Change your password immediately after logging in for security',
-                  style: Theme.of(context).textTheme.bodySmall,
+                const SizedBox(height: 16),
+                _buildInfoItem(
+                  icon: Icons.check_circle_outline,
+                  text: 'We\'ll generate a new secure password',
+                  colorScheme: colorScheme,
+                  theme: theme,
+                ),
+                const SizedBox(height: 12),
+                _buildInfoItem(
+                  icon: Icons.email_outlined,
+                  text: 'You\'ll receive an email with your new password',
+                  colorScheme: colorScheme,
+                  theme: theme,
+                ),
+                const SizedBox(height: 12),
+                _buildInfoItem(
+                  icon: Icons.login,
+                  text: 'Use the new password to log in',
+                  colorScheme: colorScheme,
+                  theme: theme,
+                ),
+                const SizedBox(height: 12),
+                _buildInfoItem(
+                  icon: Icons.security,
+                  text: 'Change your password after logging in for security',
+                  colorScheme: colorScheme,
+                  theme: theme,
                 ),
               ],
             ),
@@ -292,6 +463,29 @@ class _ForgetPasswordScreenState extends ConsumerState<ForgetPasswordScreen> {
         _isLoading = false;
       });
     }
+  }
+
+  Widget _buildInfoItem({
+    required IconData icon,
+    required String text,
+    required ColorScheme colorScheme,
+    required ThemeData theme,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 20, color: colorScheme.primary),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            text,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   @override

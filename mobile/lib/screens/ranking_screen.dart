@@ -319,7 +319,7 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
             boxShadow: isFirstPlace
                 ? [
                     BoxShadow(
-                      color: Colors.amber.withAlpha((0.3 * 255).round()),
+                      color: const Color.fromARGB(255, 186, 151, 43).withAlpha((0.3 * 255).round()),
                       blurRadius: 8,
                       spreadRadius: 2,
                     ),
@@ -344,7 +344,7 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
             shape: BoxShape.circle,
             gradient: isFirstPlace
                 ? const LinearGradient(
-                    colors: [Colors.amber, Colors.orange],
+                    colors: [Color.fromARGB(255, 159, 123, 18), Colors.orange],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   )

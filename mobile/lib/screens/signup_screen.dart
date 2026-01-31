@@ -27,47 +27,106 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Sign Up')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: _buildSignupForm(),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              colorScheme.primaryContainer.withOpacity(0.3),
+              colorScheme.surface,
+              colorScheme.tertiaryContainer.withOpacity(0.2),
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: _buildSignupForm(),
+          ),
+        ),
       ),
     );
   }
 
   Widget _buildSignupForm() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Form(
       key: _formKey,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          const SizedBox(height: 20),
+
+          // Back Button
+          Align(
+            alignment: Alignment.centerLeft,
+            child: IconButton(
+              onPressed: () => context.go('/login'),
+              icon: Icon(Icons.arrow_back, color: colorScheme.primary),
+              style: IconButton.styleFrom(
+                backgroundColor: colorScheme.primaryContainer,
+                padding: const EdgeInsets.all(12),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 24),
+
+          // Title
           Text(
-            'SIGN UP',
-            style: Theme.of(
-              context,
-            ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
+            'Create Account',
+            style: theme.textTheme.headlineLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: colorScheme.onSurface,
+            ),
+            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
           Text(
-            'Create your account',
-            style: Theme.of(context).textTheme.bodyLarge,
+            'Sign up to get started',
+            style: theme.textTheme.bodyLarge?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
+            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 32),
 
           // Error Message
           if (_errorMessage != null)
             Container(
-              padding: const EdgeInsets.all(12),
-              margin: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.all(16),
+              margin: const EdgeInsets.only(bottom: 24),
               decoration: BoxDecoration(
-                color: Colors.red.shade50,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.red.shade200),
+                color: colorScheme.errorContainer,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: colorScheme.error.withOpacity(0.5),
+                  width: 1,
+                ),
               ),
-              child: Text(
-                _errorMessage!,
-                style: TextStyle(color: Colors.red.shade800),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.error_outline,
+                    color: colorScheme.onErrorContainer,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      _errorMessage!,
+                      style: TextStyle(
+                        color: colorScheme.onErrorContainer,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
 
@@ -75,26 +134,51 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
           Center(
             child: Stack(
               children: [
-                CircleAvatar(
-                  radius: 50,
-                  backgroundColor: Colors.grey[200],
-                  backgroundImage: _selectedImage != null
-                      ? FileImage(_selectedImage!)
-                      : null,
-                  child: _selectedImage == null
-                      ? const Icon(Icons.person, size: 50, color: Colors.grey)
-                      : null,
+                Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: colorScheme.shadow.withOpacity(0.2),
+                        blurRadius: 20,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: CircleAvatar(
+                    radius: 60,
+                    backgroundColor: colorScheme.primaryContainer,
+                    backgroundImage: _selectedImage != null
+                        ? FileImage(_selectedImage!)
+                        : null,
+                    child: _selectedImage == null
+                        ? Icon(
+                            Icons.person,
+                            size: 60,
+                            color: colorScheme.onPrimaryContainer,
+                          )
+                        : null,
+                  ),
                 ),
                 Positioned(
                   bottom: 0,
                   right: 0,
-                  child: CircleAvatar(
-                    backgroundColor: Theme.of(context).primaryColor,
-                    radius: 18,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: colorScheme.primary,
+                      boxShadow: [
+                        BoxShadow(
+                          color: colorScheme.primary.withOpacity(0.4),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
                     child: IconButton(
                       icon: const Icon(
                         Icons.camera_alt,
-                        size: 18,
+                        size: 20,
                         color: Colors.white,
                       ),
                       onPressed: _pickImage,
@@ -104,13 +188,14 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Center(
             child: Text(
-              'Tap to select profile picture',
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: Colors.grey),
+              'Tap camera to select profile picture',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
           const SizedBox(height: 24),
@@ -119,10 +204,28 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
           TextFormField(
             controller: _firstNameController,
             autofocus: true,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'First Name',
-              border: OutlineInputBorder(),
-              prefixIcon: Icon(Icons.person),
+              hintText: 'Enter your first name',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(
+                  color: colorScheme.outline.withOpacity(0.5),
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(color: colorScheme.primary, width: 2),
+              ),
+              prefixIcon: Icon(
+                Icons.person_outline,
+                color: colorScheme.primary,
+              ),
+              filled: true,
+              fillColor: colorScheme.surface,
             ),
             textInputAction: TextInputAction.next,
             validator: (value) {
@@ -137,10 +240,28 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
           // Last Name Field
           TextFormField(
             controller: _lastNameController,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Last Name',
-              border: OutlineInputBorder(),
-              prefixIcon: Icon(Icons.person),
+              hintText: 'Enter your last name',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(
+                  color: colorScheme.outline.withOpacity(0.5),
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(color: colorScheme.primary, width: 2),
+              ),
+              prefixIcon: Icon(
+                Icons.person_outline,
+                color: colorScheme.primary,
+              ),
+              filled: true,
+              fillColor: colorScheme.surface,
             ),
             textInputAction: TextInputAction.next,
             validator: (value) {
@@ -155,10 +276,28 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
           // Email Field
           TextFormField(
             controller: _emailController,
-            decoration: const InputDecoration(
-              labelText: 'Email',
-              border: OutlineInputBorder(),
-              prefixIcon: Icon(Icons.email),
+            decoration: InputDecoration(
+              labelText: 'Email Address',
+              hintText: 'Enter your email',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(
+                  color: colorScheme.outline.withOpacity(0.5),
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(color: colorScheme.primary, width: 2),
+              ),
+              prefixIcon: Icon(
+                Icons.email_outlined,
+                color: colorScheme.primary,
+              ),
+              filled: true,
+              fillColor: colorScheme.surface,
             ),
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.next,
@@ -179,10 +318,26 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
           // Password Field
           TextFormField(
             controller: _passwordController,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Password',
-              border: OutlineInputBorder(),
-              prefixIcon: Icon(Icons.lock),
+              hintText: 'Enter your password',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(
+                  color: colorScheme.outline.withOpacity(0.5),
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(color: colorScheme.primary, width: 2),
+              ),
+              prefixIcon: Icon(Icons.lock_outline, color: colorScheme.primary),
+              filled: true,
+              fillColor: colorScheme.surface,
+              helperText: 'Minimum 8 characters',
             ),
             obscureText: true,
             textInputAction: TextInputAction.next,
@@ -202,10 +357,25 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
           // Confirm Password Field
           TextFormField(
             controller: _confirmPasswordController,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Confirm Password',
-              border: OutlineInputBorder(),
-              prefixIcon: Icon(Icons.lock),
+              hintText: 'Re-enter your password',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(
+                  color: colorScheme.outline.withOpacity(0.5),
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(color: colorScheme.primary, width: 2),
+              ),
+              prefixIcon: Icon(Icons.lock_outline, color: colorScheme.primary),
+              filled: true,
+              fillColor: colorScheme.surface,
             ),
             obscureText: true,
             textInputAction: TextInputAction.done,
@@ -227,25 +397,66 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
             child: ElevatedButton(
               onPressed: _isLoading ? null : _onSignup,
               style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                backgroundColor: colorScheme.primary,
+                foregroundColor: colorScheme.onPrimary,
+                padding: const EdgeInsets.symmetric(vertical: 18),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(16),
                 ),
+                elevation: 4,
+                shadowColor: colorScheme.primary.withOpacity(0.4),
               ),
               child: _isLoading
-                  ? const CircularProgressIndicator()
-                  : const Text('Sign Up'),
+                  ? SizedBox(
+                      height: 24,
+                      width: 24,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.5,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          colorScheme.onPrimary,
+                        ),
+                      ),
+                    )
+                  : const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.person_add),
+                        SizedBox(width: 8),
+                        Text(
+                          'Create Account',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
+                    ),
             ),
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
 
           // Already have account
-          Center(
-            child: TextButton(
-              onPressed: () => context.go('/login'),
-              child: const Text('Already have an account? Login'),
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'Already have an account?',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+              TextButton(
+                onPressed: () => context.go('/login'),
+                child: Text(
+                  'Sign In',
+                  style: TextStyle(
+                    color: colorScheme.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),

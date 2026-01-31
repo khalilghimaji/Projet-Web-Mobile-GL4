@@ -13,389 +13,324 @@ class AppDrawer extends ConsumerWidget {
     final user = ref.watch(userDataProvider);
     final gainedDiamonds = ref.watch(gainedDiamondsProvider);
     final notificationsState = ref.watch(notificationsProvider);
+    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
 
     return Drawer(
       child: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
             colors: [
-              Color(0xFF1a237e), // Deep blue
-              Color(0xFF3949ab), // Medium blue
-              Color(0xFF5e35b1), // Purple accent
+              colorScheme.primary,
+              colorScheme.primary.withOpacity(0.9),
+              colorScheme.secondary.withOpacity(0.8),
             ],
           ),
         ),
-        child: Column(
-          children: [
-            // Enhanced Header
-            Container(
-              height: 180,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Color(0xFF1976d2), // Bright blue
-                    Color(0xFF42a5f5), // Light blue
-                    Color(0xFF1e88e5), // Medium blue
-                  ],
-                ),
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(30),
-                  bottomRight: Radius.circular(30),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
-                    blurRadius: 10,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
-              ),
-              child: Stack(
-                children: [
-                  Positioned(
-                    top: 50,
-                    left: 20,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'KickStream',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Mobile App',
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.8),
-                            fontSize: 16,
-                            fontWeight: FontWeight.w300,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Positioned(
-                    top: 40,
-                    right: 20,
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: const Icon(
-                        Icons.sports_soccer,
-                        color: Colors.white,
-                        size: 32,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-            // Navigation Items
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                children: [
-                  _buildNavItem(
-                    context,
-                    icon: Icons.home_rounded,
-                    title: 'Home',
-                    onTap: () {
-                      Navigator.of(context).pop();
-                      context.go('/home');
-                    },
-                  ),
-                  _buildNotificationsNavItem(context, notificationsState),
-                  _buildNavItem(
-                    context,
-                    icon: Icons.leaderboard_rounded,
-                    title: 'Ranking',
-                    onTap: () {
-                      Navigator.of(context).pop();
-                      context.go('/ranking');
-                    },
-                  ),
-                  _buildNavItem(
-                    context,
-                    icon: Icons.store_rounded,
-                    title: 'Diamond Store',
-                    onTap: () {
-                      Navigator.of(context).pop();
-                      context.go('/diamond-store');
-                    },
-                  ),
-                  _buildNavItem(
-                    context,
-                    icon: Icons.lock_reset_rounded,
-                    title: 'Change Password',
-                    onTap: () {
-                      Navigator.of(context).pop();
-                      context.go('/change-password');
-                    },
-                  ),
-                  _buildNavItem(
-                    context,
-                    icon: Icons.table_chart_rounded,
-                    title: 'Standings',
-                    onTap: () {
-                      Navigator.of(context).pop();
-                      context.go('/standings');
-                    },
-                  ),
-                  _buildNavItem(
-                    context,
-                    icon: Icons.sports_soccer_rounded,
-                    title: 'Leagues',
-                    onTap: () {
-                      Navigator.of(context).pop();
-                      context.go('/leagues');
-                    },
-                  ),
-                ],
-              ),
-            ),
-            // User Info Section
-            if (user != null) ...[
+        child: SafeArea(
+          child: Column(
+            children: [
+              // Enhanced Header
               Container(
-                margin: const EdgeInsets.all(16),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 8,
-                      offset: Offset(0, 4),
-                    ),
-                  ],
-                ),
+                padding: const EdgeInsets.all(24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
                         Container(
+                          padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF1976d2), Color(0xFF42a5f5)],
-                            ),
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(16),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.blue.withOpacity(0.3),
+                                color: Colors.black.withOpacity(0.1),
                                 blurRadius: 8,
-                                offset: Offset(0, 4),
+                                offset: const Offset(0, 4),
                               ),
                             ],
                           ),
-                          child: CircleAvatar(
-                            radius: 24,
-                            backgroundColor: Colors.transparent,
-                            backgroundImage: user.imgUrl != null
-                                ? NetworkImage(
-                                    UrlUtils.transformUrl(user.imgUrl!),
-                                  )
-                                : null,
-                            child: user.imgUrl == null
-                                ? Text(
-                                    '${user.firstName[0]}${user.lastName[0]}',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                    ),
-                                  )
-                                : null,
+                          child: const Icon(
+                            Icons.sports_soccer_rounded,
+                            color: Colors.white,
+                            size: 32,
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 16),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                '${user.firstName} ${user.lastName}',
-                                style: const TextStyle(
+                              const Text(
+                                'KickStream',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 24,
                                   fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                  color: Color(0xFF2d3748),
+                                  letterSpacing: 0.5,
                                 ),
-                                overflow: TextOverflow.ellipsis,
                               ),
                               Text(
-                                user.email,
+                                'Football Live Streaming',
                                 style: TextStyle(
-                                  color: Colors.grey[600],
-                                  fontSize: 12,
+                                  color: Colors.white.withOpacity(0.9),
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w400,
                                 ),
-                                overflow: TextOverflow.ellipsis,
                               ),
                             ],
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFe3f2fd),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.diamond_rounded,
-                            color: Color(0xFF1976d2),
-                            size: 18,
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            '${user.diamonds} diamonds',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF1976d2),
-                              fontSize: 14,
+                    const SizedBox(height: 20),
+
+                    // User Info Section (moved to top)
+                    if (user != null)
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.15),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
                             ),
-                          ),
-                          if (gainedDiamonds != 0) ...[
-                            const SizedBox(width: 8),
+                          ],
+                        ),
+                        child: Row(
+                          children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
-                              ),
                               decoration: BoxDecoration(
-                                color: gainedDiamonds > 0
-                                    ? Colors.green.withOpacity(0.1)
-                                    : Colors.red.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(12),
+                                shape: BoxShape.circle,
                                 border: Border.all(
-                                  color: gainedDiamonds > 0
-                                      ? Colors.green.withOpacity(0.3)
-                                      : Colors.red.withOpacity(0.3),
+                                  color: colorScheme.primary.withOpacity(0.3),
+                                  width: 2,
                                 ),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    gainedDiamonds > 0
-                                        ? Icons.arrow_upward_rounded
-                                        : Icons.arrow_downward_rounded,
-                                    color: gainedDiamonds > 0
-                                        ? Colors.green
-                                        : Colors.red,
-                                    size: 14,
-                                  ),
-                                  const SizedBox(width: 2),
-                                  Text(
-                                    '${gainedDiamonds.abs()}',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: gainedDiamonds > 0
-                                          ? Colors.green
-                                          : Colors.red,
-                                    ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: colorScheme.primary.withOpacity(0.2),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
                                   ),
                                 ],
                               ),
+                              child: CircleAvatar(
+                                radius: 28,
+                                backgroundColor: colorScheme.primaryContainer,
+                                backgroundImage: user.imgUrl != null
+                                    ? NetworkImage(
+                                        UrlUtils.transformUrl(user.imgUrl!),
+                                      )
+                                    : null,
+                                child: user.imgUrl == null
+                                    ? Text(
+                                        '${user.firstName[0]}${user.lastName[0]}',
+                                        style: TextStyle(
+                                          color: colorScheme.onPrimaryContainer,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 18,
+                                        ),
+                                      )
+                                    : null,
+                              ),
                             ),
-                          ],
-                          if (user.isMFAEnabled == true) ...[
                             const SizedBox(width: 12),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.green.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: Colors.green.withOpacity(0.3),
-                                ),
-                              ),
-                              child: const Row(
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Icon(
-                                    Icons.security_rounded,
-                                    color: Colors.green,
-                                    size: 14,
-                                  ),
-                                  SizedBox(width: 4),
                                   Text(
-                                    'MFA',
+                                    '${user.firstName} ${user.lastName}',
                                     style: TextStyle(
-                                      fontSize: 10,
-                                      color: Colors.green,
-                                      fontWeight: FontWeight.w600,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15,
+                                      color: colorScheme.onSurface,
                                     ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.diamond,
+                                        color: colorScheme.primary,
+                                        size: 16,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        '${user.diamonds}',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: colorScheme.primary,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                      if (gainedDiamonds != 0) ...[
+                                        const SizedBox(width: 6),
+                                        _BouncingBadge(
+                                          gainedDiamonds: gainedDiamonds,
+                                        ),
+                                      ],
+                                      if (user.isMFAEnabled == true) ...[
+                                        const SizedBox(width: 6),
+                                        const Icon(
+                                          Icons.verified_user,
+                                          color: Colors.green,
+                                          size: 16,
+                                        ),
+                                      ],
+                                    ],
                                   ),
                                 ],
                               ),
                             ),
                           ],
-                        ],
+                        ),
                       ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 8),
+
+              // Navigation Items
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  children: [
+                    _buildNavItem(
+                      context,
+                      icon: Icons.home_rounded,
+                      title: 'Home',
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        context.go('/home');
+                      },
+                    ),
+                    _buildNotificationsNavItem(context, notificationsState),
+                    _buildNavItem(
+                      context,
+                      icon: Icons.leaderboard_rounded,
+                      title: 'Ranking',
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        context.go('/ranking');
+                      },
+                    ),
+                    _buildNavItem(
+                      context,
+                      icon: Icons.store_rounded,
+                      title: 'Diamond Store',
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        context.go('/diamond-store');
+                      },
+                    ),
+                    _buildNavItem(
+                      context,
+                      icon: Icons.lock_reset_rounded,
+                      title: 'Change Password',
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        context.go('/change-password');
+                      },
+                    ),
+                    _buildNavItem(
+                      context,
+                      icon: Icons.table_chart_rounded,
+                      title: 'Standings',
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        context.go('/standings');
+                      },
+                    ),
+                    _buildNavItem(
+                      context,
+                      icon: Icons.sports_soccer_rounded,
+                      title: 'Leagues',
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        context.go('/leagues');
+                      },
                     ),
                   ],
                 ),
               ),
-            ],
-            // Logout Button
-            Container(
-              margin: const EdgeInsets.all(16),
-              child: ElevatedButton.icon(
-                onPressed: () async {
-                  Navigator.of(context).pop();
-                  await ref.read(authActionsProvider).logout();
-                  if (context.mounted) {
-                    context.go('/login');
-                  }
-                },
-                icon: const Icon(Icons.logout_rounded, color: Colors.white),
-                label: const Text(
-                  'Logout',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                  ),
+
+              // Divider
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
                 ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFd32f2f),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 12,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 4,
-                  shadowColor: Colors.red.withOpacity(0.3),
+                child: Divider(
+                  color: Colors.white.withOpacity(0.3),
+                  thickness: 1,
                 ),
               ),
-            ),
-          ],
+
+              // Logout Button
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    gradient: LinearGradient(
+                      colors: [Colors.red.shade600, Colors.red.shade700],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.red.withOpacity(0.3),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () async {
+                        Navigator.of(context).pop();
+                        await ref.read(authActionsProvider).logout();
+                        if (context.mounted) {
+                          context.go('/login');
+                        }
+                      },
+                      borderRadius: BorderRadius.circular(16),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.logout_rounded,
+                              color: Colors.white,
+                              size: 24,
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              'Logout',
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -408,24 +343,50 @@ class AppDrawer extends ConsumerWidget {
     required VoidCallback onTap,
   }) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: 6),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        color: Colors.white.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(16),
+        color: Colors.white.withOpacity(0.15),
+        border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
       ),
-      child: ListTile(
-        leading: Icon(icon, color: Colors.white, size: 24),
-        title: Text(
-          title,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(icon, color: Colors.white, size: 20),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios,
+                  color: Colors.white.withOpacity(0.5),
+                  size: 16,
+                ),
+              ],
+            ),
           ),
         ),
-        onTap: onTap,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       ),
     );
   }
@@ -435,53 +396,160 @@ class AppDrawer extends ConsumerWidget {
     NotificationsState notificationsState,
   ) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: 6),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        color: Colors.white.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(16),
+        color: Colors.white.withOpacity(0.15),
+        border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
       ),
-      child: ListTile(
-        leading: const Icon(
-          Icons.notifications_rounded,
-          color: Colors.white,
-          size: 24,
-        ),
-        title: Row(
-          children: [
-            const Text(
-              'Notifications',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            if (notificationsState.unreadCount > 0) ...[
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.red,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  notificationsState.unreadCount.toString(),
-                  style: const TextStyle(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            Navigator.of(context).pop();
+            context.go('/notifications');
+          },
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.notifications_rounded,
                     color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
+                    size: 20,
                   ),
                 ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Row(
+                    children: [
+                      const Text(
+                        'Notifications',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                      if (notificationsState.unreadCount > 0) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            notificationsState.unreadCount.toString(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios,
+                  color: Colors.white.withOpacity(0.5),
+                  size: 16,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BouncingBadge extends StatefulWidget {
+  final int gainedDiamonds;
+
+  const _BouncingBadge({required this.gainedDiamonds});
+
+  @override
+  State<_BouncingBadge> createState() => _BouncingBadgeState();
+}
+
+class _BouncingBadgeState extends State<_BouncingBadge>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 1000),
+      vsync: this,
+    )..repeat(reverse: true);
+
+    _animation = Tween<double>(
+      begin: 0.0,
+      end: -8.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, child) {
+        return Transform.translate(
+          offset: Offset(0, _animation.value),
+          child: child,
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration: BoxDecoration(
+          color: widget.gainedDiamonds > 0
+              ? Colors.green.withOpacity(0.15)
+              : Colors.red.withOpacity(0.15),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              widget.gainedDiamonds > 0
+                  ? Icons.arrow_upward
+                  : Icons.arrow_downward,
+              color: widget.gainedDiamonds > 0 ? Colors.green : Colors.red,
+              size: 13,
+            ),
+            const SizedBox(width: 2),
+            Text(
+              '${widget.gainedDiamonds.abs()}',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: widget.gainedDiamonds > 0 ? Colors.green : Colors.red,
               ),
-            ],
+            ),
           ],
         ),
-        onTap: () {
-          Navigator.of(context).pop();
-          context.go('/notifications');
-        },
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       ),
     );
   }
