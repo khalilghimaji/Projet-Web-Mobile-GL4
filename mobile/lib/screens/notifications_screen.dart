@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:openapi/openapi.dart' as api;
 import 'package:mobile/providers/notifications_provider.dart';
+import 'package:mobile/services/realtime_updates_service.dart';
 import 'package:mobile/widgets/app_drawer.dart';
 
 class NotificationsScreen extends ConsumerStatefulWidget {
@@ -49,30 +50,44 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
           // Connection status indicator
           Container(
             margin: const EdgeInsets.only(right: 8),
-            child: Row(
-              children: [
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: notificationsState.isConnected
-                        ? Colors.green
-                        : Colors.red,
-                    shape: BoxShape.circle,
+            child: GestureDetector(
+              onTap: !notificationsState.isConnected
+                  ? () {
+                      // Reconnect to SSE when offline text is tapped
+                      final realtimeService = ref.read(
+                        realtimeUpdatesServiceProvider,
+                      );
+                      realtimeService.reconnectSSE();
+                    }
+                  : null,
+              child: Row(
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: notificationsState.isConnected
+                          ? Colors.green
+                          : Colors.red,
+                      shape: BoxShape.circle,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  notificationsState.isConnected ? 'LIVE' : 'OFFLINE',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: notificationsState.isConnected
-                        ? Colors.green
-                        : Colors.red,
-                    fontWeight: FontWeight.bold,
+                  const SizedBox(width: 4),
+                  Text(
+                    notificationsState.isConnected ? 'LIVE' : 'OFFLINE',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: notificationsState.isConnected
+                          ? Colors.green
+                          : Colors.red,
+                      fontWeight: FontWeight.bold,
+                      decoration: !notificationsState.isConnected
+                          ? TextDecoration.underline
+                          : null,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           IconButton(

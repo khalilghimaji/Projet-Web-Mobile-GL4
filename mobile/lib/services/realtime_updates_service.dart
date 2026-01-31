@@ -78,6 +78,14 @@ class RealtimeUpdatesService {
     }
   }
 
+  // Public method to manually reconnect SSE
+  void reconnectSSE() {
+    print('[SSE] Manual reconnection requested');
+    _disconnectSSE();
+    _reconnectAttempts = 0; // Reset reconnection attempts
+    _connectSSE();
+  }
+
   void _connectSSE() {
     if (_sseSubscription != null ||
         !_authState.isAuthenticated ||
