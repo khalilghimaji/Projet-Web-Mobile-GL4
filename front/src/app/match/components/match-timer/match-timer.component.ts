@@ -5,7 +5,7 @@ import {interval, Subscription} from 'rxjs';
   selector: 'app-match-timer',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
- templateUrl: './match-timer.component.html',
+  templateUrl: './match-timer.component.html',
   styleUrl: './match-timer.component.css'
 })
 export class MatchTimerComponent {
@@ -72,6 +72,7 @@ export class MatchTimerComponent {
         this.startTimer();
       }
     });
+
 
     this.destroyRef.onDestroy(() => {
       this.stopTimer();

@@ -3,6 +3,8 @@
   font-size: 0.875rem;
   color: #6b7280;
   transition: color 0.2s;
+  will-change: contents;
+  contain: layout style;
 }
 
 .match-timer.live {
