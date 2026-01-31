@@ -1,5 +1,6 @@
-import {Component, ChangeDetectionStrategy, input, computed, effect, signal, DestroyRef, inject, NgZone} from '@angular/core';
-import {interval, Subscription} from 'rxjs';
+import {Component, ChangeDetectionStrategy, input, computed, effect, signal, inject, DestroyRef} from '@angular/core';
+import {interval} from 'rxjs';
+import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-match-timer',
@@ -17,9 +18,7 @@ export class MatchTimerComponent {
 
   private currentMinute = signal(0);
   private currentSeconds = signal(0);
-  private zone = inject(NgZone);
   private destroyRef = inject(DestroyRef);
-  private timerSubscription: Subscription | null = null;
 
   displayTime = computed(() => {
     const status = this.statusSignal();
@@ -40,18 +39,31 @@ export class MatchTimerComponent {
     }
 
     if (status.isLive && status.status === 'LIVE') {
+      // 1ère mi-temps (0-44)
       if (minute < 45) {
         return `${minute}:${formattedSeconds}`;
       }
-      if (minute >= 45 && minute < 50) {
+      // Exactement 45 minutes (pas encore de temps additionnel affiché)
+      if (minute === 45) {
+        return `45:${formattedSeconds}`;
+      }
+      // Temps additionnel 1ère MT (46-49)
+      if (minute >= 46 && minute < 50) {
         return `45+${minute - 45}:${formattedSeconds}`;
       }
-      if (minute >= 45 && minute < 90) {
+      // 2ème mi-temps (50-89 en cas de problème, normalement 46-89)
+      if (minute >= 50 && minute < 90) {
         return `${minute}:${formattedSeconds}`;
       }
-      if (minute >= 90) {
+      // Exactement 90 minutes
+      if (minute === 90) {
+        return `90:${formattedSeconds}`;
+      }
+      // Temps additionnel 2ème MT (91+)
+      if (minute >= 91) {
         return `90+${minute - 90}:${formattedSeconds}`;
       }
+
       return `${minute}:${formattedSeconds}`;
     }
 
@@ -66,38 +78,28 @@ export class MatchTimerComponent {
       const status = this.statusSignal();
       this.currentMinute.set(status.minute);
       this.currentSeconds.set(0);
-      this.stopTimer();
 
       if (status.isLive && status.status === 'LIVE') {
         this.startTimer();
       }
     });
-
-
-    this.destroyRef.onDestroy(() => {
-      this.stopTimer();
-    });
   }
 
   private startTimer(): void {
-    this.zone.runOutsideAngular(() => {
-      this.timerSubscription = interval(1000).subscribe(() => {
+    interval(1000)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
         this.currentSeconds.update(s => {
           if (s >= 59) {
-            this.currentMinute.update(m => m + 1);
+            this.currentMinute.update(m => {
+              // Validation: ne jamais dépasser 120 minutes (prolongations comprises)
+              const nextMinute = m + 1;
+              return Math.min(nextMinute, 120);
+            });
             return 0;
           }
           return s + 1;
         });
       });
-    });
-  }
-
-  private stopTimer(): void {
-    if (this.timerSubscription) {
-      this.timerSubscription.unsubscribe();
-      this.timerSubscription = null;
-    }
   }
 }
-

@@ -1,0 +1,23 @@
+<div class="flex-shrink-0 w-60 relative group cursor-pointer">
+  <div class="w-full aspect-video bg-gray-800 rounded-lg overflow-hidden relative">
+    <div
+      class="absolute inset-0 bg-cover bg-center opacity-70 group-hover:opacity-100 transition-opacity"
+      [style.background-image]="'url(' + videoSignal().thumbnail + ')'"
+    ></div>
+
+    <div class="absolute inset-0 bg-black/30 flex items-center justify-center">
+      <div class="size-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/40">
+        <span class="material-symbols-outlined text-white filled">play_arrow</span>
+      </div>
+    </div>
+
+    <span class="absolute bottom-2 right-2 bg-black/80 text-white text-[10px] px-1.5 py-0.5 rounded">
+      {{ videoSignal().duration }}
+    </span>
+  </div>
+
+  <p class="mt-2 text-sm font-medium leading-tight line-clamp-2">
+    {{ videoSignal().title }}
+  </p>
+</div>
+

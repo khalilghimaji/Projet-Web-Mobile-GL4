@@ -1,8 +1,5 @@
-import {Component, ChangeDetectionStrategy, input, output, Signal, Input, WritableSignal} from '@angular/core';
+import {Component, ChangeDetectionStrategy, output, Signal, Input, WritableSignal} from '@angular/core';
 import { CommonModule } from '@angular/common';
-import {
-  ScorePredictionPopupComponent
-} from '../../../components/score-prediction-popup/score-prediction-popup.component';
 
 export type VoteOption = 'HOME' | 'DRAW' | 'AWAY';
 
@@ -27,113 +24,18 @@ export interface PredictionData {
   standalone: true,
   imports: [CommonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <div class="px-4 py-6">
-      <div
-        class="bg-white dark:bg-card-dark rounded-xl p-4 shadow-sm
-               border border-gray-100 dark:border-white/5"
-      >
-        <!-- Header -->
-        <div class="flex justify-between items-center mb-3">
-          <h3 class="text-sm font-semibold text-slate-700 dark:text-gray-200">
-            Who will win?
-          </h3>
-          <span class="text-xs text-primary font-medium">
-            {{ formatVotes(predictionSignal().totalVotes) }} Votes
-          </span>
-        </div>
-
-        <!-- Predict / Summary -->
-        <div class="mb-3">
-          <!-- User has voted -->
-          @if( predictionSignal().userVote ){
-            <div
-              class="flex items-center justify-between
-                   bg-primary/10 dark:bg-primary/20
-                   border border-primary/30 rounded-lg px-3 py-2"
-            >
-              <div>
-                <div class="text-[11px] text-gray-500 dark:text-gray-400">
-                  Your prediction
-                </div>
-                <div class="text-sm font-semibold text-primary">
-                  {{ formatOption(predictionSignal().userVote!.option) }}
-                  {{ predictionSignal().userVote!.home_score }} -
-                  {{ predictionSignal().userVote!.away_score }}
-                  • {{ predictionSignal().userVote!.diamonds }} 💎
-                </div>
-              </div>
-              @if (predictionSignal().voteEnabled){
-                <button
-                  class="text-xs font-medium text-primary hover:underline"
-                  (click)="onOpenPopup()"
-                >
-                  Change
-                </button>
-              }
-            </div>
-          } @else if (predictionSignal().voteEnabled){
-            <!-- Predict button -->
-            <button
-              class="w-full h-10 py-2.5 rounded-lg text-sm font-bold
-                     bg-primary text-white transition-all
-                     hover:bg-primary/90 active:scale-95
-                     disabled:opacity-50"
-              [disabled]="!predictionSignal().voteEnabled"
-              (click)="onOpenPopup()"
-            >
-              Predict & Bet 💎
-            </button>
-          }
-        </div>
-
-        <!-- Sentiment Bars -->
-        <div class="flex h-1.5 w-full rounded-full overflow-hidden gap-0.5 mt-2">
-          <div
-            class="bg-primary h-full transition-all"
-            [style.width.%]="predictionSignal().homePercentage"
-          ></div>
-          <div
-            class="bg-gray-300 dark:bg-gray-600 h-full transition-all"
-            [style.width.%]="predictionSignal().drawPercentage"
-          ></div>
-          <div
-            class="bg-gray-400 dark:bg-gray-500 h-full transition-all"
-            [style.width.%]="predictionSignal().awayPercentage"
-          ></div>
-        </div>
-
-        <!-- Percentages -->
-        <div
-          class="flex justify-between text-[10px]
-                 text-gray-500 mt-1 font-medium"
-        >
-          <span>{{ predictionSignal().homePercentage | number:'1.0-0' }}%</span>
-          <span>{{ predictionSignal().drawPercentage | number:'1.0-0' }}%</span>
-          <span>{{ predictionSignal().awayPercentage | number:'1.0-0' }}%</span>
-        </div>
-      </div>
-    </div>
-  `,
-  styles: [
-    `
-      :host {
-        display: block;
-      }
-    `
-  ]
+  templateUrl: './prediction-widget.section.html',
+  styleUrl: './prediction-widget.section.css'
 })
 export class PredictionWidgetSection {
-  // Signal reference from parent
   @Input({ required: true }) predictionSignal!: Signal<PredictionData>;
   @Input({ required: true }) popupOpened!: WritableSignal<boolean>;
 
-  // Output event for vote action
   voteSelected = output<VoteOption>();
 
   onOpenPopup(): void {
     this.popupOpened.set(true);
-}
+  }
 
   formatVotes(votes: number): string {
     if (votes >= 1000) {

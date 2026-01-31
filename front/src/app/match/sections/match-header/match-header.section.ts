@@ -23,38 +23,8 @@ export interface MatchHeader {
     MatchTimerComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <div class="relative px-4 pt-6 pb-2">
-      <div class="flex flex-col items-center">
-        <!-- Status Badge -->
-        <div class="mb-4">
-          <app-status-badge [statusSignal]="statusSignal" />
-        </div>
-
-        <!-- Match Timer -->
-        <div class="mb-3">
-          <app-match-timer [statusSignal]="timerStatusSignal()" />
-        </div>
-
-        <!-- Teams and Score -->
-        <div class="flex items-center justify-between w-full max-w-sm px-4">
-          <!-- Home Team -->
-          <app-team-display [teamSignal]="homeTeamSignal" />
-
-          <!-- Score -->
-          <app-score-display [scoreSignal]="scoreSignal" />
-
-          <!-- Away Team -->
-          <app-team-display [teamSignal]="awayTeamSignal" />
-        </div>
-      </div>
-    </div>
-  `,
-  styles: [`
-    :host {
-      display: block;
-    }
-  `]
+  templateUrl: './match-header.section.html',
+  styleUrl: './match-header.section.css'
 })
 export class MatchHeaderSection {
   // Signal reference from parent (page)
