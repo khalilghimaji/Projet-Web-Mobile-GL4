@@ -103,16 +103,6 @@ impl MockPoller {
                     start_time: Utc::now().format("%Y-%m-%d %H:%M").to_string(),
                     timestamp: Utc::now(),
                 });
-
-                events.push(MatchEvent::ScoreUpdate {
-                    match_id: match_id.to_string(),
-                    home_team: home_team.to_string(),
-                    away_team: away_team.to_string(),
-                    score: format!("{}-{}", state.home_score, state.away_score),
-                    status: "1st Half".to_string(),
-                    league_id: league_id.to_string(),
-                    timestamp: Utc::now(),
-                });
             }
 
             // First Half Events
@@ -132,7 +122,6 @@ impl MockPoller {
             }
 
             (MatchPhase::FirstHalf, 12) => {
-                // Goal for home team
                 state.home_score += 1;
 
                 events.push(MatchEvent::GoalScored {
@@ -143,16 +132,6 @@ impl MockPoller {
                     score: format!("{}-{}", state.home_score, state.away_score),
                     home_team: home_team.to_string(),
                     away_team: away_team.to_string(),
-                    league_id: league_id.to_string(),
-                    timestamp: Utc::now(),
-                });
-
-                events.push(MatchEvent::ScoreUpdate {
-                    match_id: match_id.to_string(),
-                    home_team: home_team.to_string(),
-                    away_team: away_team.to_string(),
-                    score: format!("{}-{}", state.home_score, state.away_score),
-                    status: "1st Half".to_string(),
                     league_id: league_id.to_string(),
                     timestamp: Utc::now(),
                 });
@@ -174,7 +153,6 @@ impl MockPoller {
             }
 
             (MatchPhase::FirstHalf, 28) => {
-                // Goal for away team
                 state.away_score += 1;
 
                 events.push(MatchEvent::GoalScored {
@@ -185,16 +163,6 @@ impl MockPoller {
                     score: format!("{}-{}", state.home_score, state.away_score),
                     home_team: home_team.to_string(),
                     away_team: away_team.to_string(),
-                    league_id: league_id.to_string(),
-                    timestamp: Utc::now(),
-                });
-
-                events.push(MatchEvent::ScoreUpdate {
-                    match_id: match_id.to_string(),
-                    home_team: home_team.to_string(),
-                    away_team: away_team.to_string(),
-                    score: format!("{}-{}", state.home_score, state.away_score),
-                    status: "1st Half".to_string(),
                     league_id: league_id.to_string(),
                     timestamp: Utc::now(),
                 });
@@ -216,7 +184,6 @@ impl MockPoller {
             }
 
             (MatchPhase::FirstHalf, 42) => {
-                // Goal for home team
                 state.home_score += 1;
 
                 events.push(MatchEvent::GoalScored {
@@ -227,16 +194,6 @@ impl MockPoller {
                     score: format!("{}-{}", state.home_score, state.away_score),
                     home_team: home_team.to_string(),
                     away_team: away_team.to_string(),
-                    league_id: league_id.to_string(),
-                    timestamp: Utc::now(),
-                });
-
-                events.push(MatchEvent::ScoreUpdate {
-                    match_id: match_id.to_string(),
-                    home_team: home_team.to_string(),
-                    away_team: away_team.to_string(),
-                    score: format!("{}-{}", state.home_score, state.away_score),
-                    status: "1st Half".to_string(),
                     league_id: league_id.to_string(),
                     timestamp: Utc::now(),
                 });
@@ -265,16 +222,6 @@ impl MockPoller {
                     match_id: match_id.to_string(),
                     home_team: home_team.to_string(),
                     away_team: away_team.to_string(),
-                    league_id: league_id.to_string(),
-                    timestamp: Utc::now(),
-                });
-
-                events.push(MatchEvent::ScoreUpdate {
-                    match_id: match_id.to_string(),
-                    home_team: home_team.to_string(),
-                    away_team: away_team.to_string(),
-                    score: format!("{}-{}", state.home_score, state.away_score),
-                    status: "2nd Half".to_string(),
                     league_id: league_id.to_string(),
                     timestamp: Utc::now(),
                 });
@@ -312,7 +259,6 @@ impl MockPoller {
             }
 
             (MatchPhase::SecondHalf, 65) => {
-                // Goal for away team
                 state.away_score += 1;
 
                 events.push(MatchEvent::GoalScored {
@@ -323,16 +269,6 @@ impl MockPoller {
                     score: format!("{}-{}", state.home_score, state.away_score),
                     home_team: home_team.to_string(),
                     away_team: away_team.to_string(),
-                    league_id: league_id.to_string(),
-                    timestamp: Utc::now(),
-                });
-
-                events.push(MatchEvent::ScoreUpdate {
-                    match_id: match_id.to_string(),
-                    home_team: home_team.to_string(),
-                    away_team: away_team.to_string(),
-                    score: format!("{}-{}", state.home_score, state.away_score),
-                    status: "2nd Half".to_string(),
                     league_id: league_id.to_string(),
                     timestamp: Utc::now(),
                 });
@@ -354,7 +290,6 @@ impl MockPoller {
             }
 
             (MatchPhase::SecondHalf, 81) => {
-                // Goal for away team (winner!)
                 state.away_score += 1;
 
                 events.push(MatchEvent::GoalScored {
@@ -365,16 +300,6 @@ impl MockPoller {
                     score: format!("{}-{}", state.home_score, state.away_score),
                     home_team: home_team.to_string(),
                     away_team: away_team.to_string(),
-                    league_id: league_id.to_string(),
-                    timestamp: Utc::now(),
-                });
-
-                events.push(MatchEvent::ScoreUpdate {
-                    match_id: match_id.to_string(),
-                    home_team: home_team.to_string(),
-                    away_team: away_team.to_string(),
-                    score: format!("{}-{}", state.home_score, state.away_score),
-                    status: "2nd Half".to_string(),
                     league_id: league_id.to_string(),
                     timestamp: Utc::now(),
                 });
@@ -424,29 +349,6 @@ impl MockPoller {
             }
 
             _ => {
-                // Regular minute updates (no special events)
-                // Send periodic score updates to show timer progression
-                if state.phase == MatchPhase::FirstHalf && state.minute % 5 == 0 {
-                    events.push(MatchEvent::ScoreUpdate {
-                        match_id: match_id.to_string(),
-                        home_team: home_team.to_string(),
-                        away_team: away_team.to_string(),
-                        score: format!("{}-{}", state.home_score, state.away_score),
-                        status: "1st Half".to_string(),
-                        league_id: league_id.to_string(),
-                        timestamp: Utc::now(),
-                    });
-                } else if state.phase == MatchPhase::SecondHalf && state.minute % 5 == 0 {
-                    events.push(MatchEvent::ScoreUpdate {
-                        match_id: match_id.to_string(),
-                        home_team: home_team.to_string(),
-                        away_team: away_team.to_string(),
-                        score: format!("{}-{}", state.home_score, state.away_score),
-                        status: "2nd Half".to_string(),
-                        league_id: league_id.to_string(),
-                        timestamp: Utc::now(),
-                    });
-                }
             }
         }
 
