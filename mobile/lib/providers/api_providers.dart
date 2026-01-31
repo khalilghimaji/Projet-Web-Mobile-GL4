@@ -240,10 +240,18 @@ final dioProvider = Provider<Dio>((ref) {
   dio.interceptors.add(
     InterceptorsWrapper(
       onRequest: (options, handler) {
-        // Add Authorization header if access token is available
+        // Add Cookie header if tokens are available
         final accessToken = ref.read(accessTokenProvider);
+        final refreshToken = ref.read(refreshTokenProvider);
+        String cookie = '';
         if (accessToken != null) {
-          options.headers['Authorization'] = 'Bearer $accessToken';
+          cookie += 'access_token=$accessToken; ';
+        }
+        if (refreshToken != null) {
+          cookie += 'refresh_token=$refreshToken; ';
+        }
+        if (cookie.isNotEmpty) {
+          options.headers['Cookie'] = cookie.trim();
         }
         return handler.next(options);
       },

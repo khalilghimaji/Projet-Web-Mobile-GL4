@@ -120,20 +120,42 @@ Future<void> _initializeProfile(ProviderContainer container) async {
   try {
     print('[APP] Attempting to load user profile on app start...');
 
-    // Try to load user profile
-    final authApi = container.read(authenticationApiProvider);
-    final response = await authApi.authControllerGetProfile();
+    // Load tokens from storage and set them in providers
+    final storage = container.read(secureStorageProvider);
+    final accessToken = await storage.read(key: 'access_token');
+    final refreshToken = await storage.read(key: 'refresh_token');
 
-    if (response.statusCode == 200 && response.data != null) {
-      // Set user data
-      await container.read(userDataProvider.notifier).setUser(response.data!);
-      print('[APP] Profile loaded successfully, user authenticated');
+    if (accessToken != null) {
+      await container.read(accessTokenProvider.notifier).setToken(accessToken);
+      print('[APP] Access token loaded from storage');
+    }
+    if (refreshToken != null) {
+      await container
+          .read(refreshTokenProvider.notifier)
+          .setToken(refreshToken);
+      print('[APP] Refresh token loaded from storage');
+    }
+
+    // Now try to load user profile if we have tokens
+    if (accessToken != null) {
+      final authApi = container.read(authenticationApiProvider);
+      final response = await authApi.authControllerGetProfile();
+      print(
+        '[APP] Profile load response status: ${response.statusCode} with data: ${response.data.toString()}',
+      );
+      if (response.statusCode == 200 && response.data != null) {
+        // Set user data
+        await container.read(userDataProvider.notifier).setUser(response.data!);
+        print('[APP] Profile loaded successfully, user authenticated');
+      } else {
+        print('[APP] Profile load failed with status: ${response.statusCode}');
+        // Clear any invalid tokens
+        await container.read(accessTokenProvider.notifier).clearToken();
+        await container.read(refreshTokenProvider.notifier).clearToken();
+        await container.read(userDataProvider.notifier).clearUser();
+      }
     } else {
-      print('[APP] Profile load failed with status: ${response.statusCode}');
-      // Clear any invalid tokens
-      await container.read(accessTokenProvider.notifier).clearToken();
-      await container.read(refreshTokenProvider.notifier).clearToken();
-      await container.read(userDataProvider.notifier).clearUser();
+      print('[APP] No access token found, skipping profile load');
     }
   } catch (error) {
     print('[APP] Profile load error: $error');

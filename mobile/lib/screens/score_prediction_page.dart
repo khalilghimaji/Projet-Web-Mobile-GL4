@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:openapi/openapi.dart';
 import 'package:mobile/providers/api_providers.dart';
 
 class ScorePredictionDialog extends ConsumerStatefulWidget {
@@ -131,7 +130,6 @@ class _ScorePredictionDialogState extends ConsumerState<ScorePredictionDialog> {
     setState(() => _isLoading = true);
 
     try {
-      final matchesApi = ref.read(matchesApiProvider);
       final team1Score = int.parse(_team1ScoreController.text);
       final team2Score = int.parse(_team2ScoreController.text);
       final diamonds = int.parse(_diamondsController.text);
