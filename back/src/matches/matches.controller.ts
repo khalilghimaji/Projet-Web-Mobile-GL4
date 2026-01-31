@@ -17,6 +17,7 @@ import { MatchStat } from './dto/get-match-stats-info.dto';
 import { TerminateMatchDto } from './dto/terminate-match.dto';
 import { RedisCacheService } from 'src/Common/cache/redis-cache.service';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { AuthService } from 'src/auth/auth.service';
 
 @Controller('matches')
 @UseGuards(JwtAuthGuard)
@@ -24,6 +25,7 @@ export class MatchesController {
   constructor(
     private readonly matchesService: MatchesService,
     private readonly cacheService: RedisCacheService,
+    private readonly authService: AuthService,
   ) {}
 
   @Post('can-predict/:id')
@@ -33,9 +35,6 @@ export class MatchesController {
     @Body()
     boy: CanPredictMatchDto,
   ): Promise<boolean> {
-    console.log(
-      '//////////////////' + userId + ' ' + matchId + ' ' + JSON.stringify(boy),
-    );
     return this.matchesService.canPredict(
       userId,
       matchId,
@@ -122,6 +121,10 @@ export class MatchesController {
 
   @Get('user/gains')
   async getUserGains(@User('id') userId: string): Promise<number> {
-    return (await this.cacheService.getUserGains(userId)) ?? 0;
+    return (
+      (await this.cacheService.getUserGains(userId)) ??
+      (await this.authService.getGainsFromDb(userId)) ??
+      0
+    );
   }
 }

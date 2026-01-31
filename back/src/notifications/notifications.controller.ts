@@ -15,7 +15,6 @@ import { NotificationsService } from './notifications.service';
 import { User } from 'src/Decorator/user.decorator';
 import { Request } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { FirebaseAuthGuard } from 'src/auth/guards/firebase-auth.guard';
 
 @Controller('notifications')
 @UseGuards(JwtAuthGuard)

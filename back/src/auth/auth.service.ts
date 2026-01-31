@@ -1071,4 +1071,12 @@ export class AuthService extends GenericService<User> {
     res.clearCookie('access_token', { path: '/' });
     res.clearCookie('refresh_token', { path: '/auth' });
   }
+
+  public async getGainsFromDb(userId: string): Promise<number> {
+    const res = await this.userRepository.findOneBy({
+      id: userId,
+    });
+    const { score, diamonds } = res!;
+    return score - diamonds || 0;
+  }
 }
