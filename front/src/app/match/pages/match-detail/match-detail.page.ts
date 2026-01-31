@@ -175,7 +175,7 @@ export class MatchDetailPage {
   }
 
   onBack(): void {
-    this.router.navigate(['/matches']);
+    this.router.navigate(['/fixtures']);
   }
 
   onPredict($event: TeamPrediction) {

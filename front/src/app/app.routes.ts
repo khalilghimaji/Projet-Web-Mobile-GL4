@@ -4,6 +4,11 @@ import { betRoutes } from './shared/routes/bet.routes';
 import { STANDINGS_ROUTE } from './shared/routes/standings.routes';
 
 export const routes: Routes = [
+  {
+    path: '',
+    redirectTo: 'fixtures',
+    pathMatch: 'full'
+  },
   ...authRoutes,
   ...betRoutes,
   { path: 'standings', children: STANDINGS_ROUTE },
