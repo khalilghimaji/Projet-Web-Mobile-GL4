@@ -114,14 +114,28 @@
             </a>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            @for (fixture of group.fixtures; track fixture.event_key) {
-              <app-fixture-card
-                [fixture]="fixture"
-                (cardClicked)="onFixtureClicked($event)"
-              />
-            }
-          </div>
+          @defer (on viewport; prefetch on idle) {
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              @for (fixture of group.fixtures; track fixture.event_key) {
+                <app-fixture-card
+                  [fixture]="fixture"
+                  (cardClicked)="onFixtureClicked($event)"
+                />
+              }
+            </div>
+          } @placeholder {
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              @for (i of [1, 2, 3]; track i) {
+                <div class="h-40 bg-surface-highlight/10 rounded-2xl animate-pulse border border-surface-highlight/20"></div>
+              }
+            </div>
+          } @loading (minimum 50ms) {
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              @for (i of [1, 2, 3]; track i) {
+                <div class="h-40 bg-surface-highlight/10 rounded-2xl animate-pulse border border-surface-highlight/20"></div>
+              }
+            </div>
+          }
         </div>
 
         @if (!$last) {
