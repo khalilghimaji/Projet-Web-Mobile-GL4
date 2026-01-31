@@ -162,7 +162,7 @@ function hydrateFromSnapshot(
   s.matchHeaderSignal.set({
     status:{
       isLive: dto.event_live != '0',
-      minute: Number.parseInt(dto.event_status),
+      minute: inferMinuteFromEvents(dto),
       status: getEventStatus(dto.event_live, dto.event_status),
       competition: dto.league_name,
     },
@@ -281,6 +281,7 @@ function applyEvent(
 ) {
   switch (event.type) {
     case 'GOAL_SCORED':
+      const goalMinute = parseMinuteString(event.minute);
       s.matchHeaderSignal.update(header => ({
         ...(header!),
         score: {
@@ -291,7 +292,7 @@ function applyEvent(
       }))
       s.timelineSignal.update(t => [...t,{
         id: `event-goal-${event.minute}-${event.scorer}`,
-        minute: event.minute,
+        minute: goalMinute,
         type: 'GOAL',
         team: event.team,
         player: event.scorer,
@@ -299,9 +300,10 @@ function applyEvent(
       break;
 
     case 'CARD_ISSUED':
+      const cardMinute = parseMinuteString(event.minute);
       s.timelineSignal.update(t => [...t,{
         id: `event-card-${event.minute}-${event.player}`,
-        minute: event.minute,
+        minute: cardMinute,
         type: event.card_type === 'yellow card' ? 'YELLOW_CARD' : 'RED_CARD',
         team: event.team,
         player: event.player,
@@ -309,9 +311,10 @@ function applyEvent(
       break;
 
     case 'SUBSTITUTION':
+      const subMinute = parseMinuteString(event.minute);
       s.timelineSignal.update(t => [...t,{
         id: `event-substitution-${event.minute}-${event.player_in}`,
-        minute: event.minute,
+        minute: subMinute,
         type: 'SUBSTITUTION',
         team: event.team,
         player: event.player_in,
@@ -333,6 +336,7 @@ function applyEvent(
         ...(header!),
         status: {
           ...header!.status,
+          minute: 45,
           isLive: true,
           status: 'HT'
         }
@@ -345,7 +349,7 @@ function applyEvent(
           ...header!.status,
           isLive: true,
           status: 'LIVE',
-          minute: 45, // Redémarrer le timer à 45
+          minute: 46,
         }
       }))
       break;
@@ -486,6 +490,42 @@ function hydrateFromLocalStorage(cached: StoredMatch, s: MatchSignals): void {
       player: e.player,
     })));
   }
+}
+/**
+ * Parse "28" ou "45+2" → 47
+ */
+function parseMinuteString(timeStr: string): number {
+  if (!timeStr) return 0;
+  if (timeStr.includes('+')) {
+    const [base, added] = timeStr.split('+');
+    return (parseInt(base) || 0) + (parseInt(added) || 0);
+  }
+  return parseInt(timeStr) || 0;
+}
+
+/**
+ * Infère la minute depuis les événements du match
+ */
+function inferMinuteFromEvents(dto: any): number {
+  const allEvents = [
+    ...(dto.goalscorers || []),
+    ...(dto.cards || []),
+    ...(dto.substitutes || []),
+  ];
+
+  if (allEvents.length === 0) {
+    if (dto.event_live === '1' && dto.event_status === '') {
+      return 1; // Match live sans événement
+    }
+    return 0;
+  }
+
+  let maxMinute = 0;
+  for (const event of allEvents) {
+    const minute = parseMinuteString(event.time);
+    if (minute > maxMinute) maxMinute = minute;
+  }
+  return maxMinute;
 }
 
 function mapEventType(type: string): 'GOAL' | 'YELLOW_CARD' | 'RED_CARD' | 'SUBSTITUTION' {

@@ -181,8 +181,13 @@ export class FixturesPage {
     let awayScore: number | undefined;
 
     if (fixture.event_live === '1') {
-      parsedStatus = 'LIVE';
-      minute = parseInt(fixture.event_status);
+      if (fixture.event_status === 'Half Time') {
+        parsedStatus = 'HALFTIME';
+        minute = 45;
+      } else {
+        parsedStatus = 'LIVE';
+        minute = this.inferMinuteFromFixture(fixture);
+      }
     } else if (fixture.event_status === 'Finished') {
       parsedStatus = 'FINISHED';
     }
@@ -211,5 +216,38 @@ export class FixturesPage {
     ];
     const date = this.selectedDate();
     return `${months[date.getMonth()]} ${date.getFullYear()}`;
+  }
+
+  private inferMinuteFromFixture(fixture: any): number {
+    const allEvents = [
+      ...(fixture.goalscorers || []),
+      ...(fixture.cards || []),
+      ...(fixture.substitutes || []),
+    ];
+
+    if (allEvents.length === 0) {
+      const statusMinute = parseInt(fixture.event_status);
+      return isNaN(statusMinute) ? 1 : statusMinute;
+    }
+
+    let maxMinute = 0;
+    for (const event of allEvents) {
+      const timeStr = event.time || '';
+      const minute = this.parseMinuteString(timeStr);
+      if (minute > maxMinute) {
+        maxMinute = minute;
+      }
+    }
+    return maxMinute;
+  }
+
+  private parseMinuteString(timeStr: string): number {
+    if (!timeStr) return 0;
+
+    if (timeStr.includes('+')) {
+      const [base, added] = timeStr.split('+');
+      return (parseInt(base) || 0) + (parseInt(added) || 0);
+    }
+    return parseInt(timeStr) || 0;
   }
 }

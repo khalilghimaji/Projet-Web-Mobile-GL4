@@ -1,5 +1,5 @@
 import {Component, ChangeDetectionStrategy, input, computed, effect, signal, inject, DestroyRef} from '@angular/core';
-import {interval} from 'rxjs';
+import {interval, Subscription} from 'rxjs';
 import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 
 @Component({
@@ -16,14 +16,18 @@ export class MatchTimerComponent {
     isLive: boolean;
   }>();
 
+  showSeconds = input<boolean>(false);
+
   private currentMinute = signal(0);
   private currentSeconds = signal(0);
   private destroyRef = inject(DestroyRef);
+  private timerSubscription: Subscription | null = null;
 
   displayTime = computed(() => {
     const status = this.statusSignal();
     const minute = this.currentMinute();
     const seconds = this.currentSeconds();
+    const shouldShowSeconds = this.showSeconds();
     const formattedSeconds = seconds.toString().padStart(2, '0');
 
     if (!status.isLive && status.status === 'SCHEDULED') {
@@ -39,33 +43,30 @@ export class MatchTimerComponent {
     }
 
     if (status.isLive && status.status === 'LIVE') {
-      // 1ère mi-temps (0-44)
+      const secondsPart = shouldShowSeconds ? `:${formattedSeconds}` : '';
+
       if (minute < 45) {
-        return `${minute}:${formattedSeconds}`;
+        return `${minute}${secondsPart}`;
       }
-      // Exactement 45 minutes (pas encore de temps additionnel affiché)
       if (minute === 45) {
-        return `45:${formattedSeconds}`;
+        return `45${secondsPart}`;
       }
-      // Temps additionnel 1ère MT (46-49)
       if (minute >= 46 && minute < 50) {
-        return `45+${minute - 45}:${formattedSeconds}`;
+        return `45+${minute - 45}${secondsPart}`;
       }
-      // 2ème mi-temps (50-89 en cas de problème, normalement 46-89)
       if (minute >= 50 && minute < 90) {
-        return `${minute}:${formattedSeconds}`;
+        return `${minute}${secondsPart}`;
       }
-      // Exactement 90 minutes
       if (minute === 90) {
-        return `90:${formattedSeconds}`;
+        return `90${secondsPart}`;
       }
-      // Temps additionnel 2ème MT (91+)
       if (minute >= 91) {
-        return `90+${minute - 90}:${formattedSeconds}`;
+        return `90+${minute - 90}${secondsPart}`;
       }
 
-      return `${minute}:${formattedSeconds}`;
+      return `${minute}${secondsPart}`;
     }
+
 
     return '--:--';
   });
@@ -74,19 +75,41 @@ export class MatchTimerComponent {
   isHalftime = computed(() => this.statusSignal().status === 'HT');
 
   constructor() {
+    let previousStatus: 'SCHEDULED' | 'LIVE' | 'HT' | 'FT' = 'SCHEDULED';
+
     effect(() => {
       const status = this.statusSignal();
-      this.currentMinute.set(status.minute);
-      this.currentSeconds.set(0);
+      const newMinute = status.minute;
+      const currentMinuteValue = this.currentMinute();
+      const isCurrentlyLive = status.isLive && status.status === 'LIVE';
+      const wasTimerRunning = this.timerSubscription !== null;
+      const isHalftimeToLive = previousStatus === 'HT' && status.status === 'LIVE';
+      const minuteDifference = Math.abs(newMinute - currentMinuteValue);
+      const shouldResetTimer = minuteDifference > 1 || isHalftimeToLive || currentMinuteValue === 0;
 
-      if (status.isLive && status.status === 'LIVE') {
-        this.startTimer();
+      if (shouldResetTimer) {
+        this.timerSubscription?.unsubscribe();
+        this.timerSubscription = null;
+
+        this.currentMinute.set(newMinute);
+        this.currentSeconds.set(0);
+
+        if (isCurrentlyLive) {
+          this.timerSubscription = this.startTimer();
+        }
+      } else if (isCurrentlyLive && !wasTimerRunning) {
+        this.timerSubscription = this.startTimer();
+      } else if (!isCurrentlyLive && wasTimerRunning) {
+        this.timerSubscription?.unsubscribe();
+        this.timerSubscription = null;
       }
+
+      previousStatus = status.status;
     });
   }
 
-  private startTimer(): void {
-    interval(1000)
+  private startTimer(): Subscription {
+    return interval(1000)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         this.currentSeconds.update(s => {

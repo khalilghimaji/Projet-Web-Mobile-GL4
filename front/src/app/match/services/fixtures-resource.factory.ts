@@ -179,9 +179,6 @@ function applyLiveUpdate(event: any, s: FixturesSignals) {
           fixture.event_final_result = event.score;
         }
         fixture.event_live = '1';
-        if (event.minute) {
-          fixture.event_status = event.minute.toString();
-        }
         break;
 
       case 'MATCH_STARTED':
@@ -198,7 +195,7 @@ function applyLiveUpdate(event: any, s: FixturesSignals) {
         break;
       case 'SECOND_HALF_STARTED':
         fixture.event_live = '1';
-        fixture.event_status = '45'; // Reprise à 45 minutes
+        fixture.event_status = '46';
         break;
 
 

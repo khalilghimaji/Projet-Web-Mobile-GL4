@@ -38,7 +38,7 @@ export interface DateTab {
   isToday: boolean;
 }
 
-export type FixtureStatus = 'LIVE' | 'SCHEDULED' | 'FINISHED';
+export type FixtureStatus = 'LIVE' | 'SCHEDULED' | 'FINISHED' | 'HALFTIME';
 
 export interface ParsedFixture extends Fixture {
   parsedStatus: FixtureStatus;
