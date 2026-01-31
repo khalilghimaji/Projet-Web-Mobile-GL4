@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:openapi/openapi.dart' as api;
 import 'package:mobile/providers/notifications_provider.dart';
 import 'package:mobile/widgets/app_drawer.dart';
@@ -342,7 +343,7 @@ class NotificationCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               _formatDate(notification.createdAt),
-              style: const TextStyle(color: Colors.grey, fontSize: 12),
+              style: const TextStyle(color: Colors.grey, fontSize: 14),
             ),
             const SizedBox(height: 8),
             Row(
@@ -352,7 +353,7 @@ class NotificationCard extends StatelessWidget {
                 const SizedBox(width: 4),
                 Text(
                   'Swipe left to delete • Swipe right to mark as read',
-                  style: TextStyle(color: Colors.grey.shade400, fontSize: 10),
+                  style: TextStyle(color: Colors.grey.shade900, fontSize: 14),
                 ),
                 const SizedBox(width: 4),
                 Icon(Icons.swipe_right, size: 16, color: Colors.grey.shade400),
@@ -378,17 +379,6 @@ class NotificationCard extends StatelessWidget {
   }
 
   String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final difference = now.difference(date);
-
-    if (difference.inDays > 0) {
-      return '${difference.inDays} days ago';
-    } else if (difference.inHours > 0) {
-      return '${difference.inHours} hours ago';
-    } else if (difference.inMinutes > 0) {
-      return '${difference.inMinutes} minutes ago';
-    } else {
-      return 'Just now';
-    }
+    return DateFormat('yyyy-MM-dd HH:mm').format(date);
   }
 }

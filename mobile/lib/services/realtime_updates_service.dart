@@ -327,12 +327,15 @@ class RealtimeUpdatesService {
 
     // Handle different notification types
     switch (notification.type) {
-      case api.NotificationTypeEnum.DIAMOND_UPDATE:
-        _handleDiamondUpdate(notification);
-      case api.NotificationTypeEnum.CHANGE_OF_POSSESSED_GEMS:
-        _handleChangeOfPossessedGems(notification);
       case api.NotificationTypeEnum.RANKING_UPDATE:
         _handleRankingUpdate(notification);
+        break;
+      case api.NotificationTypeEnum.DIAMOND_UPDATE:
+        _handleDiamondUpdate(notification);
+        break;
+      case api.NotificationTypeEnum.CHANGE_OF_POSSESSED_GEMS:
+        _handleChangeOfPossessedGems(notification);
+        break;
       default:
         // For other types, just add as notification
         _notificationsNotifier.addRealtimeNotification(notification);
@@ -358,13 +361,10 @@ class RealtimeUpdatesService {
       _rankingsNotifier.updateRankings(customData.rankings!);
 
       // Show system notification
-      _notificationService.showRankingUpdateNotification();
+      //_notificationService.showRankingUpdateNotification();
     } else {
       print('[SSE] No rankings data available in custom data');
     }
-
-    // Also add the notification to the list
-    _notificationsNotifier.addRealtimeNotification(notification);
   }
 
   void _handleDiamondUpdate(api.Notification notification) {

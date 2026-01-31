@@ -207,40 +207,6 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                   : const Text('Change Password'),
             ),
           ),
-
-          const SizedBox(height: 32),
-
-          // Password Requirements
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.blue.shade50,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.blue.shade200),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Password Requirements:',
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blue.shade800,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '• At least 8 characters long\n'
-                  '• At least one uppercase letter\n'
-                  '• At least one lowercase letter\n'
-                  '• At least one number',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodySmall?.copyWith(color: Colors.blue.shade700),
-                ),
-              ],
-            ),
-          ),
         ],
       ),
     );
