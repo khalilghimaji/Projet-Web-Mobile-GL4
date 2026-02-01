@@ -1,94 +1,75 @@
 <div class="standings-container">
-  <div class="standings-header">
-    <div class="header-left">
-      <button class="back-button" (click)="backToLeagues()">
-        <i class="pi pi-arrow-left"></i> Back to Leagues
-      </button>
-      <h2>League Standings</h2>
-    </div>
-
-    <div class="view-toggle">
-      <button
-        [class.active]="selectedView() === 'total'"
-        (click)="setView('total')"
-      >
-        Overall
-      </button>
-      <button
-        [class.active]="selectedView() === 'home'"
-        (click)="setView('home')"
-      >
-        Home
-      </button>
-      <button
-        [class.active]="selectedView() === 'away'"
-        (click)="setView('away')"
-      >
-        Away
-      </button>
-    </div>
-  </div>
-
-  @if (standingsRes.isLoading()) {
-    <div class="loading-state">
-      <app-loading />
-    </div>
-  } @else if (standingsRes.error()) {
-    <div class="error-state">
-      <p>Failed to load standings. Please try again later.</p>
-    </div>
-  } @else if (standingsRes.value()) {
-    <div class="standings-table">
-      <table>
-        <thead>
-          <tr>
-            <th class="position">#</th>
-            <th class="team">Team</th>
-            <th>P</th>
-            <th>W</th>
-            <th>D</th>
-            <th>L</th>
-            <th>GF</th>
-            <th>GA</th>
-            <th>GD</th>
-            <th class="points">Pts</th>
-          </tr>
-        </thead>
-        <tbody #standingsTable>
-                @for (standing of currentStandings(); track standing.standing_team) {
-                <tr [class]="" [attr.data-team-id]="standing.team_key">
-              <td class="position">{{ standing.standing_place }}</td>
-              <td class="team">
-                <span class="team-name">{{ standing.standing_team }}</span>
-                @if (standing.standing_place_type) {
-                  <span class="place-type-badge">{{
-                    standing.standing_place_type
-                  }}</span>
-                }
-              </td>
-              <td>{{ standing.standing_P }}</td>
-              <td>{{ standing.standing_W }}</td>
-              <td>{{ standing.standing_D }}</td>
-              <td>{{ standing.standing_L }}</td>
-              <td>{{ standing.standing_F }}</td>
-              <td>{{ standing.standing_A }}</td>
-              <td
-                [class.positive]="isPositive(standing.standing_GD)"
-                [class.negative]="isNegative(standing.standing_GD)"
-              >
-                {{ standing.standing_GD }}
-              </td>
-              <td class="points">{{ standing.standing_PTS }}</td>
-            </tr>
-          }
-        </tbody>
-      </table>
-
-      @if (currentStandings()[0]?.standing_updated; as updated) {
-        <div class="last-updated">
-          Last updated: {{ updated | date: "short" }}
+    <div class="standings-header">
+        <div class="header-left">
+            <button class="back-button" (click)="backToLeagues()">
+                <i class="pi pi-arrow-left"></i> Back to Leagues
+            </button>
+            <h2>League Standings</h2>
         </div>
-      }
+
+        <div class="view-toggle">
+            <button [class.active]="selectedView() === 'total'" (click)="setView('total')">Overall</button>
+            <button [class.active]="selectedView() === 'home'" (click)="setView('home')">Home</button>
+            <button [class.active]="selectedView() === 'away'" (click)="setView('away')">Away</button>
+        </div>
     </div>
-  }
+
+    @if (standingsRes.isLoading()) {
+    <div class="loading-state">
+        <app-loading />
+    </div>
+    } @else if (standingsRes.error()) {
+    <div class="error-state">
+        <p>Failed to load standings. Please try again later.</p>
+    </div>
+    } @else if (standingsRes.value()) {
+    <div class="standings-table">
+        <table>
+            <thead>
+                <tr>
+                    <th class="position">#</th>
+                    <th class="team">Team</th>
+                    <th>P</th>
+                    <th>W</th>
+                    <th>D</th>
+                    <th>L</th>
+                    <th>GF</th>
+                    <th>GA</th>
+                    <th>GD</th>
+                    <th class="points">Pts</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (standing of currentStandings(); track standing.standing_team) {
+                <tr [class]="" (click)="goToTeam(standing.team_key)">
+                    <td class="position">{{ standing.standing_place }}</td>
+                    <td class="team">
+                        <span class="team-name">{{ standing.standing_team }}</span>
+                        @if (standing.standing_place_type) {
+                        <span class="place-type-badge">{{ standing.standing_place_type }}</span>
+                        }
+                    </td>
+                    <td>{{ standing.standing_P }}</td>
+                    <td>{{ standing.standing_W }}</td>
+                    <td>{{ standing.standing_D }}</td>
+                    <td>{{ standing.standing_L }}</td>
+                    <td>{{ standing.standing_F }}</td>
+                    <td>{{ standing.standing_A }}</td>
+                    <td [class.positive]="isPositive(standing.standing_GD)"
+                        [class.negative]="isNegative(standing.standing_GD)">
+                        {{ standing.standing_GD }}
+                    </td>
+                    <td class="points">{{ standing.standing_PTS }}</td>
+                </tr>
+                }
+            </tbody>
+        </table>
+
+        @if (currentStandings()[0]?.standing_updated; as updated) {
+        <div class="last-updated">
+            Last updated: {{ updated | date:'short' }}
+        </div>
+        }
+    </div>
+    }
 </div>

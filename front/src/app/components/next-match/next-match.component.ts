@@ -1,6 +1,6 @@
 import { Component, ChangeDetectionStrategy, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Fixture } from '../../../models/models';
+import { Fixture } from '../../models/models';
 import { LucideAngularModule, CalendarClock } from 'lucide-angular';
 
 
