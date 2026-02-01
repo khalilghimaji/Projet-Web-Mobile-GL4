@@ -4,7 +4,7 @@
     Recent Matches
   </h2>
   <div class="matches-grid">
-    @for (match of matches(); track match.event_key) {
+    @for (match of matches().slice(0, 10); track match.event_key) {
     <div
       class="match-card"
       [class.win]="isWin(match, teamKey())"

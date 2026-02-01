@@ -1,6 +1,6 @@
 import { Component, ChangeDetectionStrategy, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Player } from '../../../models/models';
+import { Player } from '../../models/models';
 import { PlayerCardComponent } from '../player-card/player-card.component';
 import { LucideAngularModule, Users } from 'lucide-angular';
 
