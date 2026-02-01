@@ -32,7 +32,7 @@ This platform allows users to:
 - **View Detailed Statistics** including team standings, player info, and historical data
 - **Earn Rankings and Rewards** through a gamified prediction system with diamond currency
 
-The application integrates with **AllSportsAPI** for comprehensive football data and uses WebSocket technology for millisecond-latency live updates.
+The application integrates with **AllSportsAPI** for comprehensive football data and uses WebSocket and SSE technologies for millisecond-latency live updates.
 
 ## 🏗️ Project Architecture
 
