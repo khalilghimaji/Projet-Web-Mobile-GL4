@@ -5,7 +5,7 @@ import {
   input,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { NotificationsStateService } from '../../../services/notifications-state.service';
+import { NotificationsStateService } from '../../../notifications/services/notifications-state.service';
 
 @Component({
   selector: 'app-user-stats',

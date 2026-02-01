@@ -22,7 +22,7 @@ export const routes: Routes = [
   {
     path: 'team/:id',
     loadComponent: () =>
-      import('./components/team-detail-page/team-detail-page.component').then(
+      import('./teams/components/team-detail-page/team-detail-page.component').then(
         (c) => c.TeamDetailPageComponent
       ),
   },
