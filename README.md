@@ -1,4 +1,4 @@
-# Football Prediction & Streaming Platform 🏆⚽
+# KickStream : Football Prediction & Streaming Platform 🏆⚽
 
 A full-stack real-time football (soccer) prediction and streaming application built with modern web technologies. This project combines Angular 20 frontend, NestJS backend API, and a high-performance Rust WebSocket service for real-time match updates.
 
