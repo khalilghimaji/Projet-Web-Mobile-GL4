@@ -144,11 +144,12 @@ type MatchSignals = ReturnType<typeof createMatchSignals>;
 
 function getEventStatus(event_live:string, event_status:string){
   if(event_live == '1'){
+    if (event_status == 'Half Time') {
+      return 'HT';
+    }
     return 'LIVE';
   } else if (event_status == 'Finished') {
     return 'FT';
-  } else if (event_status == 'Half Time') {
-    return 'HT';
   } else {
     return 'SCHEDULED'
   }
@@ -162,7 +163,7 @@ function hydrateFromSnapshot(
   s.matchHeaderSignal.set({
     status:{
       isLive: dto.event_live != '0',
-      minute: inferMinuteFromEvents(dto),
+      minute: dto.event_status,
       status: getEventStatus(dto.event_live, dto.event_status),
       competition: dto.league_name,
     },
