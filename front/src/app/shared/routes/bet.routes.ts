@@ -7,7 +7,7 @@ export const betRoutes: Routes = [
     canActivate: [tokenValidationGuard],
     data: { preload: true },
     loadComponent: () =>
-      import('../../pages/NotificationPage/notifications-page.component').then(
+      import('../../notifications/pages/NotificationPage/notifications-page.component').then(
         (c) => c.NotificationsPageComponent
       ),
   },
@@ -15,7 +15,7 @@ export const betRoutes: Routes = [
     path: 'diamond-store',
     canActivate: [tokenValidationGuard],
     loadComponent: () =>
-      import('../../pages/diamond-store/diamond-store.component').then(
+      import('../../rankings/pages/diamond-store/diamond-store.component').then(
         (c) => c.DiamondStoreComponent
       ),
   },
@@ -24,7 +24,7 @@ export const betRoutes: Routes = [
     canActivate: [tokenValidationGuard],
     data: { preload: true },
     loadComponent: () =>
-      import('../../pages/ranking-page/ranking-page.component').then(
+      import('../../rankings/pages/ranking-page/ranking-page.component').then(
         (c) => c.RankingPageComponent
       ),
   },
