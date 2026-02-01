@@ -44,17 +44,17 @@ This is a **microservices-based architecture** with three main components:
 │  • Match browsing, predictions, user rankings              │
 │  • Real-time event updates via WebSocket                   │
 └────────────┬────────────────────────────┬────────────────────┘
-             │                            │
-             │ REST                       │ WebSocket
-             │                            │
-┌────────────▼──────────────┐  ┌─────────▼────────────────────┐
-│   Backend (NestJS)        │  │  Streaming Core (Rust)       │
-│  • REST API               │  │  • Real-time event service   │
-│  • User auth & profiles   │  │  • Polls AllSportsAPI        │
-│  • Predictions & rankings │  │  • Broadcasts match events   │
-│  • MySQL database         │  │  • 100k+ connections         │
-│  • Redis caching          │  │  • Ultra-low latency         │
-└───────────────────────────┘  └──────────────────────────────┘
+             │                              │
+             │ REST                         │ WebSocket
+             │                              │
+┌────────────▼──────────────┐    ┌─────────▼────────────────────┐
+│   Backend (NestJS)        │    │  Streaming Core (Rust)       │
+│  • REST API               │ WS │  • Real-time event service   │
+│  • User auth & profiles   │<-> │  • Polls AllSportsAPI        │
+│  • Predictions & rankings │    │  • Broadcasts match events   │
+│  • MySQL database         │    │  • 100k+ connections         │
+│  • Redis caching          │    │  • Ultra-low latency         │
+└───────────────────────────┘    └──────────────────────────────┘
 ```
 
 ### Component Responsibilities
