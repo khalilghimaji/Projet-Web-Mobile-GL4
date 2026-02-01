@@ -206,25 +206,52 @@ The frontend is a modern Angular 20 application with standalone components, zone
 front/
 ├── src/
 │   ├── app/
-│   │   ├── components/          # Reusable UI components
-│   │   │   ├── auth/           # Authentication components
-│   │   │   ├── matches/        # Match-related components
-│   │   │   ├── standings/      # League standings
-│   │   │   ├── teams/          # Team details
-│   │   │   └── shared/         # Shared components
-│   │   ├── services/           # Angular services
-│   │   │   ├── Api/            # Auto-generated API services
-│   │   │   ├── auth.service.ts
-│   │   │   ├── live-events.service.ts
-│   │   │   └── ...
-│   │   ├── guards/             # Route guards
-│   │   ├── interceptors/       # HTTP interceptors
-│   │   ├── models/             # TypeScript interfaces
-│   │   └── app.routes.ts       # Route configuration
-│   ├── environments/           # Environment configs
-│   └── styles.css              # Global styles
-├── angular.json                # Angular CLI configuration
-├── tailwind.config.js          # Tailwind CSS config
+│   │   ├── auth/                    # Authentication feature module
+│   │   │   ├── pages/              # Auth pages (login, signup, MFA, etc.)
+│   │   │   └── services/           # Auth-related services
+│   │   ├── match/                   # Match feature module (primary)
+│   │   │   ├── pages/              # Fixtures list, match detail pages
+│   │   │   ├── sections/           # Major page sections (lineups, stats, timeline)
+│   │   │   ├── components/         # Match UI components (cards, displays, indicators)
+│   │   │   ├── services/           # Match data services
+│   │   │   ├── types/              # TypeScript types/interfaces
+│   │   │   └── utils/              # Utility functions
+│   │   ├── rankings/                # Rankings & Diamond Store module
+│   │   │   ├── pages/              # Ranking page, diamond store
+│   │   │   └── components/         # Score prediction popup
+│   │   ├── standings/               # League standings module
+│   │   │   ├── pages/              # Leagues list, standings tables
+│   │   │   └── services/           # Standings data services
+│   │   ├── teams/                   # Team details module
+│   │   │   ├── pages/              # Team detail page
+│   │   │   ├── components/         # Squad, matches, player cards
+│   │   │   ├── services/           # Team data services
+│   │   │   └── models/             # Team-related types
+│   │   ├── notifications/           # Notifications module
+│   │   │   ├── pages/              # Notification page
+│   │   │   ├── components/         # Notification elements
+│   │   │   └── services/           # Notification services
+│   │   ├── components/              # Shared UI components
+│   │   │   ├── navigation/         # Top navigation bar
+│   │   │   ├── side-menu/          # Sidebar with user stats
+│   │   │   ├── loading/            # Loading indicators
+│   │   │   └── toast/              # Toast notifications
+│   │   ├── shared/                  # Shared utilities
+│   │   │   ├── guards/             # Route guards (auth, token validation)
+│   │   │   ├── interceptors/       # HTTP interceptors (auth, credentials, API key)
+│   │   │   ├── pipes/              # Custom Angular pipes
+│   │   │   └── routes/             # Route configuration helpers
+│   │   ├── services/                # Global services
+│   │   │   └── Api/                # Auto-generated API services
+│   │   ├── pages/                   # Standalone pages
+│   │   │   └── error-page/         # Error page component
+│   │   ├── app.component.ts         # Root component
+│   │   ├── app.config.ts            # App configuration
+│   │   └── app.routes.ts            # Route definitions
+│   ├── environments/                # Environment configs
+│   └── styles.css                   # Global styles
+├── angular.json                     # Angular CLI configuration
+├── tailwind.config.js               # Tailwind CSS config
 └── package.json
 ```
 
@@ -413,18 +440,32 @@ A robust NestJS backend providing REST APIs with comprehensive authentication an
 ```
 back/
 ├── src/
-│   ├── auth/               # Authentication module
-│   │   ├── guards/
-│   │   ├── strategies/
-│   │   └── decorators/
-│   ├── users/              # User management
-│   ├── matches/            # Match data & predictions
-│   ├── notifications/      # Notification system
-│   ├── teams/              # Team information
-│   ├── standings/          # League standings
-│   ├── websockets/         # Socket.io gateway
-│   └── main.ts             # Application entry
-├── test/                   # E2E tests
+│   ├── auth/                    # Authentication module
+│   │   ├── dto/                # Data Transfer Objects (login, register, etc.)
+│   │   │   └── responses/      # Response DTOs
+│   │   ├── entities/           # User entity
+│   │   ├── guards/             # Auth guards (JWT, local)
+│   │   └── strategies/         # Passport strategies (JWT, Local, Google, GitHub)
+│   ├── matches/                 # Match data & predictions module
+│   │   ├── dto/                # Match-related DTOs
+│   │   └── entities/           # Match, prediction entities
+│   ├── notifications/           # Notification system module
+│   │   ├── dto/                # Notification DTOs
+│   │   └── entities/           # Notification entity
+│   ├── Common/                  # Shared utilities & helpers
+│   │   ├── Emailing/           # Email service with templates
+│   │   │   └── templates/      # Handlebars email templates
+│   │   ├── cache/              # Cache module (Redis)
+│   │   └── generic/            # Generic utilities
+│   ├── Decorator/               # Custom decorators
+│   ├── Enums/                   # Shared enumerations
+│   ├── app.controller.ts        # Root controller
+│   ├── app.module.ts            # Root module
+│   ├── app.service.ts           # Root service
+│   └── main.ts                  # Application entry point
+├── Config/                      # Configuration files
+├── test/                        # E2E tests
+│   └── app.e2e-spec.ts
 └── package.json
 ```
 
@@ -597,6 +638,35 @@ The real-time service is written in Rust for several critical reasons:
 - **Memory Safety** - Zero-cost abstractions without garbage collection
 - **Concurrency** - Fearless concurrency with the actor model
 - **Reliability** - Compile-time guarantees prevent runtime errors
+
+### Project Structure
+
+```
+football-streaming-core/
+├── src/
+│   ├── actors/                  # Actor pattern implementation
+│   │   ├── broadcaster.rs      # Broadcasts events to all WebSocket connections
+│   │   ├── websocket.rs        # WebSocket actor for individual connections
+│   │   └── mod.rs
+│   ├── handlers/                # Request handlers
+│   │   ├── websocket_handler.rs # WebSocket handshake and connection handler
+│   │   └── mod.rs
+│   ├── services/                # Core business logic
+│   │   ├── poller.rs           # Polls AllSportsAPI for live data
+│   │   ├── event_detector.rs  # Detects changes and generates events
+│   │   ├── mock_poller.rs      # Mock service for testing
+│   │   └── mod.rs
+│   ├── models/                  # Data structures
+│   │   ├── api_response.rs     # AllSportsAPI response models
+│   │   ├── match_data.rs       # Match state and data
+│   │   ├── events.rs           # Event types (Goal, Card, etc.)
+│   │   └── mod.rs
+│   ├── config.rs                # Configuration loading from .env
+│   └── main.rs                  # Application entry point
+├── Cargo.toml                   # Rust dependencies
+├── Dockerfile                   # Docker build configuration
+└── .env.example                 # Environment variable template
+```
 
 ### How It Works
 
