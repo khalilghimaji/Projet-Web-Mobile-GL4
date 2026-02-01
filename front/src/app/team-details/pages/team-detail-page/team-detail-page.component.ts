@@ -74,6 +74,7 @@ export class TeamDetailPageComponent {
 
 
 
+
   //fetching team + players
   teamResource = this.teamService.getTeamResource(this.id);
 
@@ -82,28 +83,26 @@ export class TeamDetailPageComponent {
 
   // fecthing recent matches
 
-  hasMoreToLoad = computed(() => this.realDaysOffset() < this.MAX_DAYS);
+  hasMoreToLoad = computed(() => this.daysOffset() < this.MAX_DAYS);
 
-  realDaysOffset = linkedSignal({
+  daysOffset = linkedSignal({
     source: () => this.id(),
     computation: () => {
-      console.log('resetting');
       return 0;
     },
   });
 
   recentMatchesResource = this.teamService.getRecentMatchesResource(
     this.id,
-    computed(() => this.realDaysOffset() + this.DAYS_PER_PAGE),
-    this.realDaysOffset
+    computed(() => this.daysOffset() + this.DAYS_PER_PAGE),
+    this.daysOffset
   );
 
   //load next batch of matches (30 more days)
 
   loadMoreMatches(): void {
     if (this.hasMoreToLoad() && !this.recentMatchesResource.isLoading()) {
-      this.realDaysOffset.update((offset) => offset + this.DAYS_PER_PAGE);
-      console.log('Loading more matches, new offset:', this.realDaysOffset());
+      this.daysOffset.update((offset) => offset + this.DAYS_PER_PAGE);
     }
   }
 
@@ -141,9 +140,6 @@ export class TeamDetailPageComponent {
       if (!source.matches) {
         return previous ? previous.value : [];
       }
-
-      console.log(previous!.value, 'then vs now', source.matches);
-
       //appending new matches
 
       const existing = previous!.value;

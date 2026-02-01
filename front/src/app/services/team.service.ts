@@ -72,11 +72,11 @@ export class TeamService {
   getTeamResource(teamId: Signal<number>) {
   return httpResource(
     () => ({
-      url: `${this.apiUrl}?met=Teams&teamId=${teamId()}&APIkey=${this.apiKey}`
+      url: this.apiUrl,
+      params: {met : 'Teams' , teamId : teamId().toString(), APIkey : this.apiKey},
     }),
     {
       parse: (response: any) => this.transformTeamResponse(response),
-      injector: this.injector
     }
   );
 }
@@ -103,12 +103,13 @@ export class TeamService {
         const to = this.formatDate(toDate);
 
         return {
-          url: `${this.apiUrl}?met=Fixtures&teamId=${id}&from=${from}&to=${to}`,
+          url: this.apiUrl,
+          params: {met : 'Fixtures' , teamId : id.toString(), from : from, to : to},
         };
       },
       {
         parse: (response: any) => this.transformFixturesResponse(response),
-        injector: this.injector,
+        
       }
     );
   }
@@ -127,14 +128,14 @@ export class TeamService {
         const to = this.formatDate(futureDate);
 
         return {
-          url: `${
+          url:
             this.apiUrl
-          }?met=Fixtures&teamId=${teamId()}&from=${from}&to=${to}`,
+          ,
+          params: {met : 'Fixtures' , teamId : teamId().toString(), from : from, to : to}
         };
       },
       {
         parse: (response: any) => this.transformNextMatchResponse(response),
-        injector: this.injector,
       }
     );
   }
