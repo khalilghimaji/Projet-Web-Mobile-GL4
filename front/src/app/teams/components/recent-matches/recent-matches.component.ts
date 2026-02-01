@@ -58,7 +58,7 @@ export class RecentMatchesComponent {
     if (this.isLoss(match, teamKey)) return 'LOSS';
     return 'N/A';
   }
-
+  
   // Icons
   readonly TrendingUp = TrendingUp;
 }
