@@ -128,7 +128,7 @@ export class PredictionCalculatorService {
   ): number {
     // Exact match
     if (predFirst === actualFirst && predSecond === actualSecond) {
-      return 20;
+      return diamondsBet * 3;
     }
 
     const predDiff = predFirst - predSecond;
@@ -142,20 +142,12 @@ export class PredictionCalculatorService {
       predWinner !== 0 &&
       predDiff === actualDiff
     ) {
-      return 10;
+      return diamondsBet * 2;
     }
 
     // Correct winner
     if (predWinner === actualWinner && predWinner !== 0) {
-      return 5;
-    }
-
-    // Close scores (difference of 1 in each score)
-    if (
-      Math.abs(predFirst - actualFirst) <= 1 &&
-      Math.abs(predSecond - actualSecond) <= 1
-    ) {
-      return 2;
+      return diamondsBet;
     }
 
     return 0;
