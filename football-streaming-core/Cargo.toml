@@ -35,6 +35,8 @@ thiserror = "1.0"
 
 # Date/Time
 chrono = { version = "0.4", features = ["serde"] }
+# Pin `time` to avoid pulling edition2024-only releases on older Cargo (e.g. Docker image toolchain).
+time = "=0.3.44"
 
 # Collections
 dashmap = "5.5"

@@ -65,6 +65,25 @@ pub enum MatchEvent {
         timestamp: DateTime<Utc>,
     },
     
+    #[serde(rename = "HALF_TIME")]
+    HalfTime {
+        match_id: String,
+        home_team: String,
+        away_team: String,
+        halftime_score: String,
+        league_id: String,
+        timestamp: DateTime<Utc>,
+    },
+
+    #[serde(rename = "SECOND_HALF_STARTED")]
+    SecondHalfStarted {
+        match_id: String,
+        home_team: String,
+        away_team: String,
+        league_id: String,
+        timestamp: DateTime<Utc>,
+    },
+
     #[serde(rename = "MATCH_ENDED")]
     MatchEnded {
         match_id: String,

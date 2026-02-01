@@ -43,6 +43,11 @@ export class SideMenuComponent {
 
   topMenuItems: CustomMenuItem[] = [
     {
+      icon: 'pi pi-calendar',
+      label: 'Fixtures',
+      route: '/fixtures',
+    },
+    {
       icon: 'pi pi-chart-bar',
       label: 'Standings',
       route: '/standings',

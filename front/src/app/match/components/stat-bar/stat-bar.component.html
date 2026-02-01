@@ -1,0 +1,19 @@
+<div class="space-y-2">
+  <div class="flex justify-between text-sm font-bold">
+    <span>{{ displayValue().home }}</span>
+    <span class="text-gray-500 font-medium">{{ statSignal().label }}</span>
+    <span>{{ displayValue().away }}</span>
+  </div>
+
+  <div class="flex h-2 w-full rounded-full overflow-hidden bg-gray-200 dark:bg-white/10">
+    <div
+      class="bg-primary h-full transition-all duration-300"
+      [style.width.%]="percentage().home"
+    ></div>
+    <div
+      class="bg-gray-400 dark:bg-gray-600 h-full transition-all duration-300"
+      [style.width.%]="percentage().away"
+    ></div>
+  </div>
+</div>
+

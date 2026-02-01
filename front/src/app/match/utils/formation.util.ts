@@ -23,10 +23,16 @@ export function calculateFormationPositions(
   const lines = parseFormation(formation);
   const positions: Position[] = [];
 
-  // Starting Y position (defenders start closer to goal)
-  const baseY = team === 'home' ? 20 : 80;
+  // Home team: start at 10%, max at 46%
+  // Away team: start at 90%, min at 54%
+  const baseY = team === 'home' ? 10 : 90;
   const yDirection = team === 'home' ? 1 : -1;
-  const ySpacing = 13; // Vertical spacing between lines
+  const maxLines = lines.length;
+
+  // Calculer l'espacement dynamique pour que tout rentre
+  // Maximum 36% du terrain par équipe avec moins d'espace au milieu
+  const maxSpace = 36;
+  const ySpacing = Math.min(14, maxSpace / maxLines);
 
   lines.forEach((playerCount, lineIndex) => {
     const y = baseY + (yDirection * ySpacing * lineIndex);
@@ -50,8 +56,8 @@ function calculateXPositions(playerCount: number): number[] {
   if (playerCount === 1) return [50]; // Center
 
   const positions: number[] = [];
-  const spacing = 70 / (playerCount + 1); // 70% of width, evenly spaced
-  const offset = 15; // Start from 15% from left
+  const spacing = 80 / (playerCount + 1); // 80% de largeur pour plus d'espace
+  const offset = 10; // Commencer à 10% du bord
 
   for (let i = 1; i <= playerCount; i++) {
     positions.push(offset + (spacing * i));
@@ -66,7 +72,7 @@ function calculateXPositions(playerCount: number): number[] {
 export function getGoalkeeperPosition(team: 'home' | 'away'): Position {
   return {
     x: '50%',
-    y: team === 'home' ? '8%' : '92%'
+    y: team === 'home' ? '2%' : '98%'
   };
 }
 
@@ -86,7 +92,7 @@ export function mapPlayersToFormation(
 
   const result: PlayerPosition[] = [];
 
-  // Add goalkeeper
+  // Add goalkeeper first
   if (goalkeeper) {
     result.push({
       ...goalkeeper,
@@ -94,15 +100,15 @@ export function mapPlayersToFormation(
     });
   }
 
-  // Map outfield players to positions
-  outfieldPlayers.forEach((player, index) => {
-    if (index < positions.length) {
-      result.push({
-        ...player,
-        position: positions[index]
-      });
-    }
-  });
+  // Map outfield players to positions (limit to 10 players max)
+  const maxPlayers = Math.min(outfieldPlayers.length, positions.length, 10);
+
+  for (let i = 0; i < maxPlayers; i++) {
+    result.push({
+      ...outfieldPlayers[i],
+      position: positions[i]
+    });
+  }
 
   return result;
 }

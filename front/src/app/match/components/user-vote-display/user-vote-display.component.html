@@ -1,0 +1,23 @@
+<div class="flex items-center justify-between
+     bg-primary/10 dark:bg-primary/20
+     border border-primary/30 rounded-lg px-3 py-2">
+  <div>
+    <div class="text-[11px] text-gray-500 dark:text-gray-400">
+      Your prediction
+    </div>
+    <div class="text-sm font-semibold text-primary">
+      {{ formatOption(vote.option) }}
+      {{ vote.home_score }} - {{ vote.away_score }}
+      • {{ vote.diamonds }} 💎
+    </div>
+  </div>
+  @if (canChange) {
+    <button
+      class="text-xs font-medium text-primary hover:underline"
+      (click)="changeClicked.emit()"
+    >
+      Change
+    </button>
+  }
+</div>
+

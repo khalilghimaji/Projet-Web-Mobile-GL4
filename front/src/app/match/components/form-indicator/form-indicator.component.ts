@@ -8,25 +8,8 @@ export type FormResult = 'W' | 'D' | 'L';
   standalone: true,
   imports: [CommonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <div class="flex gap-2">
-      @for (result of formSignal(); track $index) {
-        <div
-          class="size-8 rounded flex items-center justify-center font-bold text-white text-xs"
-          [class.bg-green-500]="result === 'W'"
-          [class.bg-gray-400]="result === 'D'"
-          [class.bg-red-500]="result === 'L'"
-        >
-          {{ result }}
-        </div>
-      }
-    </div>
-  `,
-  styles: [`
-    :host {
-      display: contents;
-    }
-  `]
+  templateUrl: './form-indicator.component.html',
+  styleUrl: './form-indicator.component.css'
 })
 export class FormIndicatorComponent {
   // Signal reference passed from parent

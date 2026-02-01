@@ -2,7 +2,7 @@ import {MatchApiService} from './match-api.service';
 import {LiveEventsService} from './live-events.service';
 import {inject, Injectable, Signal, signal } from '@angular/core';
 import {rxResource} from '@angular/core/rxjs-interop';
-import {concat, tap} from 'rxjs';
+import {concat, tap, of, catchError} from 'rxjs';
 import {filter} from 'rxjs/operators';
 import {MatchEvent} from '../types/timeline.types';
 import {MatchHeader} from '../sections/match-header/match-header.section';
@@ -10,6 +10,35 @@ import {Lineups} from '../sections/lineups-pitch/lineups-pitch.section';
 import {TeamStats} from '../types/stats.types';
 import {HeadToHead} from '../types/h2h.types';
 import {VideoHighlight} from '../types/highlight.types';
+import {mapPlayersToFormation} from '../utils/formation.util';
+import {PlayerPosition} from '../types/lineup.types';
+
+const MOCK_MATCHES_KEY = 'mock_matches';
+
+interface StoredMatch {
+  event_key: string;
+  event_home_team: string;
+  event_away_team: string;
+  event_final_result: string;
+  event_status: string;
+  event_live: string;
+  league_name: string;
+  home_team_logo?: string;
+  away_team_logo?: string;
+  home_team_key?: string;
+  away_team_key?: string;
+  event_stadium?: string;
+  events?: StoredEvent[];
+  lastUpdate: string;
+}
+
+interface StoredEvent {
+  type: string;
+  minute: string;
+  player: string;
+  team: string;
+  score?: string;
+}
 
 @Injectable({ providedIn: 'root' })
 export class MatchResourceFactory {
@@ -24,16 +53,32 @@ export class MatchResourceFactory {
       params: () => matchId(),
       stream: ({params: matchId}) =>
         concat(
-          // Initial HTTP snapshot
           this.api.getMatch(matchId).pipe(
-            tap(dto => hydrateFromSnapshot(dto, signals))
+            tap(dto => {
+              console.log('Match data loaded:', matchId);
+              hydrateFromSnapshot(dto, signals);
+            }),
+            catchError(() => {
+              console.warn('Match not found in API, checking localStorage:', matchId);
+              const cached = loadMatchFromLocalStorage(matchId);
+              if (cached) {
+                console.log('Match found in localStorage:', matchId);
+                hydrateFromLocalStorage(cached, signals);
+              } else {
+                console.warn('Match not in localStorage, waiting for WebSocket:', matchId);
+              }
+              return of(null);
+            })
           ),
 
-          // Live WebSocket updates
-          // this.live.events$.pipe(
-          //   filter(e => e.matchId === matchId),
-          //   tap(e => applyEvent(e, signals))
-          // )
+          this.live.events$.pipe(
+            filter(e => e.match_id === matchId),
+            tap(e => {
+              console.log('Live event received for match:', matchId, e.type);
+              applyEvent(e, signals);
+              updateLocalStorageFromEvent(matchId, e, signals);
+            })
+          )
         ),
     });
 
@@ -117,7 +162,7 @@ function hydrateFromSnapshot(
   s.matchHeaderSignal.set({
     status:{
       isLive: dto.event_live != '0',
-      minute: Number.parseInt(dto.event_status),
+      minute: inferMinuteFromEvents(dto),
       status: getEventStatus(dto.event_live, dto.event_status),
       competition: dto.league_name,
     },
@@ -173,11 +218,30 @@ function hydrateFromSnapshot(
   ))]);
   console.log(`cards ${JSON.stringify(s.timelineSignal())}`)
   s.timelineSignal.update(t=> t.sort((a,b) => a.minute - b.minute));
-  // todo
-  // s.lineupsSignal.set({
-  //
-  // })
   console.log(`sorted ${JSON.stringify(s.timelineSignal())}`)
+
+  // Lineups mapping
+  if (dto.lineups?.home_team && dto.lineups?.away_team) {
+    const homeFormation = dto.event_home_formation || '4-3-3';
+    const awayFormation = dto.event_away_formation || '4-3-3';
+
+    s.lineupsSignal.set({
+      homeFormation,
+      awayFormation,
+      homePlayers: mapLineupPlayers(
+        dto.lineups.home_team.starting_lineups || [],
+        homeFormation,
+        'home'
+      ),
+      awayPlayers: mapLineupPlayers(
+        dto.lineups.away_team.starting_lineups || [],
+        awayFormation,
+        'away'
+      ),
+    });
+    console.log(`lineups set ${JSON.stringify(s.lineupsSignal())}`)
+  }
+
   s.statsSignal.set({stats:dto.statistics.map((s:any) => (
     {
       label: s.type,
@@ -217,6 +281,7 @@ function applyEvent(
 ) {
   switch (event.type) {
     case 'GOAL_SCORED':
+      const goalMinute = parseMinuteString(event.minute);
       s.matchHeaderSignal.update(header => ({
         ...(header!),
         score: {
@@ -227,7 +292,7 @@ function applyEvent(
       }))
       s.timelineSignal.update(t => [...t,{
         id: `event-goal-${event.minute}-${event.scorer}`,
-        minute: event.minute,
+        minute: goalMinute,
         type: 'GOAL',
         team: event.team,
         player: event.scorer,
@@ -235,9 +300,10 @@ function applyEvent(
       break;
 
     case 'CARD_ISSUED':
+      const cardMinute = parseMinuteString(event.minute);
       s.timelineSignal.update(t => [...t,{
         id: `event-card-${event.minute}-${event.player}`,
-        minute: event.minute,
+        minute: cardMinute,
         type: event.card_type === 'yellow card' ? 'YELLOW_CARD' : 'RED_CARD',
         team: event.team,
         player: event.player,
@@ -245,9 +311,10 @@ function applyEvent(
       break;
 
     case 'SUBSTITUTION':
+      const subMinute = parseMinuteString(event.minute);
       s.timelineSignal.update(t => [...t,{
         id: `event-substitution-${event.minute}-${event.player_in}`,
-        minute: event.minute,
+        minute: subMinute,
         type: 'SUBSTITUTION',
         team: event.team,
         player: event.player_in,
@@ -261,6 +328,28 @@ function applyEvent(
           ...header!.status,
           isLive: false,
           status: 'FT'
+        }
+      }))
+      break;
+    case 'HALF_TIME':
+      s.matchHeaderSignal.update(header => ({
+        ...(header!),
+        status: {
+          ...header!.status,
+          minute: 45,
+          isLive: true,
+          status: 'HT'
+        }
+      }))
+      break;
+    case 'SECOND_HALF_STARTED':
+      s.matchHeaderSignal.update(header => ({
+        ...(header!),
+        status: {
+          ...header!.status,
+          isLive: true,
+          status: 'LIVE',
+          minute: 46,
         }
       }))
       break;
@@ -280,8 +369,8 @@ function applyEvent(
         ...(t!),
         score: {
           ...t!.score,
-          home: event.score.split('-')[0],
-          away: event.score.split('-')[1],
+          home: Number(event.score.split('-')[0]) || 0,
+          away: Number(event.score.split('-')[1]) || 0,
         }
       }));
       break;
@@ -290,3 +379,199 @@ function applyEvent(
   }
 }
 
+/**
+ * Map API lineup data to PlayerPosition array with calculated positions
+ */
+function mapLineupPlayers(
+  apiPlayers: any[],
+  formation: string,
+  team: 'home' | 'away'
+): PlayerPosition[] {
+  if (!apiPlayers || apiPlayers.length === 0) {
+    return [];
+  }
+
+  // Séparer gardien et joueurs de champ
+  const goalkeeper = apiPlayers.find(p => p.player_position === '1' || p.player_position === 1);
+  const outfieldPlayers = apiPlayers.filter(p => p.player_position !== '1' && p.player_position !== 1);
+
+  // Trier les joueurs de champ par numéro
+  outfieldPlayers.sort((a, b) => {
+    const numA = Number.parseInt(a.player_number) || 99;
+    const numB = Number.parseInt(b.player_number) || 99;
+    return numA - numB;
+  });
+
+  const players = [];
+
+  // Ajouter le gardien en premier
+  if (goalkeeper) {
+    players.push({
+      id: goalkeeper.player_key || `gk-${team}`,
+      number: Number.parseInt(goalkeeper.player_number) || 1,
+      name: extractShortName(goalkeeper.player),
+      fullName: goalkeeper.player,
+      team,
+      isGoalkeeper: true,
+    });
+  }
+
+  // Ajouter EXACTEMENT 10 joueurs de champ (pas plus)
+  const maxOutfield = 10;
+  for (let i = 0; i < Math.min(maxOutfield, outfieldPlayers.length); i++) {
+    const p = outfieldPlayers[i];
+    players.push({
+      id: p.player_key || `player-${team}-${i}`,
+      number: Number.parseInt(p.player_number) || 0,
+      name: extractShortName(p.player),
+      fullName: p.player,
+      team,
+      isGoalkeeper: false,
+    });
+  }
+
+  return mapPlayersToFormation(players, formation, team);
+}
+
+/**
+ * Extract short name from full player name
+ */
+function extractShortName(fullName: string): string {
+  if (!fullName) return '';
+  const parts = fullName.trim().split(' ');
+  if (parts.length === 1) return parts[0];
+  return parts[parts.length - 1];
+}
+
+
+function loadMatchFromLocalStorage(matchId: string | undefined): StoredMatch | null {
+  if (!matchId) return null;
+  const cached = localStorage.getItem(MOCK_MATCHES_KEY);
+  if (!cached) return null;
+  const matches: Record<string, StoredMatch> = JSON.parse(cached);
+  return matches[matchId] ?? null;
+}
+
+function hydrateFromLocalStorage(cached: StoredMatch, s: MatchSignals): void {
+  const [homeScore, awayScore] = (cached.event_final_result || '0-0').split('-').map(Number);
+
+  s.matchHeaderSignal.set({
+    status: {
+      isLive: cached.event_live === '1',
+      minute: parseInt(cached.event_status) || 0,
+      status: getEventStatus(cached.event_live, cached.event_status),
+      competition: cached.league_name || '',
+    },
+    homeTeam: {
+      id: cached.home_team_key || '',
+      name: cached.event_home_team || '',
+      shortName: cached.event_home_team || '',
+      logo: cached.home_team_logo || '',
+    },
+    awayTeam: {
+      id: cached.away_team_key || '',
+      name: cached.event_away_team || '',
+      shortName: cached.event_away_team || '',
+      logo: cached.away_team_logo || '',
+    },
+    score: {
+      home: homeScore || 0,
+      away: awayScore || 0,
+      venue: cached.event_stadium || '',
+    },
+  });
+
+  if (cached.events?.length) {
+    s.timelineSignal.set(cached.events.map(e => ({
+      id: `event-${e.type}-${e.minute}-${e.player}`,
+      type: mapEventType(e.type),
+      minute: parseInt(e.minute) || 0,
+      team: e.team as 'home' | 'away',
+      player: e.player,
+    })));
+  }
+}
+/**
+ * Parse "28" ou "45+2" → 47
+ */
+function parseMinuteString(timeStr: string): number {
+  if (!timeStr) return 0;
+  if (timeStr.includes('+')) {
+    const [base, added] = timeStr.split('+');
+    return (parseInt(base) || 0) + (parseInt(added) || 0);
+  }
+  return parseInt(timeStr) || 0;
+}
+
+/**
+ * Infère la minute depuis les événements du match
+ */
+function inferMinuteFromEvents(dto: any): number {
+  const allEvents = [
+    ...(dto.goalscorers || []),
+    ...(dto.cards || []),
+    ...(dto.substitutes || []),
+  ];
+
+  if (allEvents.length === 0) {
+    if (dto.event_live === '1' && dto.event_status === '') {
+      return 1; // Match live sans événement
+    }
+    return 0;
+  }
+
+  let maxMinute = 0;
+  for (const event of allEvents) {
+    const minute = parseMinuteString(event.time);
+    if (minute > maxMinute) maxMinute = minute;
+  }
+  return maxMinute;
+}
+
+function mapEventType(type: string): 'GOAL' | 'YELLOW_CARD' | 'RED_CARD' | 'SUBSTITUTION' {
+  switch (type) {
+    case 'GOAL_SCORED': return 'GOAL';
+    case 'CARD_ISSUED': return 'YELLOW_CARD';
+    case 'SUBSTITUTION': return 'SUBSTITUTION';
+    default: return 'GOAL';
+  }
+}
+
+function updateLocalStorageFromEvent(matchId: string | undefined, event: any, signals: MatchSignals): void {
+  if (!matchId) return;
+
+  const cached = localStorage.getItem(MOCK_MATCHES_KEY);
+  const matches: Record<string, StoredMatch> = cached ? JSON.parse(cached) : {};
+
+  const header = signals.matchHeaderSignal();
+  const existing = matches[matchId];
+  const events = existing?.events ?? [];
+
+  if (['GOAL_SCORED', 'CARD_ISSUED', 'SUBSTITUTION'].includes(event.type)) {
+    events.push({
+      type: event.type,
+      minute: event.minute,
+      player: event.scorer || event.player || event.player_in,
+      team: event.team,
+      score: event.score
+    });
+  }
+
+  matches[matchId] = {
+    event_key: matchId,
+    event_home_team: event.home_team || header.homeTeam.name,
+    event_away_team: event.away_team || header.awayTeam.name,
+    event_final_result: event.score || `${header.score.home}-${header.score.away}`,
+    event_status: event.minute?.toString() || String(header.status.minute ?? 0),
+    event_live: header.status.isLive ? '1' : '0',
+    league_name: event.league || header.status.competition,
+    home_team_logo: header.homeTeam.logo,
+    away_team_logo: header.awayTeam.logo,
+    home_team_key: header.homeTeam.id,
+    away_team_key: header.awayTeam.id,
+    events,
+    lastUpdate: new Date().toISOString()
+  };
+
+  localStorage.setItem(MOCK_MATCHES_KEY, JSON.stringify(matches));
+}

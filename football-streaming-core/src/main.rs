@@ -10,6 +10,7 @@ mod handlers;
 
 use actors::broadcaster::Broadcaster;
 use services::poller::Poller;
+use services::mock_poller::MockPoller;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -32,16 +33,30 @@ async fn main() -> std::io::Result<()> {
     let broadcaster = Broadcaster::new().start();
     let broadcaster_clone = broadcaster.clone();
     
-    // Start polling service
-    let poller = Poller::new(
-        config.api_key.clone(),
-        config.poll_interval_secs,
-        broadcaster.clone(),
-    );
-    
-    tokio::spawn(async move {
-        poller.start().await;
-    });
+    // Start polling service (real or mock)
+    let use_mock = config.mock_mode || config.api_key.is_none();
+    if use_mock {
+        if config.api_key.is_none() && !config.mock_mode {
+            tracing::warn!(
+                "ALLSPORTS_API_KEY not set. Falling back to MOCK_MODE to keep websocket usable."
+            );
+        }
+
+        let mock = MockPoller::new(config.poll_interval_secs, broadcaster.clone());
+        tokio::spawn(async move {
+            mock.start().await;
+        });
+    } else {
+        let poller = Poller::new(
+            config.api_key.clone().expect("api_key missing but mock mode disabled"),
+            config.poll_interval_secs,
+            broadcaster.clone(),
+        );
+
+        tokio::spawn(async move {
+            poller.start().await;
+        });
+    }
     
     // Start HTTP server with WebSocket
     tracing::info!("🚀 Server running on http://{}", config.bind_address);
