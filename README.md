@@ -45,11 +45,11 @@ This is a **microservices-based architecture** with three main components:
 │  • Real-time event updates via WebSocket                   │
 └────────────┬────────────────────────────┬────────────────────┘
              │                            │
-             │ REST/GraphQL              │ WebSocket
+             │ REST                       │ WebSocket
              │                            │
 ┌────────────▼──────────────┐  ┌─────────▼────────────────────┐
 │   Backend (NestJS)        │  │  Streaming Core (Rust)       │
-│  • GraphQL + REST API     │  │  • Real-time event service   │
+│  • REST API               │  │  • Real-time event service   │
 │  • User auth & profiles   │  │  • Polls AllSportsAPI        │
 │  • Predictions & rankings │  │  • Broadcasts match events   │
 │  • MySQL database         │  │  • 100k+ connections         │
@@ -100,7 +100,7 @@ This is a **microservices-based architecture** with three main components:
 
 ### Backend (NestJS)
 - **Framework**: NestJS 11.0.1 (Node.js)
-- **API**: GraphQL (Apollo Server 5.0) + REST
+- **API**: REST
 - **Database**: MySQL with TypeORM 0.3.22
 - **Authentication**: 
   - JWT (jsonwebtoken 9.0.2)
@@ -195,7 +195,6 @@ npm start
 
 - **Frontend**: http://localhost:4200
 - **Backend API**: http://localhost:3003
-- **Backend GraphQL**: http://localhost:3003/graphql
 - **WebSocket Service**: ws://localhost:8080/ws
 - **Health Check**: http://localhost:8080/health
 
@@ -409,7 +408,7 @@ connectToLiveEvents() {
 
 ## 🔧 Backend (NestJS)
 
-A robust NestJS backend providing both REST and GraphQL APIs with comprehensive authentication and real-time capabilities.
+A robust NestJS backend providing REST APIs with comprehensive authentication and real-time capabilities.
 
 ### Project Structure
 
@@ -434,9 +433,8 @@ back/
 
 ### Key Features
 
-#### 1. Dual API (REST + GraphQL)
+#### 1. Dual API (REST)
 - **REST API** - Traditional endpoints with Swagger documentation
-- **GraphQL API** - Apollo Server with subscriptions
 - **API Documentation** - Available at `/api` (Swagger)
 
 #### 2. Authentication & Authorization
@@ -594,46 +592,6 @@ npm run format
 #### Notifications
 - `GET /notifications` - List user notifications
 - `PATCH /notifications/:id/read` - Mark as read
-
-### GraphQL Schema
-
-```graphql
-type User {
-  id: ID!
-  email: String!
-  username: String!
-  diamonds: Int!
-  predictions: [Prediction!]!
-  ranking: Int
-}
-
-type Match {
-  id: ID!
-  homeTeam: Team!
-  awayTeam: Team!
-  startTime: DateTime!
-  status: String!
-  score: Score
-}
-
-type Query {
-  me: User!
-  matches(leagueId: ID): [Match!]!
-  match(id: ID!): Match
-  standings(leagueId: ID!): [Standing!]!
-}
-
-type Mutation {
-  login(email: String!, password: String!): AuthPayload!
-  register(input: RegisterInput!): AuthPayload!
-  predictMatch(matchId: ID!, prediction: PredictionInput!): Prediction!
-}
-
-type Subscription {
-  matchUpdated(matchId: ID!): Match!
-  newNotification: Notification!
-}
-```
 
 ## ⚡ Real-Time Service (Rust)
 
@@ -866,7 +824,6 @@ For support and questions:
 - Check the documentation in each component's README
 - Review the code comments and type definitions
 - Check the API documentation at `/api` (Swagger)
-- Explore the GraphQL schema at `/graphql`
 
 ---
 
