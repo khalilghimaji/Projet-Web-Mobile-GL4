@@ -1,0 +1,142 @@
+@startuml Entity Relationship Diagram - Projet Web Mobile GL4
+
+!define ENTITY_COLOR #E8F5E9
+!define ENUM_COLOR #FFF3E0
+
+' ========== Enums ==========
+enum NotificationType <<enumeration>> ENUM_COLOR {
+  CHANGE_OF_POSSESSED_GEMS
+  DIAMOND_UPDATE
+  RANKING_UPDATE
+}
+
+enum MatchStatus <<enumeration>> ENUM_COLOR {
+  ONGOING
+  COMPLETED
+  INACTIVE
+}
+
+' ========== Base Entity ==========
+abstract class CommonEntity ENTITY_COLOR {
+  # id: string
+  # createdAt: Date
+  # updatedAt: Date
+  # version: number
+}
+
+' ========== Entities ==========
+class User ENTITY_COLOR {
+  - firstName: string
+  - lastName: string
+  - email: string
+  - password: string
+  - imageUrl: string
+  - isEmailVerified: boolean
+  - verificationToken: string
+  - isMFAEnabled: boolean
+  - mfaSecret: string
+  - recoveryCodes: string[]
+  - googleId: string
+  - githubId: string
+  - diamonds: number
+  - score: number
+  - refreshToken: string
+}
+
+class Match ENTITY_COLOR {
+  - matchId: string
+  - homeTeam: string
+  - awayTeam: string
+  - homeScore: number
+  - awayScore: number
+  - league: string
+  - eventDate: Date
+  - eventTime: string
+  - status: MatchStatus
+}
+
+class Prediction ENTITY_COLOR {
+  - scoreFirstEquipe: number
+  - scoreSecondEquipe: number
+  - numberOfDiamondsBet: number
+  - pointsEarned: number
+}
+
+class Notification ENTITY_COLOR {
+  - type: NotificationType
+  - message: string
+  - data: DataMessage | UserRankingMessage
+  - read: boolean
+}
+
+class DataMessage ENTITY_COLOR {
+  + gain: number
+  + newDiamonds: number
+}
+
+class UserRankingMessage ENTITY_COLOR {
+  + rankings: UserRanking[]
+}
+
+class UserRanking ENTITY_COLOR {
+  + firstName: string
+  + lastName: string
+  + score: number
+  + imageUrl: string
+}
+
+' ========== Relationships ==========
+
+' Inheritance
+CommonEntity <|-- User
+CommonEntity <|-- Match
+CommonEntity <|-- Prediction
+CommonEntity <|-- Notification
+
+' Many-to-Many: User <-> Match through Prediction
+User "1" -- "0..*" Prediction
+Match "1" -- "0..*" Prediction
+Prediction "*" -- "*" Match : predicts >
+Prediction "*" -- "*" User : made by >
+
+' One-to-Many: User -> Notification
+User "1" *-- "0..*" Notification
+
+' Enums
+Match --> MatchStatus : status
+Notification --> NotificationType : type
+
+' Composition
+Notification o-- DataMessage : data
+Notification o-- UserRankingMessage : data
+UserRankingMessage "1" *-- "0..*" UserRanking : rankings >
+
+' Notes
+note right of User
+  Table: _user
+  Représente les utilisateurs du système
+  avec authentification MFA et système
+  de points/diamants pour les prédictions
+end note
+
+note right of Match
+  Table: match
+  Représente les matchs de football
+  avec leurs informations et statuts
+end note
+
+note right of Prediction
+  Table: prediction
+  Table d'association pour la relation
+  many-to-many entre User et Match.
+  Contient les prédictions de scores
+  et les gains associés
+end note
+
+note right of Notification
+  Table: notification
+  Notifications temps réel envoyées
+  aux utilisateurs (gains, classements)
+end note
+
+@enduml
