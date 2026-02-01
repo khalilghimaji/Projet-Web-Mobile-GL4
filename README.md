@@ -104,7 +104,7 @@ This is a **microservices-based architecture** with three main components:
 - **Database**: MySQL with TypeORM 0.3.22
 - **Authentication**: 
   - JWT (jsonwebtoken 9.0.2)
-  - Passport.js with strategies (Local, JWT, Google, GitHub)
+  - Passport with strategies (Local, JWT, Google, GitHub)
   - Two-Factor Authentication (otplib 12.0.1)
 - **Real-Time**: Socket.io 4.8.1
 - **Caching**: Redis (ioredis 5.6.1)
@@ -553,7 +553,7 @@ npm run start:prod
 npm run test
 
 # E2E tests
-npm test:e2e
+npm run test:e2e
 
 # Lint code
 npm run lint
