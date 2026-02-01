@@ -900,11 +900,11 @@ For support and questions:
 This project was developed by a team of dedicated GL4 students. Here are the main contributors and their significant contributions:
 
 ### 🎯 Dhouibi Mohamed Aziz ([@3zzouz](https://github.com/3zzouz))
-**Branches:** `main`, `mobile-main`, `auth`, `integrating-backend-with-api`, `predictions_and_diamonds`, `ranking_prediction`
+**Branches:** `main`, `auth`, `integrating-backend-with-api`, `predictions_and_diamonds`, `ranking_prediction`
 
 **Key Contributions:**
 - **Backend Architecture & Authentication**: Designed and implemented comprehensive authentication system including JWT tokens, OAuth integration (Google, GitHub), email verification, password recovery, and two-factor authentication (MFA)
-- **Mobile Application (Flutter)**: Led the development of the Flutter mobile app with authentication, match viewing, predictions, and real-time updates integration
+- **Score Prediction Popup**: Created the score prediction dialog component allowing users to submit and update match predictions
 - **Real-Time Features**: Implemented WebSocket integration for live match events and notifications
 - **Predictions & Betting System**: Created the prediction calculator service, diamond betting system, user gains tracking with Redis caching, and ranking/leaderboard functionality
 - **Frontend Refactoring**: Migrated components to Angular signals, implemented rxResource patterns, improved event handling with takeUntilDestroyed, and enhanced UI/UX with responsive design
@@ -946,7 +946,6 @@ This project was developed by a team of dedicated GL4 students. Here are the mai
 
 **Key Contributions:**
 - **Single Match Details**: Built the detailed match view page showing comprehensive match information, lineups, statistics, and match timeline
-- **Score Prediction Popup**: Created the score prediction dialog component allowing users to submit and update match predictions
 - **Match Predictions Integration**: Connected prediction functionality with match details including prediction percentages and betting amounts
 - **Project Restructuring**: Reorganized the frontend project structure to group components by feature for better maintainability
 - **Match Services**: Developed services for match data fetching, prediction submission, and WebSocket integration
