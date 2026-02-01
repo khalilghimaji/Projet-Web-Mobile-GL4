@@ -109,7 +109,6 @@ This is a **microservices-based architecture** with three main components:
 - **Real-Time**: Socket.io 4.8.1
 - **Caching**: Redis (ioredis 5.6.1)
 - **Email**: Nodemailer 6.10.1 with Handlebars templates
-- **Payments**: Stripe 18.0.0
 - **Security**: Helmet, bcrypt, CSRF protection
 - **Testing**: Jest
 
@@ -138,7 +137,6 @@ Before you begin, ensure you have the following installed:
 
 ### API Keys
 - **AllSportsAPI Key** - Get your free API key from [AllSportsAPI](https://allsportsapi.com/)
-- **Stripe Keys** - For payment processing (optional)
 - **OAuth Credentials** - Google and GitHub OAuth apps (optional)
 
 ## 🚀 Quick Start
@@ -424,7 +422,6 @@ back/
 │   ├── notifications/      # Notification system
 │   ├── teams/              # Team information
 │   ├── standings/          # League standings
-│   ├── payments/           # Stripe integration
 │   ├── websockets/         # Socket.io gateway
 │   └── main.ts             # Application entry
 ├── test/                   # E2E tests
@@ -508,10 +505,6 @@ MAIL_PORT=587
 MAIL_USER=your_email@gmail.com
 MAIL_PASSWORD=your_app_password
 MAIL_FROM=noreply@footballapp.com
-
-# Stripe
-STRIPE_SECRET_KEY=your_stripe_secret_key
-STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
 
 # Redis
 REDIS_HOST=localhost
