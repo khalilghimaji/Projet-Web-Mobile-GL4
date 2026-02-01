@@ -905,10 +905,11 @@ This project was developed by a team of dedicated GL4 students. Here are the mai
 **Key Contributions:**
 - **Backend Architecture & Authentication**: Designed and implemented comprehensive authentication system including JWT tokens, OAuth integration (Google, GitHub), email verification, password recovery, and two-factor authentication (MFA)
 - **Score Prediction Popup**: Created the score prediction dialog component allowing users to submit and update match predictions
-- **Real-Time Features**: Implemented WebSocket integration for live match events and notifications
+- **Real-Time Features**: Implemented SSE integration for notifications
 - **Predictions & Betting System**: Created the prediction calculator service, diamond betting system, user gains tracking with Redis caching, and ranking/leaderboard functionality
 - **Frontend Refactoring**: Migrated components to Angular signals, implemented rxResource patterns, improved event handling with takeUntilDestroyed, and enhanced UI/UX with responsive design
 - **Documentation**: Authored comprehensive project documentation including README updates, architecture diagrams, and setup guides
+- **Event Handling Optimization**: Refactored DOM event handling to use RxJS fromEvent for better performance and memory management
 
 ### ⚽ Rayen Chemlali ([@Rayen-Chemlali](https://github.com/Rayen-Chemlali))
 **Branches:** `fixtures`, `main`
@@ -920,6 +921,8 @@ This project was developed by a team of dedicated GL4 students. Here are the mai
 - **Search & Filtering**: Built optimized league search feature with chip-based filtering using RxJS fromEvent optimizations
 - **Factory/Store Pattern**: Refactored fixtures page to use the factory/store pattern with signals for better state management
 - **Mock Server Development**: Enhanced Rust WebSocket server with mock data capabilities for testing and half-time event handling
+- **Event Handling Optimization**: Refactored DOM event handling to use RxJS fromEvent for better performance and memory management
+
 
 ### 🎨 Mohamed Dhia Medini ([@Dhia9030](https://github.com/Dhia9030))
 **Branches:** `team_details`, `teams`, `fixtures`, `main`
@@ -940,6 +943,7 @@ This project was developed by a team of dedicated GL4 students. Here are the mai
 - **League Navigation**: Implemented navigation between leagues list and individual league standings
 - **Routing Enhancements**: Updated routing configuration with RouterLink and RouterLinkActive for better navigation
 - **Matches Integration**: Contributed to match data integration and display
+- **Event Handling Optimization**: Refactored DOM event handling to use RxJS fromEvent for better performance and memory management
 
 ### 🏆 Khalil Ghimaji ([@Khalil-Ghimaji](https://github.com/Khalil-Ghimaji))
 **Branches:** `single-match`, `matches`, `predictions_and_diamonds`, `main`
@@ -949,6 +953,7 @@ This project was developed by a team of dedicated GL4 students. Here are the mai
 - **Match Predictions Integration**: Connected prediction functionality with match details including prediction percentages and betting amounts
 - **Project Restructuring**: Reorganized the frontend project structure to group components by feature for better maintainability
 - **Match Services**: Developed services for match data fetching, prediction submission, and WebSocket integration
+- **Event Handling Optimization**: Refactored DOM event handling to use RxJS fromEvent for better performance and memory management
 
 ### ⚙️ Rust WebSocket Service
 **Branch:** `live-score`, `main`
