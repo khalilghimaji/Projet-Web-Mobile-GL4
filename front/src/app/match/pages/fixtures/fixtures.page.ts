@@ -234,10 +234,10 @@ export class FixturesPage {
     if (fixture.event_live === '1') {
       if (fixture.event_status === 'Half Time') {
         parsedStatus = 'HALFTIME';
-        minute = 45;
       } else {
         parsedStatus = 'LIVE';
-        minute = this.inferMinuteFromFixture(fixture);
+        const statusMinute = this.parseMinuteString(fixture.event_status);
+        minute = statusMinute > 0 ? statusMinute : this.inferMinuteFromFixture(fixture);
       }
     } else if (fixture.event_status === 'Finished') {
       parsedStatus = 'FINISHED';

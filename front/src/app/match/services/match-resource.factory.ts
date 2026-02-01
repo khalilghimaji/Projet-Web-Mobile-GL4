@@ -150,9 +150,12 @@ function getEventStatus(event_live:string, event_status:string){
     return 'LIVE';
   } else if (event_status == 'Finished') {
     return 'FT';
+  } else if (event_live == '0' && event_status && event_status !== '') {
+    return 'FT';
   } else {
     return 'SCHEDULED'
   }
+  console.log("here me",event_status)
 }
 
 function hydrateFromSnapshot(
@@ -163,7 +166,7 @@ function hydrateFromSnapshot(
   s.matchHeaderSignal.set({
     status:{
       isLive: dto.event_live != '0',
-      minute: dto.event_status,
+      minute: parseStatusMinute(dto.event_status),
       status: getEventStatus(dto.event_live, dto.event_status),
       competition: dto.league_name,
     },
@@ -281,10 +284,14 @@ function applyEvent(
   s: MatchSignals
 ) {
   switch (event.type) {
-    case 'GOAL_SCORED':
+    case 'GOAL_SCORED': {
       const goalMinute = parseMinuteString(event.minute);
       s.matchHeaderSignal.update(header => ({
-        ...(header!),
+        ...header!,
+        status: {
+          ...header!.status,
+          minute: goalMinute,
+        },
         score: {
           ...header!.score,
           home: event.team === 'home' ? header!.score.home + 1 : header!.score.home,
@@ -299,9 +306,17 @@ function applyEvent(
         player: event.scorer,
       }]);
       break;
+    }
 
-    case 'CARD_ISSUED':
+    case 'CARD_ISSUED': {
       const cardMinute = parseMinuteString(event.minute);
+      s.matchHeaderSignal.update(header => ({
+        ...header!,
+        status: {
+          ...header!.status,
+          minute: cardMinute,
+        }
+      }))
       s.timelineSignal.update(t => [...t,{
         id: `event-card-${event.minute}-${event.player}`,
         minute: cardMinute,
@@ -310,9 +325,17 @@ function applyEvent(
         player: event.player,
       }]);
       break;
+    }
 
-    case 'SUBSTITUTION':
+    case 'SUBSTITUTION': {
       const subMinute = parseMinuteString(event.minute);
+      s.matchHeaderSignal.update(header => ({
+        ...header!,
+        status: {
+          ...header!.status,
+          minute: subMinute,
+        }
+      }))
       s.timelineSignal.update(t => [...t,{
         id: `event-substitution-${event.minute}-${event.player_in}`,
         minute: subMinute,
@@ -322,11 +345,13 @@ function applyEvent(
         detail: `OUT: ${event.player_out}`,
       }]);
       break;
+    }
     case 'MATCH_ENDED':
       s.matchHeaderSignal.update(header => ({
-        ...(header!),
+        ...header!,
         status: {
           ...header!.status,
+          minute: 0,
           isLive: false,
           status: 'FT'
         }
@@ -334,10 +359,10 @@ function applyEvent(
       break;
     case 'HALF_TIME':
       s.matchHeaderSignal.update(header => ({
-        ...(header!),
+        ...header!,
         status: {
+          minute: 0,
           ...header!.status,
-          minute: 45,
           isLive: true,
           status: 'HT'
         }
@@ -345,7 +370,7 @@ function applyEvent(
       break;
     case 'SECOND_HALF_STARTED':
       s.matchHeaderSignal.update(header => ({
-        ...(header!),
+        ...header!,
         status: {
           ...header!.status,
           isLive: true,
@@ -356,7 +381,7 @@ function applyEvent(
       break;
     case 'MATCH_STARTED':
       s.matchHeaderSignal.update(header => ({
-        ...(header!),
+        ...header!,
         status: {
           ...header!.status,
           isLive: true,
@@ -367,7 +392,7 @@ function applyEvent(
       break;
     case 'SCORE_UPDATE':
       s.matchHeaderSignal.update(t=> ({
-        ...(t!),
+        ...t!,
         score: {
           ...t!.score,
           home: Number(event.score.split('-')[0]) || 0,
@@ -459,7 +484,7 @@ function hydrateFromLocalStorage(cached: StoredMatch, s: MatchSignals): void {
   s.matchHeaderSignal.set({
     status: {
       isLive: cached.event_live === '1',
-      minute: parseInt(cached.event_status) || 0,
+      minute: parseStatusMinute(cached.event_status),
       status: getEventStatus(cached.event_live, cached.event_status),
       competition: cached.league_name || '',
     },
@@ -492,9 +517,6 @@ function hydrateFromLocalStorage(cached: StoredMatch, s: MatchSignals): void {
     })));
   }
 }
-/**
- * Parse "28" ou "45+2" → 47
- */
 function parseMinuteString(timeStr: string): number {
   if (!timeStr) return 0;
   if (timeStr.includes('+')) {
@@ -504,30 +526,13 @@ function parseMinuteString(timeStr: string): number {
   return parseInt(timeStr) || 0;
 }
 
-/**
- * Infère la minute depuis les événements du match
- */
-function inferMinuteFromEvents(dto: any): number {
-  const allEvents = [
-    ...(dto.goalscorers || []),
-    ...(dto.cards || []),
-    ...(dto.substitutes || []),
-  ];
-
-  if (allEvents.length === 0) {
-    if (dto.event_live === '1' && dto.event_status === '') {
-      return 1; // Match live sans événement
-    }
-    return 0;
-  }
-
-  let maxMinute = 0;
-  for (const event of allEvents) {
-    const minute = parseMinuteString(event.time);
-    if (minute > maxMinute) maxMinute = minute;
-  }
-  return maxMinute;
+function parseStatusMinute(status: string): number {
+  if (!status) return 0;
+  if (status === 'Half Time') return 0;
+  if (status === 'Finished') return 0;
+  return parseMinuteString(status);
 }
+
 
 function mapEventType(type: string): 'GOAL' | 'YELLOW_CARD' | 'RED_CARD' | 'SUBSTITUTION' {
   switch (type) {

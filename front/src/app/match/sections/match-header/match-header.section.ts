@@ -27,16 +27,13 @@ export interface MatchHeader {
   styleUrl: './match-header.section.css'
 })
 export class MatchHeaderSection {
-  // Signal reference from parent (page)
   @Input({required:true}) matchHeaderSignal!: Signal<MatchHeader>;
 
-  // Derived signals for child components
   statusSignal = computed(() => this.matchHeaderSignal().status);
   homeTeamSignal = computed(() => this.matchHeaderSignal().homeTeam);
   awayTeamSignal = computed(() => this.matchHeaderSignal().awayTeam);
   scoreSignal = computed(() => this.matchHeaderSignal().score);
 
-  // Timer signal with required minute property
   timerStatusSignal = computed(() => {
     const status = this.matchHeaderSignal().status;
     return {
