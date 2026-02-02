@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/match_models.dart';
+import '../../utils/formation_util.dart';
 
 /// Timeline section showing match events
 class MatchTimelineWidget extends StatelessWidget {
@@ -398,31 +399,45 @@ class LineupsPitchWidget extends StatelessWidget {
   }
 
   List<Widget> _buildPlayerPositions(List<PlayerPosition> players, bool isHome) {
-    return players.map((player) {
-      // Simple positioning based on index for now
-      final index = players.indexOf(player);
-      final x = 0.1 + (index % 4) * 0.25;
-      final y = isHome ? 0.1 + (index ~/ 4) * 0.15 : 0.9 - (index ~/ 4) * 0.15;
+    if (players.isEmpty) return [];
+
+    // Use formation utility to get properly positioned players
+    final formation = isHome ? lineups.homeFormation : lineups.awayFormation;
+    final positionedPlayers = mapPlayersToFormation(players, formation, isHome);
+
+    return positionedPlayers.map((player) {
+      // Use the row (y%) and col (x%) from the player position
+      // Convert percentage to actual position
+      final xPercent = player.col / 100.0;
+      final yPercent = player.row / 100.0;
 
       return Positioned(
-        left: x * 300,
-        top: y * 400,
+        left: xPercent * 350, // Width of the container
+        top: yPercent * 400,  // Height of the container
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 32,
-              height: 32,
+              width: 36,
+              height: 36,
               decoration: BoxDecoration(
                 color: isHome ? Colors.blue : Colors.red,
                 shape: BoxShape.circle,
                 border: Border.all(color: Colors.white, width: 2),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.3),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
               child: Center(
                 child: Text(
                   '${player.playerNumber}',
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 12,
+                    fontSize: 13,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -430,18 +445,21 @@ class LineupsPitchWidget extends StatelessWidget {
             ),
             const SizedBox(height: 2),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+              constraints: const BoxConstraints(maxWidth: 60),
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.6),
+                color: Colors.black.withOpacity(0.7),
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Text(
                 player.playerName.split(' ').last,
                 style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 8,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w500,
                 ),
                 overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
               ),
             ),
           ],

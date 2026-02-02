@@ -1,6 +1,30 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'dart:async';
+
+// Mutex to prevent concurrent notification operations that can cause database locks
+class _NotificationMutex {
+  bool _locked = false;
+  final _queue = <Completer<void>>[];
+
+  Future<void> acquire() async {
+    while (_locked) {
+      final completer = Completer<void>();
+      _queue.add(completer);
+      await completer.future;
+    }
+    _locked = true;
+  }
+
+  void release() {
+    _locked = false;
+    if (_queue.isNotEmpty) {
+      final completer = _queue.removeAt(0);
+      completer.complete();
+    }
+  }
+}
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -10,6 +34,8 @@ class NotificationService {
   final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
+  final _NotificationMutex _mutex = _NotificationMutex();
+
   // Store router instance for navigation
   static GoRouter? _router;
 
@@ -18,51 +44,56 @@ class NotificationService {
   }
 
   Future<void> initialize() async {
-    print('[NOTIFICATION] Initializing notification service...');
+    await _mutex.acquire();
+    try {
+      print('[NOTIFICATION] Initializing notification service...');
 
-    const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+      const AndroidInitializationSettings initializationSettingsAndroid =
+          AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    const DarwinInitializationSettings initializationSettingsIOS =
-        DarwinInitializationSettings(
-          requestAlertPermission: true,
-          requestBadgePermission: true,
-          requestSoundPermission: true,
-        );
+      const DarwinInitializationSettings initializationSettingsIOS =
+          DarwinInitializationSettings(
+            requestAlertPermission: true,
+            requestBadgePermission: true,
+            requestSoundPermission: true,
+          );
 
-    const InitializationSettings initializationSettings =
-        InitializationSettings(
-          android: initializationSettingsAndroid,
-          iOS: initializationSettingsIOS,
-        );
+      const InitializationSettings initializationSettings =
+          InitializationSettings(
+            android: initializationSettingsAndroid,
+            iOS: initializationSettingsIOS,
+          );
 
-    await _flutterLocalNotificationsPlugin.initialize(
-      initializationSettings,
-      onDidReceiveNotificationResponse: (NotificationResponse response) {
-        _handleNotificationTap(response);
-      },
-    );
+      await _flutterLocalNotificationsPlugin.initialize(
+        initializationSettings,
+        onDidReceiveNotificationResponse: (NotificationResponse response) {
+          _handleNotificationTap(response);
+        },
+      );
 
-    // Create notification channel for Android
-    const AndroidNotificationChannel channel = AndroidNotificationChannel(
-      'kickstream_channel',
-      'KickStream Notifications',
-      description: 'Notifications for KickStream app',
-      importance: Importance.high,
-      playSound: true,
-      showBadge: true,
-    );
+      // Create notification channel for Android
+      const AndroidNotificationChannel channel = AndroidNotificationChannel(
+        'kickstream_channel',
+        'KickStream Notifications',
+        description: 'Notifications for KickStream app',
+        importance: Importance.high,
+        playSound: true,
+        showBadge: true,
+      );
 
-    await _flutterLocalNotificationsPlugin
-        .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin
-        >()
-        ?.createNotificationChannel(channel);
+      await _flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >()
+          ?.createNotificationChannel(channel);
 
-    // Request permissions after initialization
-    await _requestPermissions();
+      // Request permissions after initialization
+      await _requestPermissions();
 
-    print('[NOTIFICATION] Notification service initialized successfully');
+      print('[NOTIFICATION] Notification service initialized successfully');
+    } finally {
+      _mutex.release();
+    }
   }
 
   Future<void> _requestPermissions() async {
@@ -91,34 +122,39 @@ class NotificationService {
     required String body,
     String? payload,
   }) async {
-    print('[NOTIFICATION] Showing notification: $title - $body');
+    await _mutex.acquire();
+    try {
+      print('[NOTIFICATION] Showing notification: $title - $body');
 
-    const NotificationDetails notificationDetails = NotificationDetails(
-      android: AndroidNotificationDetails(
-        'kickstream_channel',
-        'KickStream Notifications',
-        channelDescription: 'Notifications for KickStream app',
-        importance: Importance.high,
-        priority: Priority.high,
-        showWhen: true,
-        icon: '@mipmap/ic_launcher',
-      ),
-      iOS: DarwinNotificationDetails(
-        presentAlert: true,
-        presentBadge: true,
-        presentSound: true,
-      ),
-    );
+      const NotificationDetails notificationDetails = NotificationDetails(
+        android: AndroidNotificationDetails(
+          'kickstream_channel',
+          'KickStream Notifications',
+          channelDescription: 'Notifications for KickStream app',
+          importance: Importance.high,
+          priority: Priority.high,
+          showWhen: true,
+          icon: '@mipmap/ic_launcher',
+        ),
+        iOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+        ),
+      );
 
-    await _flutterLocalNotificationsPlugin.show(
-      DateTime.now().millisecondsSinceEpoch ~/ 1000, // Unique ID
-      title,
-      body,
-      notificationDetails,
-      payload: payload ?? '/notifications', // Default to notifications screen
-    );
+      await _flutterLocalNotificationsPlugin.show(
+        DateTime.now().millisecondsSinceEpoch ~/ 1000, // Unique ID
+        title,
+        body,
+        notificationDetails,
+        payload: payload ?? '/notifications', // Default to notifications screen
+      );
 
-    print('[NOTIFICATION] Notification sent successfully');
+      print('[NOTIFICATION] Notification sent successfully');
+    } finally {
+      _mutex.release();
+    }
   }
 
   void _handleNotificationTap(NotificationResponse response) {

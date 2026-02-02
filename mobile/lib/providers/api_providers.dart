@@ -12,6 +12,31 @@ import 'dart:async';
 import 'package:mobile/providers/notifications_provider.dart';
 import 'package:mobile/providers/rankings_provider.dart';
 
+// Simple mutex to prevent concurrent secure storage access
+class _StorageMutex {
+  bool _locked = false;
+  final _queue = <Completer<void>>[];
+
+  Future<void> acquire() async {
+    while (_locked) {
+      final completer = Completer<void>();
+      _queue.add(completer);
+      await completer.future;
+    }
+    _locked = true;
+  }
+
+  void release() {
+    _locked = false;
+    if (_queue.isNotEmpty) {
+      final completer = _queue.removeAt(0);
+      completer.complete();
+    }
+  }
+}
+
+final _storageMutex = _StorageMutex();
+
 // Token validation interceptor
 class TokenValidationInterceptor extends Interceptor {
   final Dio _dio;
@@ -157,7 +182,17 @@ class TokenValidationInterceptor extends Interceptor {
 
 // Storage providers
 final secureStorageProvider = Provider<FlutterSecureStorage>((ref) {
-  return const FlutterSecureStorage();
+  // Configure secure storage with Android options to prevent database locking
+  return const FlutterSecureStorage(
+    aOptions: AndroidOptions(
+      encryptedSharedPreferences: true,
+      // This prevents database locking issues on Android
+      resetOnError: true,
+    ),
+    iOptions: IOSOptions(
+      accessibility: KeychainAccessibility.first_unlock,
+    ),
+  );
 });
 
 final sharedPreferencesProvider = FutureProvider<SharedPreferences>((ref) {
@@ -308,18 +343,33 @@ class AuthTokenNotifier extends StateNotifier<String?> {
   static const String _tokenKey = 'access_token';
 
   Future<void> _loadToken() async {
-    final token = await _storage.read(key: _tokenKey);
-    state = token;
+    await _storageMutex.acquire();
+    try {
+      final token = await _storage.read(key: _tokenKey);
+      state = token;
+    } finally {
+      _storageMutex.release();
+    }
   }
 
   Future<void> setToken(String token) async {
-    await _storage.write(key: _tokenKey, value: token);
-    state = token;
+    await _storageMutex.acquire();
+    try {
+      await _storage.write(key: _tokenKey, value: token);
+      state = token;
+    } finally {
+      _storageMutex.release();
+    }
   }
 
   Future<void> clearToken() async {
-    await _storage.delete(key: _tokenKey);
-    state = null;
+    await _storageMutex.acquire();
+    try {
+      await _storage.delete(key: _tokenKey);
+      state = null;
+    } finally {
+      _storageMutex.release();
+    }
   }
 }
 
@@ -333,18 +383,33 @@ class RefreshTokenNotifier extends StateNotifier<String?> {
   static const String _tokenKey = 'refresh_token';
 
   Future<void> _loadToken() async {
-    final token = await _storage.read(key: _tokenKey);
-    state = token;
+    await _storageMutex.acquire();
+    try {
+      final token = await _storage.read(key: _tokenKey);
+      state = token;
+    } finally {
+      _storageMutex.release();
+    }
   }
 
   Future<void> setToken(String token) async {
-    await _storage.write(key: _tokenKey, value: token);
-    state = token;
+    await _storageMutex.acquire();
+    try {
+      await _storage.write(key: _tokenKey, value: token);
+      state = token;
+    } finally {
+      _storageMutex.release();
+    }
   }
 
   Future<void> clearToken() async {
-    await _storage.delete(key: _tokenKey);
-    state = null;
+    await _storageMutex.acquire();
+    try {
+      await _storage.delete(key: _tokenKey);
+      state = null;
+    } finally {
+      _storageMutex.release();
+    }
   }
 }
 
@@ -423,7 +488,7 @@ class AuthActions {
     final cookieJar = _ref.read(cookieJarProvider);
     await cookieJar.deleteAll();
 
-    // Clear all stored authentication data
+    // Clear all stored authentication data SEQUENTIALLY to avoid database locks
     await _ref.read(accessTokenProvider.notifier).clearToken();
     await _ref.read(refreshTokenProvider.notifier).clearToken();
     await _ref.read(userDataProvider.notifier).clearUser();

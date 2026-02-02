@@ -66,11 +66,13 @@ class PredictionWidget extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          // User vote display
+          // User vote display or predict button based on voteEnabled
           if (prediction.userVote != null)
             _buildUserVoteDisplay()
           else if (prediction.voteEnabled)
-            _buildPredictButton(),
+            _buildPredictButton()
+          else
+            _buildDisabledMessage(),
         ],
       ),
     );
@@ -142,42 +144,85 @@ class PredictionWidget extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: color.withOpacity(0.5)),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+      child: Column(
         children: [
-          Icon(Icons.check_circle, color: color, size: 20),
-          const SizedBox(width: 8),
-          Text(
-            'Your prediction: $voteLabel (${vote.homeScore}-${vote.awayScore})',
-            style: TextStyle(
-              color: color,
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-            decoration: BoxDecoration(
-              color: Colors.amber.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.diamond, color: Colors.amber, size: 14),
-                const SizedBox(width: 4),
-                Text(
-                  '${vote.diamonds}',
-                  style: const TextStyle(
-                    color: Colors.amber,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    Icon(Icons.check_circle, color: color, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Your prediction',
+                            style: TextStyle(
+                              color: Colors.grey,
+                              fontSize: 11,
+                            ),
+                          ),
+                          Text(
+                            '$voteLabel ${vote.homeScore}-${vote.awayScore}',
+                            style: TextStyle(
+                              color: color,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.amber.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text(
+                            '💎',
+                            style: TextStyle(fontSize: 12),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${vote.diamonds}',
+                            style: const TextStyle(
+                              color: Colors.amber,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
+          if (prediction.voteEnabled) ...[
+            const SizedBox(height: 8),
+            TextButton(
+              onPressed: onPredict,
+              style: TextButton.styleFrom(
+                foregroundColor: color,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              ),
+              child: const Text(
+                'Change',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -202,7 +247,7 @@ class PredictionWidget extends StatelessWidget {
             Icon(Icons.sports_soccer, size: 20),
             SizedBox(width: 8),
             Text(
-              'Predict Score',
+              'Predict & Bet 💎',
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.bold,
@@ -210,6 +255,31 @@ class PredictionWidget extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildDisabledMessage() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.grey.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.grey.withOpacity(0.3)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.lock, color: Colors.grey.shade500, size: 16),
+          const SizedBox(width: 8),
+          Text(
+            'Predictions closed',
+            style: TextStyle(
+              color: Colors.grey.shade500,
+              fontSize: 13,
+            ),
+          ),
+        ],
       ),
     );
   }

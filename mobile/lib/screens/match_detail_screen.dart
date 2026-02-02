@@ -25,14 +25,20 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
   @override
   void initState() {
     super.initState();
-    _loadPrediction();
+    // Delay prediction loading slightly to avoid DB lock with match details loading
+    Future.delayed(const Duration(milliseconds: 200), () {
+      if (mounted) {
+        _loadPrediction();
+      }
+    });
   }
 
   Future<void> _loadPrediction() async {
     try {
       final dio = ref.read(dioProvider);
 
-      // Try to get user prediction
+      // Load predictions SEQUENTIALLY to avoid database locks
+      // Try to get user prediction first
       try {
         final userPredictionResponse = await dio.get('/matches/prediction/${widget.matchId}');
         if (userPredictionResponse.statusCode == 200 && userPredictionResponse.data != null) {
@@ -49,41 +55,51 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
             option = VoteOption.draw;
           }
 
-          setState(() {
-            _prediction = _prediction.copyWith(
-              userVote: UserVote(
-                option: option,
-                homeScore: homeScore,
-                awayScore: awayScore,
-                diamonds: data['numberOfDiamondsBet'] ?? 1,
-              ),
-            );
-          });
+          // Use mounted check before setState
+          if (mounted) {
+            setState(() {
+              _prediction = _prediction.copyWith(
+                userVote: UserVote(
+                  option: option,
+                  homeScore: homeScore,
+                  awayScore: awayScore,
+                  diamonds: data['numberOfDiamondsBet'] ?? 1,
+                ),
+              );
+            });
+          }
         }
       } catch (e) {
         // No prediction yet, that's fine
+        print('[PREDICTION] No user prediction found: $e');
       }
 
-      // Try to get prediction stats
+      // IMPORTANT: Add small delay between API calls to avoid DB lock
+      await Future.delayed(const Duration(milliseconds: 100));
+
+      // Try to get prediction stats (second call)
       try {
         final statsResponse = await dio.get('/matches/predictions-stats/${widget.matchId}');
         if (statsResponse.statusCode == 200 && statsResponse.data != null) {
           final stats = statsResponse.data;
-          setState(() {
-            _prediction = _prediction.copyWith(
-              totalVotes: stats['totalVotes'] ?? 0,
-              homePercentage: (stats['homePercentage'] ?? 0).toDouble(),
-              drawPercentage: (stats['drawPercentage'] ?? 0).toDouble(),
-              awayPercentage: (stats['awayPercentage'] ?? 0).toDouble(),
-              voteEnabled: stats['voteEnabled'] ?? true,
-            );
-          });
+          if (mounted) {
+            setState(() {
+              _prediction = _prediction.copyWith(
+                totalVotes: stats['totalVotes'] ?? 0,
+                homePercentage: (stats['homePercentage'] ?? 0).toDouble(),
+                drawPercentage: (stats['drawPercentage'] ?? 0).toDouble(),
+                awayPercentage: (stats['awayPercentage'] ?? 0).toDouble(),
+                voteEnabled: stats['voteEnabled'] ?? true,
+              );
+            });
+          }
         }
       } catch (e) {
         // Stats not available
+        print('[PREDICTION] No stats available: $e');
       }
     } catch (e) {
-      print('Error loading prediction: $e');
+      print('[PREDICTION] Error loading prediction: $e');
     }
   }
 
