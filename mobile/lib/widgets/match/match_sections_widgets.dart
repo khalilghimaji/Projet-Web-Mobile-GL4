@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../models/match_models.dart';
 import '../../utils/formation_util.dart';
@@ -307,39 +308,53 @@ class LineupsPitchWidget extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Formation headers
+          // Header with Formations (following front-end layout)
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildFormationBadge(lineups.homeFormation, 'Home'),
-              _buildFormationBadge(lineups.awayFormation, 'Away'),
+              Text(
+                'LINEUPS',
+                style: TextStyle(
+                  color: Colors.grey.shade500,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.2,
+                ),
+              ),
+              Row(
+                children: [
+                  _buildFormationBadge(lineups.homeFormation),
+                  const SizedBox(width: 8),
+                  _buildFormationBadge(lineups.awayFormation),
+                ],
+              ),
             ],
           ),
           const SizedBox(height: 16),
           // Pitch
-          Container(
-            height: 400,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Colors.green.shade800,
-                  Colors.green.shade700,
-                ],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
+          AspectRatio(
+            aspectRatio: 2 / 3,
+            child: Container(
+              constraints: const BoxConstraints(maxHeight: 500),
+              decoration: BoxDecoration(
+                color: const Color(0xFF2a4e3a), // Match front-end color
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white.withOpacity(0.1), width: 2),
               ),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.white.withOpacity(0.3)),
-            ),
-            child: Stack(
-              children: [
-                // Pitch lines
-                _buildPitchLines(),
-                // Home players (top half)
-                ..._buildPlayerPositions(lineups.homePlayers, true),
-                // Away players (bottom half)
-                ..._buildPlayerPositions(lineups.awayPlayers, false),
-              ],
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return Stack(
+                    children: [
+                      // Pitch lines
+                      _buildPitchLines(),
+                      // Home players (top half)
+                      ..._buildPlayerPositions(lineups.homePlayers, true, constraints.maxWidth, constraints.maxHeight),
+                      // Away players (bottom half)
+                      ..._buildPlayerPositions(lineups.awayPlayers, false, constraints.maxWidth, constraints.maxHeight),
+                    ],
+                  );
+                },
+              ),
             ),
           ),
         ],
@@ -365,40 +380,33 @@ class LineupsPitchWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildFormationBadge(String formation, String label) {
+  Widget _buildFormationBadge(String formation) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.grey.shade800,
-        borderRadius: BorderRadius.circular(8),
+        color: Colors.white.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(4),
       ),
-      child: Column(
-        children: [
-          Text(
-            label,
-            style: TextStyle(color: Colors.grey.shade400, fontSize: 11),
-          ),
-          Text(
-            formation.isEmpty ? '-' : formation,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
+      child: Text(
+        formation.isEmpty ? '-' : formation,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+        ),
       ),
     );
   }
 
   Widget _buildPitchLines() {
-    return CustomPaint(
-      size: const Size(double.infinity, 400),
-      painter: PitchLinesPainter(),
+    return Positioned.fill(
+      child: CustomPaint(
+        painter: PitchLinesPainter(),
+      ),
     );
   }
 
-  List<Widget> _buildPlayerPositions(List<PlayerPosition> players, bool isHome) {
+  List<Widget> _buildPlayerPositions(List<PlayerPosition> players, bool isHome, double containerWidth, double containerHeight) {
     if (players.isEmpty) return [];
 
     // Use formation utility to get properly positioned players
@@ -406,63 +414,73 @@ class LineupsPitchWidget extends StatelessWidget {
     final positionedPlayers = mapPlayersToFormation(players, formation, isHome);
 
     return positionedPlayers.map((player) {
+      // Check if player is goalkeeper
+      final isGoalkeeper = player.position.toLowerCase() == 'gk' || player.position.toLowerCase() == 'goalkeeper';
+
       // Use the row (y%) and col (x%) from the player position
       // Convert percentage to actual position
       final xPercent = player.col / 100.0;
       final yPercent = player.row / 100.0;
 
       return Positioned(
-        left: xPercent * 350, // Width of the container
-        top: yPercent * 400,  // Height of the container
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: isHome ? Colors.blue : Colors.red,
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 2),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.3),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
+        left: xPercent * containerWidth,
+        top: yPercent * containerHeight,
+        child: Transform.translate(
+          offset: const Offset(-18, -18), // Center the 36px circle
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: isGoalkeeper
+                      ? const Color(0xFFFACC15) // Yellow for goalkeepers
+                      : isHome
+                          ? const Color(0xFFBAE6FD) // Sky blue for home
+                          : const Color(0xFFDC2626), // Red for away
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.3),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: Text(
+                    '${player.playerNumber}',
+                    style: TextStyle(
+                      color: isGoalkeeper || isHome ? Colors.black : Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ],
+                ),
               ),
-              child: Center(
+              const SizedBox(height: 4),
+              Container(
+                constraints: const BoxConstraints(maxWidth: 70),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.4),
+                  borderRadius: BorderRadius.circular(4),
+                ),
                 child: Text(
-                  '${player.playerNumber}',
+                  player.playerName.split(' ').last,
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
                   ),
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
                 ),
               ),
-            ),
-            const SizedBox(height: 2),
-            Container(
-              constraints: const BoxConstraints(maxWidth: 60),
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.7),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(
-                player.playerName.split(' ').last,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 9,
-                  fontWeight: FontWeight.w500,
-                ),
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       );
     }).toList();
@@ -474,46 +492,63 @@ class PitchLinesPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.white.withOpacity(0.4)
+      ..color = Colors.white.withOpacity(0.2)
       ..strokeWidth = 2
       ..style = PaintingStyle.stroke;
 
+    const inset = 16.0; // Match front-end inset-4 (16px)
+
+    // Outer boundary
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTRB(inset, inset, size.width - inset, size.height - inset),
+        const Radius.circular(4),
+      ),
+      paint,
+    );
+
     // Center line
     canvas.drawLine(
-      Offset(0, size.height / 2),
-      Offset(size.width, size.height / 2),
+      Offset(inset, size.height / 2),
+      Offset(size.width - inset, size.height / 2),
       paint,
     );
 
     // Center circle
     canvas.drawCircle(
       Offset(size.width / 2, size.height / 2),
-      50,
+      min(size.width, size.height) * 0.08, // 8% of smallest dimension
       paint,
     );
 
     // Goal areas
-    const goalWidth = 100.0;
-    const goalHeight = 30.0;
+    final goalWidth = size.width * 0.3; // 30% of width
+    final goalHeight = size.height * 0.06; // 6% of height
 
     // Top goal area
-    canvas.drawRect(
-      Rect.fromLTWH(
-        (size.width - goalWidth) / 2,
-        0,
-        goalWidth,
-        goalHeight,
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(
+          (size.width - goalWidth) / 2,
+          inset,
+          goalWidth,
+          goalHeight,
+        ),
+        const Radius.circular(8),
       ),
       paint,
     );
 
     // Bottom goal area
-    canvas.drawRect(
-      Rect.fromLTWH(
-        (size.width - goalWidth) / 2,
-        size.height - goalHeight,
-        goalWidth,
-        goalHeight,
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(
+          (size.width - goalWidth) / 2,
+          size.height - inset - goalHeight,
+          goalWidth,
+          goalHeight,
+        ),
+        const Radius.circular(8),
       ),
       paint,
     );

@@ -407,8 +407,6 @@ class FootballApiService {
         print('[TIMELINE] Error parsing substitution: $e');
         // Continue with next substitution
       }
-    } catch (e) {
-      print('[TIMELINE] Error parsing substitutes list: $e');
     }
 
     // Sort by minute with error handling

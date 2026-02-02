@@ -56,13 +56,12 @@ List<double> calculateXPositions(int playerCount) {
   }
 
   final positions = <double>[];
-  // Use 70% of width (15% margins on each side)
-  const margin = 15.0;
-  const usableWidth = 70.0;
-  final spacing = usableWidth / (playerCount - 1);
+  // Use 80% of width with 10% offset on each side (matching front-end)
+  const offset = 10.0;
+  final spacing = 80.0 / (playerCount + 1);
 
-  for (var i = 0; i < playerCount; i++) {
-    positions.add(margin + (spacing * i));
+  for (var i = 1; i <= playerCount; i++) {
+    positions.add(offset + (spacing * i));
   }
 
   return positions;
@@ -72,7 +71,7 @@ List<double> calculateXPositions(int playerCount) {
 Map<String, double> getGoalkeeperPosition(bool isHome) {
   return {
     'x': 50.0,
-    'y': isHome ? 5.0 : 95.0,
+    'y': isHome ? 2.0 : 98.0, // Match front-end: 2% for home, 98% for away
   };
 }
 
