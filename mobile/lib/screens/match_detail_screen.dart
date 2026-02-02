@@ -18,19 +18,45 @@ class MatchDetailScreen extends ConsumerStatefulWidget {
   ConsumerState<MatchDetailScreen> createState() => _MatchDetailScreenState();
 }
 
-class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
-  bool _showPredictionPopup = false;
+class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen>
+    with WidgetsBindingObserver {
   PredictionData _prediction = PredictionData.empty();
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+
+    // Refresh data on screen opening
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _refreshMatchData();
+    });
+
     // Delay prediction loading slightly to avoid DB lock with match details loading
     Future.delayed(const Duration(milliseconds: 200), () {
       if (mounted) {
         _loadPrediction();
       }
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Refresh data when app comes back to foreground
+    if (state == AppLifecycleState.resumed) {
+      _refreshMatchData();
+    }
+  }
+
+  /// Refresh match data and ensure WebSocket connection
+  Future<void> _refreshMatchData() async {
+    await ref.read(matchDetailProvider(widget.matchId).notifier).refresh();
   }
 
   Future<void> _loadPrediction() async {
@@ -207,67 +233,73 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
                       ],
                     ),
                   )
-                : CustomScrollView(
-                    slivers: [
-                      // App Bar
-                      SliverAppBar(
-                        backgroundColor: const Color(0xFF0F1419),
-                        floating: true,
-                        leading: IconButton(
-                          icon: const Icon(Icons.arrow_back, color: Colors.white),
-                          onPressed: () => context.pop(),
+                : RefreshIndicator(
+                    onRefresh: _refreshMatchData,
+                    color: const Color(0xFF6366F1),
+                    backgroundColor: const Color(0xFF1A1F26),
+                    child: CustomScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      slivers: [
+                        // App Bar
+                        SliverAppBar(
+                          backgroundColor: const Color(0xFF0F1419),
+                          floating: true,
+                          leading: IconButton(
+                            icon: const Icon(Icons.arrow_back, color: Colors.white),
+                            onPressed: () => context.pop(),
+                          ),
+                          title: const Text(
+                            'Match Detail',
+                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                          ),
+                          centerTitle: true,
+                          actions: [
+                            IconButton(
+                              icon: const Icon(Icons.share, color: Colors.white),
+                              onPressed: () {
+                                // Share functionality
+                              },
+                            ),
+                          ],
                         ),
-                        title: const Text(
-                          'Match Detail',
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+
+                        // Match Header
+                        SliverToBoxAdapter(
+                          child: MatchHeaderWidget(header: state.matchData.header),
                         ),
-                        centerTitle: true,
-                        actions: [
-                          IconButton(
-                            icon: const Icon(Icons.share, color: Colors.white),
-                            onPressed: () {
-                              // Share functionality
+
+                        // Prediction Widget
+                        SliverToBoxAdapter(
+                          child: PredictionWidget(
+                            prediction: _prediction,
+                            onPredict: () {
+                              _showScorePredictionDialog(context, state.matchData.header);
                             },
                           ),
-                        ],
-                      ),
-
-                      // Match Header
-                      SliverToBoxAdapter(
-                        child: MatchHeaderWidget(header: state.matchData.header),
-                      ),
-
-                      // Prediction Widget
-                      SliverToBoxAdapter(
-                        child: PredictionWidget(
-                          prediction: _prediction,
-                          onPredict: () {
-                            _showScorePredictionDialog(context, state.matchData.header);
-                          },
                         ),
-                      ),
 
-                      // Tabs Navigation
-                      SliverPersistentHeader(
-                        pinned: true,
-                        delegate: _TabsHeaderDelegate(
-                          activeTab: state.activeTab,
-                          onTabChanged: (tab) {
-                            ref.read(matchDetailProvider(widget.matchId).notifier).setActiveTab(tab);
-                          },
+                        // Tabs Navigation
+                        SliverPersistentHeader(
+                          pinned: true,
+                          delegate: _TabsHeaderDelegate(
+                            activeTab: state.activeTab,
+                            onTabChanged: (tab) {
+                              ref.read(matchDetailProvider(widget.matchId).notifier).setActiveTab(tab);
+                            },
+                          ),
                         ),
-                      ),
 
-                      // Content based on active tab
-                      SliverToBoxAdapter(
-                        child: _buildTabContent(state),
-                      ),
+                        // Content based on active tab
+                        SliverToBoxAdapter(
+                          child: _buildTabContent(state),
+                        ),
 
-                      // Bottom padding
-                      const SliverToBoxAdapter(
-                        child: SizedBox(height: 100),
-                      ),
-                    ],
+                        // Bottom padding
+                        const SliverToBoxAdapter(
+                          child: SizedBox(height: 100),
+                        ),
+                      ],
+                    ),
                   ),
       ),
     );

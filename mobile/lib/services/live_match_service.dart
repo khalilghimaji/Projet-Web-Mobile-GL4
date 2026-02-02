@@ -15,6 +15,7 @@ class LiveMatchService {
   // Broadcast stream to allow multiple listeners
   final _eventController = StreamController<Map<String, dynamic>>.broadcast();
   bool _isConnected = false;
+  bool _isConnecting = false;
 
   // Reconnection logic
   Timer? _reconnectTimer;
@@ -26,15 +27,17 @@ class LiveMatchService {
   bool get isConnected => _isConnected;
 
   void connect() {
-    // If already connected, don't do anything
-    if (_isConnected) return;
+    // If already connected or connecting, don't do anything
+    if (_isConnected || _isConnecting) return;
 
+    _isConnecting = true;
     final wsUrl = _getWebSocketUrl();
     print('[WS] Connecting to $wsUrl');
 
     try {
       _channel = WebSocketChannel.connect(Uri.parse(wsUrl));
       _isConnected = true;
+      _isConnecting = false;
       _reconnectAttempts = 0; // Reset attempts on successful connection initiated
 
       _channel!.stream.listen(
@@ -82,6 +85,14 @@ class LiveMatchService {
     }
   }
 
+  /// Force reconnection to WebSocket
+  void forceReconnect() {
+    print('[WS] Force reconnecting...');
+    _reconnectAttempts = 0;
+    disconnect();
+    connect();
+  }
+
   void _sendSubscription() {
     if (_channel != null) {
       final subscriptionMsg = jsonEncode({'action': 'subscribe_all'});
@@ -121,6 +132,7 @@ class LiveMatchService {
 
   void _cleanup() {
     _isConnected = false;
+    _isConnecting = false;
     _channel = null;
   }
 
