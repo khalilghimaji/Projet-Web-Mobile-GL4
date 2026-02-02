@@ -79,11 +79,9 @@ export class MatchTimerComponent {
       const isCurrentlyLive = status.isLive && status.status === 'LIVE';
       const wasTimerRunning = this.timerSubscription !== null;
       const isHalftimeToLive = previousStatus === 'HT' && status.status === 'LIVE';
-      const minuteDifference = newMinute - currentMinuteValue;
       const shouldSyncTimer = (
         currentMinuteValue === 0 ||
-        isHalftimeToLive ||
-        Math.abs(minuteDifference) >= 2
+        isHalftimeToLive
       );
 
       if (status.status === 'HT' || status.status === 'FT') {

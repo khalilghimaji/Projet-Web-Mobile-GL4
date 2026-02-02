@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../models/fixture_models.dart';
+import '../../models/fixture_models.dart';
 
 /// Chip for filtering by league
 class LeagueFilterChip extends StatelessWidget {

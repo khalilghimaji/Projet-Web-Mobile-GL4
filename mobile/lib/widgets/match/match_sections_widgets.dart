@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../models/match_models.dart';
+import '../../models/match_models.dart';
 
 /// Timeline section showing match events
 class MatchTimelineWidget extends StatelessWidget {

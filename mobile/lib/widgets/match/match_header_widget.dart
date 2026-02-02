@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../models/match_models.dart';
+import '../../models/match_models.dart';
 
 /// Match header section showing teams, score, and status
 class MatchHeaderWidget extends StatelessWidget {

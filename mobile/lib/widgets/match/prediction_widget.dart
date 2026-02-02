@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../models/match_models.dart';
+import '../../models/match_models.dart';
 
 /// Prediction widget showing voting stats and predict button
 class PredictionWidget extends StatelessWidget {

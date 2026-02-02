@@ -283,6 +283,7 @@ function applyEvent(
   event: any,
   s: MatchSignals
 ) {
+  console.log('Applying event:', event);
   switch (event.type) {
     case 'GOAL_SCORED': {
       const goalMinute = parseMinuteString(event.minute);
