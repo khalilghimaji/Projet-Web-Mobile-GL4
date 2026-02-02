@@ -129,6 +129,7 @@ export class MatchesService {
       actualScoreSecond,
       this.predictionRepository,
       this.userRepository,
+      id,
     );
   }
 
@@ -169,7 +170,7 @@ export class MatchesService {
     await this.notificationsService.notify({
       userId: user.id,
       type: NotificationType.CHANGE_OF_POSSESSED_GEMS,
-      message: `You spent ${diamondsBet} diamonds for your prediction! And now you have ${user.diamonds} diamonds.`,
+      message: `You spent ${diamondsBet} diamonds for your prediction to ${await this.predictionCalculator.matchInfoString(matchId)}! And now you have ${user.diamonds} diamonds.`,
       data: { gain: -diamondsBet, newDiamonds: user.diamonds },
     });
 
@@ -242,8 +243,8 @@ export class MatchesService {
           type: NotificationType.CHANGE_OF_POSSESSED_GEMS,
           message:
             diamondDifference > 0
-              ? `You spent ${diamondDifference} more diamonds for your updated prediction! You now have ${user.diamonds} diamonds.`
-              : `You got ${Math.abs(diamondDifference)} diamonds back from your updated prediction! You now have ${user.diamonds} diamonds.`,
+              ? `You spent ${diamondDifference} more diamonds for your updated prediction to ${await this.predictionCalculator.matchInfoString(matchId)}! You now have ${user.diamonds} diamonds.`
+              : `You got ${Math.abs(diamondDifference)} diamonds back from your updated prediction to ${await this.predictionCalculator.matchInfoString(matchId)}! You now have ${user.diamonds} diamonds.`,
           data: { gain: -diamondDifference, newDiamonds: user.diamonds },
         });
 

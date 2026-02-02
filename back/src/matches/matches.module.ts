@@ -16,8 +16,8 @@ import { WebSocketClientService } from './websocket-client.service';
     NotificationsModule,
   ],
   providers: [
-    MatchesService,
     PredictionCalculatorService,
+    MatchesService,
     WebSocketClientService,
   ],
   controllers: [MatchesController],

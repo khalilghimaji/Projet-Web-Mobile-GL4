@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prediction } from './entities/prediction.entity';
 import {
   NotificationsService,
@@ -8,12 +8,14 @@ import { NotificationType } from '../Enums/notification-type.enum';
 import { Repository } from 'typeorm';
 import { User } from 'src/auth/entities/user.entity';
 import { RedisCacheService } from 'src/Common/cache/redis-cache.service';
+import { ConfigService } from '@nestjs/config/dist/config.service';
 
 @Injectable()
 export class PredictionCalculatorService {
   constructor(
     private readonly notificationsService: NotificationsService,
     private readonly cacheService: RedisCacheService,
+    private readonly configService: ConfigService,
   ) {}
 
   async calculateAndApplyGainsAtMatchEnd(
@@ -24,6 +26,7 @@ export class PredictionCalculatorService {
     predictionRepository: Repository<Prediction>,
   ): Promise<void> {
     const processes: Promise<void>[] = [];
+    const matchString = await this.matchInfoString(predictions[0].matchId);
     console.log('Calculating gains for these predictions : ', predictions);
     for (const prediction of predictions) {
       processes.push(
@@ -49,7 +52,7 @@ export class PredictionCalculatorService {
             userId: prediction.user.id,
             type: NotificationType.DIAMOND_UPDATE,
             message:
-              'The match ended. With the score ' +
+              `The match of ${matchString} ended. With the score ` +
               `${actualScoreFirst} - ${actualScoreSecond}`,
             data: { gain: sum, newDiamonds: 0 },
           });
@@ -58,7 +61,7 @@ export class PredictionCalculatorService {
           await this.notificationsService.notify({
             userId: prediction.user.id,
             type: NotificationType.CHANGE_OF_POSSESSED_GEMS,
-            message: `You gained ${gain} diamonds for your prediction! And now you have ${prediction.user.diamonds} diamonds.`,
+            message: `You gained ${gain} diamonds for your prediction to ${matchString}! And now you have ${prediction.user.diamonds} diamonds.`,
             data: { gain, newDiamonds: prediction.user.diamonds },
           });
           await this.cacheService.storeUserGains(prediction.user.id, sum);
@@ -67,15 +70,54 @@ export class PredictionCalculatorService {
     }
     await Promise.all(processes);
   }
-
+  async matchInfoString(id: string): Promise<string> {
+    const matchInfo = await this.getMatchInfo(id);
+    return `${matchInfo.equipe1} vs ${matchInfo.equipe2} on ${matchInfo.date.toLocaleString()}`;
+  }
+  async getMatchInfo(id: string): Promise<{
+    equipe1: string;
+    equipe2: string;
+    date: Date;
+  }> {
+    // fetch from api the match status using all sports api
+    const apiKey = this.configService.get<string>('ALL_SPORTS_API_KEY');
+    //also need the timezone of the server to send to the api
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const response = await fetch(
+      `https://apiv2.allsportsapi.com/football?met=Fixtures&APIkey=${apiKey}&matchId=${id}&timezone=${timezone}`,
+    );
+    const data = await response.json();
+    const success = data.success;
+    if (success !== 1) {
+      throw new NotFoundException('Match not found in external API');
+    }
+    if (data.result && data.result.length > 0) {
+      const matchData = data.result[0];
+      const eventDate = matchData.event_date;
+      const eventTime = matchData.event_time;
+      // the time is in format HH:MM so we need to combine date and time
+      const eventDateTimeString = `${eventDate}T${eventTime}:00`;
+      const eventDateTime = new Date(eventDateTimeString);
+      const equipe1 = matchData.event_home_team;
+      const equipe2 = matchData.event_away_team;
+      return {
+        equipe1: equipe1,
+        equipe2: equipe2,
+        date: eventDateTime,
+      };
+    }
+    throw new NotFoundException('Match not found in external API');
+  }
   async calculateAndApplyGainsAtMatchUpdate(
     predictions: Prediction[],
     actualScoreFirst: number,
     actualScoreSecond: number,
     predictionRepository: Repository<Prediction>,
     userRepository: Repository<User>,
+    matchId: string,
   ): Promise<void> {
     console.log('Calculating gains for these predictions : ', predictions);
+    const matchString = await this.matchInfoString(matchId);
     const users = new Set<{ id: string; gain: number }>();
     for (const prediction of predictions) {
       const gain = this.calculateGain(
@@ -103,7 +145,7 @@ export class PredictionCalculatorService {
             userId: userId.id,
             type: NotificationType.DIAMOND_UPDATE,
             message:
-              'There was a match update of the match you predicted. And the new score is ' +
+              `There was a match update of the match ${matchString} and you gained for the match you predicted. And the new score is ` +
               `${actualScoreFirst} - ${actualScoreSecond}`,
             data: { gain: sum, newDiamonds: 0 },
           });
