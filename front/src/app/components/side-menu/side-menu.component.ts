@@ -2,7 +2,7 @@ import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { DrawerModule } from 'primeng/drawer';
-import { AuthService } from '../../services/auth.service';
+import { AuthService } from '../../auth/services/auth.service';
 import { ImageDefaultPipe } from '../../shared/pipes/image-default.pipe';
 import { MenuItem } from 'primeng/api';
 import { UserStatsComponent } from './user-stats/user-stats.component';
@@ -42,6 +42,11 @@ export class SideMenuComponent {
   isAuthMenuExpanded = signal(false);
 
   topMenuItems: CustomMenuItem[] = [
+    {
+      icon: 'pi pi-calendar',
+      label: 'Fixtures',
+      route: '/fixtures',
+    },
     {
       icon: 'pi pi-chart-bar',
       label: 'Standings',

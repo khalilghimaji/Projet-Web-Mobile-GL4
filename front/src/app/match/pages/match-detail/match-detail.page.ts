@@ -30,7 +30,7 @@ import { MatchResourceFactory } from '../../services/match-resource.factory';
 import {
   ScorePredictionPopupComponent,
   TeamPrediction,
-} from '../../../components/score-prediction-popup/score-prediction-popup.component';
+} from '../../../rankings/components/score-prediction-popup/score-prediction-popup.component';
 import { catchError, forkJoin, map, of, tap } from 'rxjs';
 import {MatchesService, MatchStat, Prediction} from '../../../services/Api';
 import { rxResource } from '@angular/core/rxjs-interop';
@@ -175,7 +175,7 @@ export class MatchDetailPage {
   }
 
   onBack(): void {
-    this.router.navigate(['/matches']);
+    this.router.navigate(['/fixtures']);
   }
 
   onPredict($event: TeamPrediction) {

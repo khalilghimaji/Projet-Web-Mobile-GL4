@@ -5,14 +5,14 @@ export const authRoutes: Routes = [
   {
     path: 'signup',
     loadComponent: () =>
-      import('../../pages/signup-page/signup-page.component').then(
+      import('../../auth/pages/signup-page/signup-page.component').then(
         (c) => c.SignupPageComponent
       ),
   },
   {
     path: 'login',
     loadComponent: () =>
-      import('../../pages/login-page/login-page.component').then(
+      import('../../auth/pages/login-page/login-page.component').then(
         (c) => c.LoginPageComponent
       ),
   },
@@ -20,20 +20,20 @@ export const authRoutes: Routes = [
     path: 'verify-email',
     loadComponent: () =>
       import(
-        '../../pages/email-verification/email-verification.component'
+        '../../auth/pages/email-verification/email-verification.component'
       ).then((c) => c.EmailVerificationComponent),
   },
   {
     path: 'forget-password',
     loadComponent: () =>
-      import('../../pages/forget-password/forget-password.component').then(
+      import('../../auth/pages/forget-password/forget-password.component').then(
         (c) => c.ForgetPasswordComponent
       ),
   },
   {
     path: 'forget-password/reset',
     loadComponent: () =>
-      import('../../pages/forget-password/forget-password.component').then(
+      import('../../auth/pages/forget-password/forget-password.component').then(
         (c) => c.ForgetPasswordComponent
       ),
     data: { resetMode: true },
@@ -42,7 +42,7 @@ export const authRoutes: Routes = [
     path: 'mfa-setup',
     canActivate: [tokenValidationGuard],
     loadComponent: () =>
-      import('../../pages/mfa-setup/mfa-setup.component').then(
+      import('../../auth/pages/mfa-setup/mfa-setup.component').then(
         (c) => c.MfaSetupComponent
       ),
   },
@@ -52,14 +52,14 @@ export const authRoutes: Routes = [
       {
         path: '',
         loadComponent: () =>
-          import('../../pages/auth-callback/auth-callback.component').then(
+          import('../../auth/pages/auth-callback/auth-callback.component').then(
             (c) => c.AuthCallbackComponent
           ),
       },
       {
         path: ':provider',
         loadComponent: () =>
-          import('../../pages/auth-callback/auth-callback.component').then(
+          import('../../auth/pages/auth-callback/auth-callback.component').then(
             (c) => c.AuthCallbackComponent
           ),
       },

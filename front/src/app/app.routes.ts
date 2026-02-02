@@ -4,6 +4,11 @@ import { betRoutes } from './shared/routes/bet.routes';
 import { STANDINGS_ROUTE } from './shared/routes/standings.routes';
 
 export const routes: Routes = [
+  {
+    path: '',
+    redirectTo: 'fixtures',
+    pathMatch: 'full'
+  },
   ...authRoutes,
   ...betRoutes,
   { path: 'standings', children: STANDINGS_ROUTE },
@@ -17,11 +22,17 @@ export const routes: Routes = [
   {
     path: 'team/:id',
     loadComponent: () =>
-      import(
-        './team-details/pages/team-detail-page/team-detail-page.component'
-      ).then((c) => c.TeamDetailPageComponent),
+      import('./teams/components/team-detail-page/team-detail-page.component').then(
+        (c) => c.TeamDetailPageComponent
+      ),
   },
-
+  {
+    path: 'fixtures',
+    loadComponent: () =>
+      import('./match/pages/fixtures/fixtures.page').then(
+        (m) => m.FixturesPage
+      ),
+  },
   {
     path: 'error',
     children: [

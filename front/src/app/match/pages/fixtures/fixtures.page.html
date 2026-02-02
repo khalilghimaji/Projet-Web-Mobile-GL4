@@ -1,0 +1,163 @@
+<div class="min-h-screen bg-gradient-to-br from-background-dark via-background-dark to-surface-dark/50">
+
+  <div class="max-w-7xl mx-auto px-6 py-8">
+
+
+    <div class="mb-6 bg-surface-dark/60 backdrop-blur-xl rounded-2xl border border-surface-highlight/30 p-6 shadow-2xl">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="material-symbols-outlined text-primary" style="font-size: 24px;">search</span>
+        <h2 class="text-lg font-semibold text-gray-800">Search & Filter Leagues</h2>
+      </div>
+
+      <app-league-search
+        [leagues]="allLeagues()"
+        [currentLeagueId]="selectedLeagueId()"
+        (leagueSelected)="onLeagueSearchSelected($event)"
+        (searchQueryChange)="onSearchQueryChange($event)"
+        (clearFilter)="onClearFilter()"
+      />
+    </div>
+
+    <div class="mb-6 bg-surface-dark/60 backdrop-blur-xl rounded-2xl border border-surface-highlight/30 p-6 shadow-2xl">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-gray-800">Select Date</h2>
+        <div class="flex gap-2">
+          <button class="h-9 w-9 rounded-lg bg-surface-highlight/50 hover:bg-surface-highlight transition flex items-center justify-center text-white">
+            <span class="material-symbols-outlined" style="font-size: 18px;">chevron_left</span>
+          </button>
+          <button class="h-9 w-9 rounded-lg bg-surface-highlight/50 hover:bg-surface-highlight transition flex items-center justify-center text-white">
+            <span class="material-symbols-outlined" style="font-size: 18px;">chevron_right</span>
+          </button>
+        </div>
+      </div>
+
+      <div #dateTabsContainer class="grid grid-cols-5 gap-3">
+        @for (tab of dateTabs(); track tab.date) {
+          <button
+            class="date-tab-button flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-200"
+            [ngClass]="{
+              'bg-primary text-background-dark shadow-lg shadow-primary/30': isSelected(tab),
+              'bg-surface-highlight/30 text-text-secondary hover:bg-surface-highlight hover:text-white': !isSelected(tab)
+            }"
+            [attr.data-date]="tab.date.toISOString()"
+          >
+            <span class="text-xs font-medium mb-1" [class.font-bold]="isSelected(tab)">
+              {{ tab.isToday ? 'Today' : tab.dayName }}
+            </span>
+            <span class="text-2xl font-bold">{{ tab.dayNumber }}</span>
+          </button>
+        }
+      </div>
+    </div>
+
+    <div class="mb-8 flex gap-3 flex-wrap">
+      <app-league-filter-chip
+        [league]="null"
+        [selectedLeagueId]="selectedLeagueId()"
+        (chipClicked)="onLeagueSelected($event)"
+      />
+
+      @for (league of topLeagues(); track league.league_key) {
+        <app-league-filter-chip
+          [league]="league"
+          [selectedLeagueId]="selectedLeagueId()"
+          (chipClicked)="onLeagueSelected($event)"
+        />
+      }
+    </div>
+
+    @if (fixturesResource.isLoading()) {
+      <div class="flex items-center justify-center py-32">
+        <div class="flex flex-col items-center gap-4">
+          <div class="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+          <p class="text-text-secondary text-lg">Loading fixtures...</p>
+        </div>
+      </div>
+    }
+
+    @if (fixturesResource.hasError()) {
+      <div class="flex items-center justify-center py-32">
+        <div class="flex flex-col items-center gap-4 max-w-md">
+          <span class="material-symbols-outlined text-6xl text-red-500">error</span>
+          <p class="text-white text-xl font-bold text-center">Failed to load fixtures</p>
+          <p class="text-text-secondary text-center">Please check your connection and try again</p>
+        </div>
+      </div>
+    }
+
+    @if (fixturesResource.value() !== undefined && fixturesByLeague().length > 0) {
+      @for (group of fixturesByLeague(); track group.league.league_key) {
+        <div class="mb-10">
+
+          <div class="flex items-center justify-between mb-6 px-2">
+            <div class="flex items-center gap-3">
+              <div class="h-12 w-12 rounded-xl bg-gradient-to-br from-surface-highlight/30 to-surface-dark border border-surface-highlight/50 p-2 flex items-center justify-center overflow-hidden">
+                @if (group.league.league_logo) {
+                  <img
+                    [src]="group.league.league_logo"
+                    [alt]="group.league.league_name"
+                    class="w-full h-full object-contain"
+                  />
+                } @else {
+                  <div class="w-6 h-6 rounded-full bg-gradient-to-br from-primary to-blue-500"></div>
+                }
+              </div>
+              <div>
+                <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">{{ group.league.league_name }}</h3>
+                <p class="text-sm text-gray-700 dark:text-gray-300 font-medium">{{ group.league.country_name }}</p>
+              </div>
+            </div>
+            <a [routerLink]="['/standings', group.league.league_key]" class="text-primary text-sm font-semibold hover:text-white transition cursor-pointer flex items-center gap-1">
+              View Standings
+              <span class="material-symbols-outlined" style="font-size: 18px;">arrow_forward</span>
+            </a>
+          </div>
+
+          @defer (on viewport; prefetch on idle) {
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              @for (fixture of group.fixtures; track fixture.event_key) {
+                <app-fixture-card
+                  [fixture]="fixture"
+                  (cardClicked)="onFixtureClicked($event)"
+                />
+              }
+            </div>
+          } @placeholder {
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              @for (i of [1, 2, 3]; track i) {
+                <div class="h-40 bg-surface-highlight/10 rounded-2xl animate-pulse border border-surface-highlight/20"></div>
+              }
+            </div>
+          } @loading (minimum 50ms) {
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              @for (i of [1, 2, 3]; track i) {
+                <div class="h-40 bg-surface-highlight/10 rounded-2xl animate-pulse border border-surface-highlight/20"></div>
+              }
+            </div>
+          }
+        </div>
+
+        @if (!$last) {
+          <div class="h-px bg-gradient-to-r from-transparent via-surface-highlight/50 to-transparent my-10"></div>
+        }
+      }
+    }
+
+    @if (fixturesResource.value() !== undefined && fixturesByLeague().length === 0) {
+      <div class="flex items-center justify-center py-32">
+        <div class="flex flex-col items-center gap-4 max-w-md">
+          <div class="h-24 w-24 rounded-2xl bg-surface-dark/80 border border-surface-highlight/30 flex items-center justify-center">
+            <span class="material-symbols-outlined text-5xl text-text-secondary">event_busy</span>
+          </div>
+          <p class="text-white text-2xl font-bold text-center">No matches scheduled</p>
+          <p class="text-text-secondary text-center">
+            There are no fixtures for this date. Try selecting a different date.
+          </p>
+        </div>
+      </div>
+    }
+
+    <div class="h-20"></div>
+  </div>
+
+</div>

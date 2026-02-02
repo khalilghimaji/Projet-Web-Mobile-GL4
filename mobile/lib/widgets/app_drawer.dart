@@ -213,6 +213,15 @@ class AppDrawer extends ConsumerWidget {
                         context.go('/home');
                       },
                     ),
+                    _buildNavItem(
+                      context,
+                      icon: Icons.calendar_today_rounded,
+                      title: 'Fixtures',
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        context.go('/fixtures');
+                      },
+                    ),
                     _buildNotificationsNavItem(context, notificationsState),
                     _buildNavItem(
                       context,

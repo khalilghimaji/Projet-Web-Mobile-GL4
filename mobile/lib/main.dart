@@ -18,6 +18,7 @@ import 'package:mobile/screens/error_screen.dart';
 import 'package:mobile/screens/score_prediction_page.dart';
 import 'package:mobile/screens/forget_password_screen.dart';
 import 'package:mobile/screens/change_password_screen.dart';
+import 'package:mobile/screens/fixtures_screen.dart';
 import 'package:mobile/widgets/app_drawer.dart';
 
 // Static router instance
@@ -56,10 +57,21 @@ final _router = GoRouter(
       builder: (context, state) =>
           const AuthGuard(child: ChangePasswordScreen()),
     ),
+    // Fixtures route
+    GoRoute(
+      path: '/fixtures',
+      builder: (context, state) => const AuthGuard(child: FixturesScreen()),
+    ),
     // Standings routes
     GoRoute(
       path: '/standings',
       builder: (context, state) => const AuthGuard(child: StandingsScreen()),
+    ),
+    GoRoute(
+      path: '/standings/:leagueId',
+      builder: (context, state) => AuthGuard(
+        child: StandingsScreen(leagueId: state.pathParameters['leagueId']),
+      ),
     ),
     GoRoute(
       path: '/leagues',
@@ -86,10 +98,10 @@ final _router = GoRouter(
       builder: (context, state) =>
           ErrorScreen(errorCode: state.pathParameters['errorCode']),
     ),
-    // Home
+    // Home - now redirects to fixtures
     GoRoute(
       path: '/home',
-      builder: (context, state) => const AuthGuard(child: HomeScreen()),
+      builder: (context, state) => const AuthGuard(child: FixturesScreen()),
     ),
     // Catch all
     GoRoute(path: '/:path', redirect: (context, state) => '/error/404'),

@@ -1,0 +1,25 @@
+<div>
+  <!-- Sentiment Bars -->
+  <div class="flex h-1.5 w-full rounded-full overflow-hidden gap-0.5 mt-2">
+    <div
+      class="bg-primary h-full transition-all"
+      [style.width.%]="data.homePercentage"
+    ></div>
+    <div
+      class="bg-gray-300 dark:bg-gray-600 h-full transition-all"
+      [style.width.%]="data.drawPercentage"
+    ></div>
+    <div
+      class="bg-gray-400 dark:bg-gray-500 h-full transition-all"
+      [style.width.%]="data.awayPercentage"
+    ></div>
+  </div>
+
+  <!-- Percentages -->
+  <div class="flex justify-between text-[10px] text-gray-500 mt-1 font-medium">
+    <span>{{ data.homePercentage | number:'1.0-0' }}%</span>
+    <span>{{ data.drawPercentage | number:'1.0-0' }}%</span>
+    <span>{{ data.awayPercentage | number:'1.0-0' }}%</span>
+  </div>
+</div>
+

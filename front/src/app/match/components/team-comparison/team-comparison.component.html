@@ -1,0 +1,31 @@
+<div class="bg-white dark:bg-card-dark rounded-xl p-4 border border-gray-100 dark:border-white/5">
+  <div class="flex items-center justify-between mb-4">
+    <!-- Home Team Logo -->
+    <div class="flex flex-col items-center w-16">
+      <img
+        [src]="data.homeTeamLogo"
+        alt="Home Team"
+        class="w-8 h-8 object-contain mb-1"
+      />
+    </div>
+
+    <!-- Form Results -->
+    <div class="flex-1 flex justify-center">
+      <app-form-indicator [formSignal]="data.recentForm.slice(0,5)" />
+    </div>
+
+    <!-- Away Team Logo -->
+    <div class="flex flex-col items-center w-16">
+      <img
+        [src]="data.awayTeamLogo"
+        alt="Away Team"
+        class="w-8 h-8 object-contain mb-1"
+      />
+    </div>
+  </div>
+
+  <div class="text-center text-xs text-gray-500">
+    Last {{Math.min(data.recentForm.length,5)}} Matches
+  </div>
+</div>
+
