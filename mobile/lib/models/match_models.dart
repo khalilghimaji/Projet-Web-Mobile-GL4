@@ -61,6 +61,20 @@ class MatchStatus {
     required this.status,
     required this.competition,
   });
+
+  MatchStatus copyWith({
+    bool? isLive,
+    int? minute,
+    String? status,
+    String? competition,
+  }) {
+    return MatchStatus(
+      isLive: isLive ?? this.isLive,
+      minute: minute ?? this.minute,
+      status: status ?? this.status,
+      competition: competition ?? this.competition,
+    );
+  }
 }
 
 /// Match score
@@ -74,6 +88,18 @@ class MatchScore {
     required this.away,
     this.venue,
   });
+
+  MatchScore copyWith({
+    int? home,
+    int? away,
+    String? venue,
+  }) {
+    return MatchScore(
+      home: home ?? this.home,
+      away: away ?? this.away,
+      venue: venue ?? this.venue,
+    );
+  }
 }
 
 /// Match header data
@@ -89,6 +115,20 @@ class MatchHeader {
     required this.awayTeam,
     required this.score,
   });
+
+  MatchHeader copyWith({
+    MatchStatus? status,
+    TeamInfo? homeTeam,
+    TeamInfo? awayTeam,
+    MatchScore? score,
+  }) {
+    return MatchHeader(
+      status: status ?? this.status,
+      homeTeam: homeTeam ?? this.homeTeam,
+      awayTeam: awayTeam ?? this.awayTeam,
+      score: score ?? this.score,
+    );
+  }
 
   factory MatchHeader.empty() {
     return const MatchHeader(
@@ -305,6 +345,24 @@ class MatchData {
     required this.h2h,
     required this.highlights,
   });
+
+  MatchData copyWith({
+    MatchHeader? header,
+    List<MatchEvent>? timeline,
+    Lineups? lineups,
+    TeamStats? stats,
+    HeadToHead? h2h,
+    List<VideoHighlight>? highlights,
+  }) {
+    return MatchData(
+      header: header ?? this.header,
+      timeline: timeline ?? this.timeline,
+      lineups: lineups ?? this.lineups,
+      stats: stats ?? this.stats,
+      h2h: h2h ?? this.h2h,
+      highlights: highlights ?? this.highlights,
+    );
+  }
 
   factory MatchData.empty() {
     return MatchData(

@@ -84,6 +84,56 @@ class Fixture {
     this.awayScore,
   });
 
+  Fixture copyWith({
+    String? eventKey,
+    String? eventDate,
+    String? eventTime,
+    String? homeTeam,
+    String? homeTeamKey,
+    String? homeTeamLogo,
+    String? awayTeam,
+    String? awayTeamKey,
+    String? awayTeamLogo,
+    String? eventFinalResult,
+    String? eventHalftimeResult,
+    String? eventStatus,
+    String? eventLive,
+    String? leagueName,
+    String? leagueKey,
+    String? leagueLogo,
+    String? countryName,
+    String? eventStadium,
+    FixtureStatus? parsedStatus,
+    int? minute,
+    int? homeScore,
+    int? awayScore,
+  }) {
+    return Fixture(
+      eventKey: eventKey ?? this.eventKey,
+      eventDate: eventDate ?? this.eventDate,
+      eventTime: eventTime ?? this.eventTime,
+      homeTeam: homeTeam ?? this.homeTeam,
+      homeTeamKey: homeTeamKey ?? this.homeTeamKey,
+      homeTeamLogo: homeTeamLogo ?? this.homeTeamLogo,
+      awayTeam: awayTeam ?? this.awayTeam,
+      awayTeamKey: awayTeamKey ?? this.awayTeamKey,
+      awayTeamLogo: awayTeamLogo ?? this.awayTeamLogo,
+      eventFinalResult: eventFinalResult ?? this.eventFinalResult,
+      eventHalftimeResult: eventHalftimeResult ?? this.eventHalftimeResult,
+      eventStatus: eventStatus ?? this.eventStatus,
+      eventLive: eventLive ?? this.eventLive,
+      leagueName: leagueName ?? this.leagueName,
+      leagueKey: leagueKey ?? this.leagueKey,
+      leagueLogo: leagueLogo ?? this.leagueLogo,
+      countryName: countryName ?? this.countryName,
+      eventStadium: eventStadium ?? this.eventStadium,
+      parsedStatus: parsedStatus ?? this.parsedStatus,
+      minute: minute ?? this.minute,
+      homeScore: homeScore ?? this.homeScore,
+      awayScore: awayScore ?? this.awayScore,
+    );
+  }
+
   factory Fixture.fromJson(Map<String, dynamic> json) {
     // Parse status
     FixtureStatus parsedStatus = FixtureStatus.scheduled;
@@ -180,4 +230,3 @@ class DateTab {
     required this.isToday,
   });
 }
-

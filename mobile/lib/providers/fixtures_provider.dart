@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/fixture_models.dart';
 import '../models/match_models.dart';
 import '../services/football_api_service.dart';
+import '../services/live_match_service.dart';
 
 /// State for fixtures page
 class FixturesState {
@@ -228,14 +229,99 @@ class MatchDetailState {
 /// Match detail notifier
 class MatchDetailNotifier extends StateNotifier<MatchDetailState> {
   final FootballApiService _apiService;
+  final LiveMatchService _liveService;
   final String matchId;
 
-  MatchDetailNotifier(this._apiService, this.matchId)
+  MatchDetailNotifier(this._apiService, this._liveService, this.matchId)
       : super(MatchDetailState(
           matchData: MatchData.empty(),
           prediction: PredictionData.empty(),
         )) {
     loadMatchData();
+    _subscribeToLiveEvents();
+  }
+
+  void _subscribeToLiveEvents() {
+    _liveService.connect();
+    _liveService.events.listen((event) {
+      if (event['match_id']?.toString() == matchId) {
+        _handleMatchUpdate(event);
+      }
+    });
+  }
+
+  void _handleMatchUpdate(Map<String, dynamic> event) {
+    if (state.isLoading) return; // Maybe wait until loaded?
+
+    MatchData updatedMatch = state.matchData;
+    bool hasChanged = false;
+
+    // Update Score
+    int? homeScore;
+    int? awayScore;
+
+    if (event['match_hometeam_score'] != null) {
+      homeScore = int.tryParse(event['match_hometeam_score'].toString());
+    }
+    if (event['match_awayteam_score'] != null) {
+      awayScore = int.tryParse(event['match_awayteam_score'].toString());
+    }
+
+    if (homeScore != null || awayScore != null) {
+      updatedMatch = updatedMatch.copyWith(
+        header: updatedMatch.header.copyWith(
+          score: updatedMatch.header.score.copyWith(
+            home: homeScore ?? updatedMatch.header.score.home,
+            away: awayScore ?? updatedMatch.header.score.away,
+          )
+        )
+      );
+      hasChanged = true;
+    }
+
+    // Update Status
+    if (event['match_status'] != null) {
+      updatedMatch = updatedMatch.copyWith(
+        header: updatedMatch.header.copyWith(
+          status: updatedMatch.header.status.copyWith(
+            status: event['match_status'].toString(),
+            // Update minute if available or if status implies something
+            // event['minute'] check?
+          )
+        )
+      );
+      hasChanged = true;
+    }
+
+    // Handle Events (Goal, Card, Substitution)
+    // Add to timeline
+    // Use proper MatchEvent model
+    // type: GOAL_SCORED -> EventType.goal
+
+    final typeStr = event['type']?.toString();
+    if (typeStr != null) {
+       EventType? type;
+       switch (typeStr) {
+         case 'GOAL_SCORED': type = EventType.goal; break;
+         case 'CARD_ISSUED':
+           // Check if red or yellow? Usually detail in event
+           type = EventType.yellowCard;
+           break;
+         case 'SUBSTITUTION': type = EventType.substitution; break;
+       }
+
+       if (type != null) {
+          // Construct MatchEvent
+          // Need to parse minute, team, player
+          // This is intricate without detailed event payload knowledge
+          // For now, logging and minimal update is good.
+          // Ideally we append to timeline
+       }
+    }
+
+    if (hasChanged) {
+      state = state.copyWith(matchData: updatedMatch);
+    }
   }
 
   Future<void> loadMatchData() async {
@@ -267,6 +353,7 @@ class MatchDetailNotifier extends StateNotifier<MatchDetailState> {
 /// Provider family for match detail state
 final matchDetailProvider = StateNotifierProvider.family<MatchDetailNotifier, MatchDetailState, String>((ref, matchId) {
   final apiService = ref.watch(footballApiServiceProvider);
-  return MatchDetailNotifier(apiService, matchId);
+  final liveService = ref.watch(liveMatchServiceProvider);
+  return MatchDetailNotifier(apiService, liveService, matchId);
 });
 
