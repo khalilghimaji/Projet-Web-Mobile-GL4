@@ -42,10 +42,7 @@ import {
 import { FullAuthGuard } from './guards/full-auth.guard';
 import { SignUpResponseDto } from './dto/responses/sign-up-response.dto';
 import { VerifyEmailResponseDto } from './dto/responses/verify-email-response.dto';
-import {
-  LoginResponseDto,
-  MfaRequiredResponseDto,
-} from './dto/responses/login-response.dto';
+import { LoginResponseDto } from './dto/responses/login-response.dto';
 import { LogoutResponseDto } from './dto/responses/logout-response.dto';
 import {
   MfaVerifyResponseDto,
@@ -56,6 +53,7 @@ import { MfaEnableResponseDto } from './dto/responses/mfa-enable-response.dto';
 import { MfaDisableResponseDto } from './dto/responses/mfa-disable-response.dto';
 import { OAuthResponseDto } from './dto/responses/oauth-response.dto';
 import { User } from './entities/user.entity';
+import { User as UserId } from '../Decorator/user.decorator';
 import { Response } from 'express';
 import { DisableMfaDto } from './dto/disable-mfa.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -65,6 +63,7 @@ import { join } from 'path';
 import { RefresResponse } from './dto/refresh-token.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ForgotPasswordResponseDto } from './dto/responses/forgot-password-response.dto';
+import { FirebaseLoginDto } from './dto/firebase-login.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { ResetPasswordResponseDto } from './dto/responses/reset-password-response.dto';
 
@@ -167,10 +166,6 @@ export class AuthController {
     description: 'User has been authenticated successfully',
     type: LoginResponseDto,
   })
-  @ApiOkResponse({
-    description: 'MFA verification required',
-    type: MfaRequiredResponseDto,
-  })
   async login(
     @Body() loginDto: LoginDto,
     @Res({ passthrough: true }) res: Response,
@@ -191,19 +186,31 @@ export class AuthController {
     // At this point, we know it's a LoginResponseDto with accessToken
     if ('accessToken' in result && result.accessToken) {
       this.authService.setAccessTokenCookie(res, result.accessToken);
-      // Don't include the token in the response
-      delete result.accessToken;
+      // Include the token in the response for mobile apps
+      // delete result.accessToken;
     }
 
     // Store the refresh token in an HTTP-only cookie if available
     if ('refreshToken' in result && result.refreshToken) {
       this.authService.setRefreshTokenCookie(res, result.refreshToken);
-      // Don't include the token in the response
-      delete result.refreshToken;
+      // Include the token in the response for mobile apps
+      // delete result.refreshToken;
     }
 
-    // Return only the user data
+    // Return the result with tokens for mobile
     return result;
+  }
+
+  @Post('login/firebase')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'User login with Firebase' })
+  @ApiBody({ type: FirebaseLoginDto })
+  @ApiOkResponse({
+    description: 'User has been authenticated successfully',
+    type: LoginResponseDto,
+  })
+  async loginWithFirebase(@Body() firebaseLoginDto: FirebaseLoginDto) {
+    return this.authService.loginWithFirebase(firebaseLoginDto.firebaseToken);
   }
 
   @Post('refresh')
@@ -214,9 +221,16 @@ export class AuthController {
     description: 'Access token has been refreshed',
     type: RefresResponse,
   })
-  async refreshToken(@Req() req, @Res({ passthrough: true }) res: Response) {
-    // Get the refresh token from the cookie
-    const refreshToken = req.cookies['refresh_token'];
+  async refreshToken(
+    @Req() req,
+    @Res({ passthrough: true }) res: Response,
+    @Body() body?: { refreshToken?: string },
+  ) {
+    // Get the refresh token from the cookie or body
+    let refreshToken = req.cookies['refresh_token'];
+    if (!refreshToken && body?.refreshToken) {
+      refreshToken = body.refreshToken;
+    }
     if (!refreshToken) {
       throw new UnauthorizedException('Refresh token not found');
     }
@@ -228,8 +242,12 @@ export class AuthController {
     // Set new cookies
     this.authService.setAccessTokenCookie(res, result.accessToken);
 
-    // Return a success message (without tokens)
-    return { message: 'Token refreshed successfully' };
+    // Return the new tokens for mobile apps
+    return {
+      message: 'Token refreshed successfully',
+      accessToken: result.accessToken,
+      refreshToken: result.refreshToken,
+    };
   }
 
   @Post('logout')
@@ -408,10 +426,13 @@ export class AuthController {
     status: 400,
     description: 'Invalid or expired token',
   })
+  @UseGuards(JwtAuthGuard)
   async resetPassword(
     @Body() resetPasswordDto: ResetPasswordDto,
+    @UserId('id') userId: string,
   ): Promise<ResetPasswordResponseDto> {
-    return this.authService.resetPassword(resetPasswordDto);
+    console.log('RRRRRRRRRRRRRRRRRRRRRRRRRR' + userId);
+    return this.authService.resetPassword(resetPasswordDto, userId);
   }
 
   /**

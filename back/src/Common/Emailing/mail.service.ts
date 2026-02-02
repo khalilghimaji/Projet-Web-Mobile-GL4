@@ -211,4 +211,63 @@ export class MailService {
       throw error;
     }
   }
+
+  async sendNewPasswordEmail(
+    email: string,
+    newPassword: string,
+    isResend: boolean = false,
+  ) {
+    // Customize the subject based on whether this is a new request or a resend
+    const subject = isResend
+      ? 'Your New Password - KickStream'
+      : 'Your Password Has Been Reset - KickStream';
+
+    // Customize the message for resend cases
+    const message = isResend
+      ? 'You recently requested a new password. Here is your new password:'
+      : 'Your password has been reset. Here is your new password:';
+
+    try {
+      await this.mailerService.sendMail({
+        to: email,
+        subject: subject,
+        template: './new-password',
+        attachments: [
+          {
+            filename: 'logo.png',
+            path: path.join(process.cwd(), 'public', 'images', 'logo.png'),
+            cid: this.getLogoCid(),
+          },
+        ],
+        context: {
+          logoUrl: `cid:${this.getLogoCid()}`,
+          userName: 'User',
+          userEmail: email,
+          supportEmail: 'support@kickstream.com',
+          message: message,
+          newPassword: newPassword,
+          securityNote:
+            'Please change this password after logging in for security reasons. Keep this password secure and do not share it with anyone.',
+          loginUrl: `${this.configService.get<string>(
+            'FRONTEND_URL',
+            `http://localhost:${this.configService.get<number>('APP_PORT')}`,
+          )}/login`,
+          buttonText: 'Login Now',
+          buttonUrl: `${this.configService.get<string>(
+            'FRONTEND_URL',
+            `http://localhost:${this.configService.get<number>('APP_PORT')}`,
+          )}/login`,
+          facebookUrl: 'https://facebook.com/kickstream',
+          twitterUrl: 'https://twitter.com/kickstream',
+          instagramUrl: 'https://instagram.com/kickstream',
+          currentYear: new Date().getFullYear().toString(),
+        },
+      });
+
+      this.logger.log(`New password email sent to ${email}`);
+    } catch (error) {
+      this.logger.error('Error sending new password email:', error.message);
+      throw error;
+    }
+  }
 }

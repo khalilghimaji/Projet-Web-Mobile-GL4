@@ -9,12 +9,13 @@ interface NotificationPayload {
   userId: string;
   type: NotificationType;
   message: string;
-  data?: DataMessage | UserRankingMessage;
+  data?: DataMessage;
 }
 
 interface DataMessage {
-  gain: number;
-  newDiamonds: number;
+  gain?: number;
+  newDiamonds?: number;
+  rankings?: UserRanking[];
 }
 
 export interface UserRanking {
@@ -22,10 +23,6 @@ export interface UserRanking {
   lastName: string;
   score: number;
   imageUrl: string;
-}
-
-export interface UserRankingMessage {
-  rankings: UserRanking[];
 }
 @Injectable()
 export class NotificationsService {
@@ -37,10 +34,6 @@ export class NotificationsService {
   ) {}
 
   subscribe(userId: string): Observable<MessageEvent> {
-    const client = this.clients.get(userId);
-    if (client) {
-      return client.asObservable();
-    }
     const subject = new Subject<MessageEvent>();
     this.clients.set(userId, subject);
     console.log(`User ${userId} subscribed to SSE`);

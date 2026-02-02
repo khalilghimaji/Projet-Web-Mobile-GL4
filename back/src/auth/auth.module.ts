@@ -11,6 +11,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { GoogleStrategy } from './strategies/google.strategy';
 import { GithubStrategy } from './strategies/github.strategy';
 import { UserController } from './user.controller';
+import { FirebaseService } from './firebase.service';
 
 // Helper function to parse JWT expiry strings to seconds
 function parseExpiryToSeconds(expiry: string): number {
@@ -61,6 +62,7 @@ function parseExpiryToSeconds(expiry: string): number {
     GoogleStrategy,
     GithubStrategy,
     MailService,
+    FirebaseService,
   ],
   exports: [JwtStrategy, PassportModule, AuthService],
 })

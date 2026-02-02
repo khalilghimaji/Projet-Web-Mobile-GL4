@@ -3,12 +3,11 @@ import {
   Post,
   Param,
   Body,
-  UseGuards,
   Get,
   Patch,
+  UseGuards,
 } from '@nestjs/common';
 import { MatchesService } from './matches.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { User } from '../Decorator/user.decorator';
 import { PredictDto } from './dto/predict.dto';
 import { CanPredictMatchDto } from './dto/can-predict-match.dto';
@@ -17,6 +16,8 @@ import { Prediction } from './entities/prediction.entity';
 import { MatchStat } from './dto/get-match-stats-info.dto';
 import { TerminateMatchDto } from './dto/terminate-match.dto';
 import { RedisCacheService } from 'src/Common/cache/redis-cache.service';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { AuthService } from 'src/auth/auth.service';
 
 @Controller('matches')
 @UseGuards(JwtAuthGuard)
@@ -24,6 +25,7 @@ export class MatchesController {
   constructor(
     private readonly matchesService: MatchesService,
     private readonly cacheService: RedisCacheService,
+    private readonly authService: AuthService,
   ) {}
 
   @Post('can-predict/:id')
@@ -70,6 +72,7 @@ export class MatchesController {
     @Param('id') id: string,
     @Body() body: PredictDto,
   ): Promise<Prediction> {
+    console.log('Making prediction for user:', user.id, 'on match:', id, body);
     return this.matchesService.makePrediction(
       user.id,
       id,
@@ -118,6 +121,10 @@ export class MatchesController {
 
   @Get('user/gains')
   async getUserGains(@User('id') userId: string): Promise<number> {
-    return (await this.cacheService.getUserGains(userId)) ?? 0;
+    return (
+      (await this.cacheService.getUserGains(userId)) ??
+      (await this.authService.getGainsFromDb(userId)) ??
+      0
+    );
   }
 }

@@ -26,10 +26,7 @@ import { MailService } from '../Common/Emailing/mail.service';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { SignUpResponseDto } from './dto/responses/sign-up-response.dto';
 import { VerifyEmailResponseDto } from './dto/responses/verify-email-response.dto';
-import {
-  LoginResponseDto,
-  MfaRequiredResponseDto,
-} from './dto/responses/login-response.dto';
+import { LoginResponseDto } from './dto/responses/login-response.dto';
 import { RefreshTokenResponseDto } from './dto/responses/refresh-token-response.dto';
 import { LogoutResponseDto } from './dto/responses/logout-response.dto';
 import { MfaVerifyResponseDto } from './dto/responses/mfa-verify-response.dto';
@@ -41,6 +38,7 @@ import { RedisCacheService } from '../Common/cache/redis-cache.service';
 import { Response } from 'express';
 import { DisableMfaDto } from './dto/disable-mfa.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import * as admin from 'firebase-admin';
 import { ForgotPasswordResponseDto } from './dto/responses/forgot-password-response.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { ResetPasswordResponseDto } from './dto/responses/reset-password-response.dto';
@@ -49,7 +47,7 @@ import { GenericService } from 'src/Common/generic/generic.service';
 @Injectable()
 export class AuthService extends GenericService<User> {
   private readonly logger = new Logger(AuthService.name);
-  // Email verification token expiry in seconds (24 hours)
+  // Email verification token expiry in seconds (24 hours
   private readonly EMAIL_VERIFICATION_EXPIRY = 24 * 60 * 60;
   // Password reset token expiry in seconds (30 minutes)
   private readonly PASSWORD_RESET_EXPIRY = 30 * 60;
@@ -63,6 +61,42 @@ export class AuthService extends GenericService<User> {
     private readonly redisCacheService: RedisCacheService,
   ) {
     super(userRepository);
+
+    // Initialize Firebase Admin SDK
+    if (!admin.apps.length) {
+      try {
+        const firebaseProjectId = this.configService.get<string>(
+          'FIREBASE_PROJECT_ID',
+        );
+        const firebaseServiceAccountKey = this.configService.get<string>(
+          'FIREBASE_SERVICE_ACCOUNT_KEY',
+        );
+
+        if (firebaseProjectId && firebaseServiceAccountKey) {
+          // Parse the service account key JSON
+          const serviceAccount = JSON.parse(firebaseServiceAccountKey);
+
+          admin.initializeApp({
+            credential: admin.credential.cert(serviceAccount),
+            projectId: firebaseProjectId,
+          });
+        } else if (firebaseProjectId) {
+          // Use project ID only (for environments with default credentials)
+          admin.initializeApp({
+            projectId: firebaseProjectId,
+          });
+        } else {
+          // Try application default (may work in some environments)
+          admin.initializeApp({
+            credential: admin.credential.applicationDefault(),
+          });
+        }
+      } catch (error) {
+        this.logger.warn(
+          `Firebase Admin SDK initialization failed: ${error.message}. Firebase login will not work.`,
+        );
+      }
+    }
   }
 
   // Sign up function with automatic email verification
@@ -164,9 +198,7 @@ export class AuthService extends GenericService<User> {
   }
 
   // Login function with email verification and MFA check
-  async login(
-    loginDto: LoginDto,
-  ): Promise<LoginResponseDto | MfaRequiredResponseDto> {
+  async login(loginDto: LoginDto): Promise<LoginResponseDto> {
     const { email, password, rememberMe = false } = loginDto;
 
     // Find user
@@ -330,6 +362,73 @@ export class AuthService extends GenericService<User> {
         diamonds: user.diamonds,
       },
     };
+  }
+
+  async loginWithFirebase(firebaseToken: string): Promise<LoginResponseDto> {
+    try {
+      // Check if Firebase is initialized
+      if (!admin.apps.length) {
+        throw new InternalServerErrorException(
+          'Firebase authentication is not configured',
+        );
+      }
+
+      // Verify Firebase token
+      const decodedToken = await admin.auth().verifyIdToken(firebaseToken);
+
+      // Extract user information from the token
+      const { uid, email, name, picture } = decodedToken;
+
+      // Find user by Firebase UID
+      let user = await this.userRepository.findOneBy({ firebaseUid: uid });
+
+      if (!user) {
+        // Try to find by email if UID not found (for linking accounts)
+        user = await this.userRepository.findOneBy({ email });
+
+        if (user) {
+          // Link Firebase UID to existing user
+          user.firebaseUid = uid;
+          await this.userRepository.save(user);
+        } else {
+          // Create new user with Firebase information
+          const [firstName, lastName] = name
+            ? name.split(' ')
+            : ['Firebase', 'User'];
+
+          user = this.userRepository.create({
+            email,
+            firstName,
+            lastName: lastName || 'User',
+            imageUrl: picture,
+            firebaseUid: uid,
+            isEmailVerified: true,
+            isMFAEnabled: false,
+            password: 'firebase-auth', // Placeholder, not used for Firebase auth
+          });
+          await this.userRepository.save(user);
+        }
+      }
+
+      // Generate access token
+      const accessToken = await this.generateAccessToken(user);
+
+      return {
+        accessToken,
+        user: {
+          id: user.id.toString(),
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          isMFAEnabled: user.isMFAEnabled,
+          imgUrl: user.imageUrl || '',
+          diamonds: user.diamonds,
+        },
+      };
+    } catch (error) {
+      this.logger.error(`Firebase login error: ${error.message}`);
+      throw new UnauthorizedException('Invalid Firebase token');
+    }
   }
 
   // Verify MFA code during login
@@ -679,84 +778,32 @@ export class AuthService extends GenericService<User> {
       );
       return {
         message:
-          'If your email exists in our system, you will receive a password reset link',
+          'If your email exists in our system, you will receive a new password in your inbox shortly',
       };
     }
-
-    // Check if a reset was recently requested - implement rate limiting
-    const resetCooldownKey = `password_reset_cooldown:${user.id}`;
-    const lastResetTime = await this.redisCacheService.get(resetCooldownKey);
-
-    // Use a shorter cooldown period than the token expiry (e.g., 2 minutes)
-    const cooldownPeriod = 120; // 2 minutes in seconds
-
-    if (lastResetTime) {
-      // A reset was recently requested - check if we're in cooldown period
-      const currentTime = Date.now();
-      const lastRequestTime = parseInt(lastResetTime);
-      const timeElapsed = (currentTime - lastRequestTime) / 1000; // convert to seconds
-
-      if (timeElapsed < cooldownPeriod) {
-        // Still in cooldown period - calculate remaining time
-        const remainingTime = Math.ceil(cooldownPeriod - timeElapsed);
-        let timeMessage;
-
-        if (remainingTime > 60) {
-          timeMessage = `${Math.ceil(remainingTime / 60)} minute(s)`;
-        } else {
-          timeMessage = `${remainingTime} second(s)`;
-        }
-
-        this.logger.debug(
-          `Password reset rate limited for user ${user.id}. Can try again in ${timeMessage}`,
-        );
-
-        // Return a specific message for rate limiting, but maintain security by not confirming email exists
-        return {
-          message: `If your email exists in our system, you'll need to wait before requesting another reset. Please try again in ${timeMessage} or check your inbox for the previous email.`,
-        };
-      }
-    }
-
-    // Generate a random token
-    const token = uuidv4();
+    // Generate a new random password
+    const newPassword = this.generateRandomPassword();
 
     try {
-      // 1. Invalidate any existing tokens for this user
-      // This ensures each email has a unique valid token
-      await this.redisCacheService.invalidateUserPasswordResetTokens(email);
+      // Hash the new password
+      const hashedPassword = await this.hashPassword(newPassword);
 
-      // 2. Store token in Redis with expiry
-      await this.redisCacheService.storePasswordResetToken(
-        token,
-        email,
-        this.PASSWORD_RESET_EXPIRY,
-      );
+      // Update user's password
+      user.password = hashedPassword;
+      await this.userRepository.save(user);
 
-      // 3. Set the cooldown for this user
-      await this.redisCacheService.set(
-        resetCooldownKey,
-        Date.now().toString(),
-        cooldownPeriod,
-      );
+      // Invalidate all existing sessions for this user
+      await this.redisCacheService.invalidateAllUserTokens(user.id);
 
-      // 4. Send password reset email
-      const isResend = lastResetTime !== null;
-      await this.mailService.sendPasswordResetEmail(
-        email,
-        token,
-        this.PASSWORD_RESET_EXPIRY / 60, // Convert seconds to minutes
-        isResend,
-      );
+      // Send new password email
+      await this.mailService.sendNewPasswordEmail(email, newPassword);
 
       return {
         message:
-          'If your email exists in our system, you will receive a password reset link',
+          'If your email exists in our system, you will receive a new password in your inbox shortly',
       };
     } catch (error) {
-      this.logger.error(
-        `Failed to send password reset email: ${error.message}`,
-      );
+      this.logger.error(`Failed to send new password email: ${error.message}`);
       throw new InternalServerErrorException('Error sending reset email');
     }
   }
@@ -764,38 +811,29 @@ export class AuthService extends GenericService<User> {
   // Reset password with token
   async resetPassword(
     resetPasswordDto: ResetPasswordDto,
+    userId: string,
   ): Promise<ResetPasswordResponseDto> {
     const { token, password } = resetPasswordDto;
 
-    // Check if token exists in Redis and is valid
-    const email =
-      await this.redisCacheService.getEmailFromPasswordResetToken(token);
-
-    if (!email) {
-      throw new BadRequestException('Invalid or expired reset token');
-    }
-
     // Find the user
-    const user = await this.userRepository.findOneBy({ email });
+    const user = await this.userRepository.findOneBy({ id: userId });
     if (!user) {
       throw new NotFoundException('User not found');
     }
-
+    console.log(userId, token, password);
+    // Check password
+    const isPasswordValid = await bcrypt.compare(token, user.password);
+    if (!isPasswordValid) {
+      console.log('Invalid credentials');
+      throw new UnauthorizedException('Invalid credentials');
+    }
+    console.log('Password valid');
     // Hash the new password
     const hashedPassword = await this.hashPassword(password);
 
     // Update the user's password
     user.password = hashedPassword;
     await this.userRepository.save(user);
-
-    // Invalidate all existing sessions for this user
-    await this.redisCacheService.invalidateAllUserTokens(user.id);
-
-    // Invalidate the password reset token to prevent reuse
-    await this.redisCacheService.invalidatePasswordResetToken(token);
-
-    // Clear any reset cooldown since the reset was successful
-    await this.redisCacheService.del(`password_reset_cooldown:${user.id}`);
 
     this.logger.debug(`Password reset successful for user ${user.id}`);
 
@@ -894,6 +932,18 @@ export class AuthService extends GenericService<User> {
     return codes;
   }
 
+  // Helper method to generate a random password
+  private generateRandomPassword(): string {
+    const length = 6;
+    const chars =
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+    let password = '';
+    for (let i = 0; i < length; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return password;
+  }
+
   // Helper method to send verification email
   private async sendVerificationEmail(
     email: string,
@@ -971,5 +1021,13 @@ export class AuthService extends GenericService<User> {
     // Suppression des cookies d'authentification
     res.clearCookie('access_token', { path: '/' });
     res.clearCookie('refresh_token', { path: '/auth' });
+  }
+
+  public async getGainsFromDb(userId: string): Promise<number> {
+    const res = await this.userRepository.findOneBy({
+      id: userId,
+    });
+    const { score, diamonds } = res!;
+    return score - diamonds || 0;
   }
 }

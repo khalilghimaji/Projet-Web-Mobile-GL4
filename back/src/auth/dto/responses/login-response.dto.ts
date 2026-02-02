@@ -1,11 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { UserDto } from './mfa-verify-response.dto';
+import { IsOptional } from 'class-validator';
 
 export class LoginResponseDto {
   @ApiProperty({
     description: 'JWT access token',
     example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
   })
+  @IsOptional()
   accessToken?: string;
 
   @ApiProperty({
@@ -13,28 +15,31 @@ export class LoginResponseDto {
     example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
     required: false,
   })
+  @IsOptional()
   refreshToken?: string;
 
   @ApiProperty({ type: UserDto })
-  user: UserDto;
-}
+  @IsOptional()
+  user?: UserDto;
 
-export class MfaRequiredResponseDto {
   @ApiProperty({
     description: 'Message indicating MFA verification is required',
     example: 'MFA verification required',
   })
-  message: string;
+  @IsOptional()
+  message?: string;
 
   @ApiProperty({
     description: 'Temporary token for MFA verification',
     example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
   })
-  mfaToken: string;
+  @IsOptional()
+  mfaToken?: string;
 
   @ApiProperty({
     description: 'Flag indicating MFA is required',
     example: true,
   })
-  isMfaRequired: boolean;
+  @IsOptional()
+  isMfaRequired?: boolean;
 }

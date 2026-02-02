@@ -23,9 +23,7 @@ export class NotificationsController implements OnModuleInit, OnModuleDestroy {
   private heartbeat$: Observable<MessageEvent>;
   private destroy$ = new Subject<void>();
 
-  constructor(
-    private readonly notificationsService: NotificationsService,
-  ) {
+  constructor(private readonly notificationsService: NotificationsService) {
     this.heartbeat$ = interval(this.heartbeatInterval).pipe(
       map(() => new MessageEvent('heartbeat', { data: 'ping' })),
       takeUntil(this.destroy$),
@@ -44,6 +42,7 @@ export class NotificationsController implements OnModuleInit, OnModuleDestroy {
         (notificationStream: Observable<MessageEvent>) => {
           return new Observable<MessageEvent>((subscriber) => {
             // Subscribe to notifications
+            console.log('AAAAAAAAAAAAAAAAAAAAAAAAAAAAA' + userId);
             const notificationSubscription = notificationStream.subscribe({
               next: (notification) => subscriber.next(notification),
               error: (error) => subscriber.error(error),
