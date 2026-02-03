@@ -1,27 +1,30 @@
-import { Controller, Post, Param, Body, UseGuards, Get } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Param,
+  Body,
+  UseGuards,
+  Get,
+  Patch,
+} from '@nestjs/common';
 import { MatchesService } from './matches.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { User } from '../Decorator/user.decorator';
-import { TerminateMatchDto } from './dto/terminate-match.dto';
 import { PredictDto } from './dto/predict.dto';
 import { CanPredictMatchDto } from './dto/can-predict-match.dto';
+import { UpdatePredictionDto } from './dto/update-prediction.dto';
+import { Prediction } from './entities/prediction.entity';
+import { MatchStat } from './dto/get-match-stats-info.dto';
+import { TerminateMatchDto } from './dto/terminate-match.dto';
+import { RedisCacheService } from 'src/Common/cache/redis-cache.service';
 
 @Controller('matches')
 @UseGuards(JwtAuthGuard)
 export class MatchesController {
-  constructor(private readonly matchesService: MatchesService) {}
-
-  //cet endpoint sera supprimé
-  @Post(':id/activate')
-  async activateMatch(@Param('id') id: string) {
-    return this.matchesService.activateMatch(id);
-  }
-
-  //cet endpoint sera supprimé
-  @Post(':id/disable')
-  async disableMatch(@Param('id') id: string) {
-    return this.matchesService.disableMatch(id);
-  }
+  constructor(
+    private readonly matchesService: MatchesService,
+    private readonly cacheService: RedisCacheService,
+  ) {}
 
   @Post('can-predict/:id')
   async canPredict(
@@ -29,43 +32,36 @@ export class MatchesController {
     @Param('id') matchId: string,
     @Body()
     boy: CanPredictMatchDto,
-  ) {
+  ): Promise<boolean> {
     return this.matchesService.canPredict(
       userId,
       matchId,
       boy.numberOfDiamondsBet,
     );
   }
+
+  @Get('match-stats-info/:id')
+  async getPredictionsStatsForMatch(
+    @Param('id') matchId: string,
+  ): Promise<MatchStat> {
+    return this.matchesService.getPredictionsStatsForMatch(matchId);
+  }
+
+  @Get(':id/prediction')
+  async getUserPrediction(
+    @User('id') userId: string,
+    @Param('id') matchId: string,
+  ): Promise<Prediction | null> {
+    return this.matchesService.getUserPrediction(userId, matchId);
+  }
+
   @Post('add-diamond')
   async addDiamond(
     @User('id') userId: string,
     @Body()
     boy: CanPredictMatchDto,
-  ) {
+  ): Promise<void> {
     return this.matchesService.addDiamond(userId, boy.numberOfDiamondsBet);
-  }
-
-  //cet endpoint sera supprimé
-  @Post(':id/terminate')
-  async terminateMatch(
-    @Param('id') id: string,
-    @Body() body: TerminateMatchDto,
-  ) {
-    return this.matchesService.terminateMatch(
-      id,
-      body.scoreFirst,
-      body.scoreSecond,
-    );
-  }
-
-  // cet endpoint sera supprimé
-  @Post(':id/update')
-  async updateMatch(@Param('id') id: string, @Body() body: TerminateMatchDto) {
-    return this.matchesService.updateMatch(
-      id,
-      body.scoreFirst,
-      body.scoreSecond,
-    );
   }
 
   @Post(':id/predict')
@@ -73,7 +69,7 @@ export class MatchesController {
     @User() user: any,
     @Param('id') id: string,
     @Body() body: PredictDto,
-  ) {
+  ): Promise<Prediction> {
     return this.matchesService.makePrediction(
       user.id,
       id,
@@ -81,5 +77,47 @@ export class MatchesController {
       body.scoreSecond,
       body.numberOfDiamondsBet,
     );
+  }
+
+  @Patch(':id/prediction')
+  async updatePrediction(
+    @User('id') userId: string,
+    @Param('id') matchId: string,
+    @Body() body: UpdatePredictionDto,
+  ): Promise<Prediction> {
+    return this.matchesService.updatePrediction(
+      userId,
+      matchId,
+      body.scoreFirst,
+      body.scoreSecond,
+      body.numberOfDiamondsBet,
+    );
+  }
+
+  @Post(':id/update-match')
+  async updateMatch(
+    @Param('id') id: string,
+    @Body()
+    body: TerminateMatchDto,
+  ): Promise<void> {
+    return this.matchesService.updateMatch(
+      id,
+      body.scoreFirst,
+      body.scoreSecond,
+    );
+  }
+
+  @Post(':id/end-match')
+  async endMatch(
+    @Param('id') id: string,
+    @Body()
+    body: TerminateMatchDto,
+  ): Promise<void> {
+    return this.matchesService.endMatch(id, body.scoreFirst, body.scoreSecond);
+  }
+
+  @Get('user/gains')
+  async getUserGains(@User('id') userId: string): Promise<number> {
+    return (await this.cacheService.getUserGains(userId)) ?? 0;
   }
 }

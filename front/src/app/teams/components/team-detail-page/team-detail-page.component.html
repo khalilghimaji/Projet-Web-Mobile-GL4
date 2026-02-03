@@ -1,0 +1,70 @@
+<div class="team-detail-page">
+  <!-- Loading State -->
+  @if (teamResource.isLoading()) {
+  <div class="loading-overlay">
+    <div class="spinner"></div>
+    <p>Loading team data...</p>
+  </div>
+  }
+
+  <!-- Error State -->
+  @else if (teamResource.error()) {
+  <div class="error-container">
+    <div class="error-card">
+      <h2>Error Loading Team</h2>
+    </div>
+  </div>
+  }
+
+  <!-- Team Data -->
+  @else if (teamResource.value(); as team) {
+  <div class="team-content">
+    <!-- Navigation Buttons -->
+    <div class="navigation-buttons">
+      <button class="nav-btn prev-btn" (click)="decrementTeamId()">
+        ← Previous Team ({{ teamId() - 1 }})
+      </button>
+      <span class="current-team-id">Current Team ID: {{ id() }}</span>
+      <button class="nav-btn next-btn" (click)="incrementTeamId()">
+        Next Team ({{ teamId() + 1 }}) →
+      </button>
+    </div>
+
+    <!-- Team Header Section -->
+    <app-team-header [team]="team" />
+
+    <!-- Next Match Section -->
+    @if (nextMatchResource.value(); as nextMatch) {
+    <app-next-match [match]="nextMatch" />
+    }
+
+    <!-- Recent Matches Section -->
+    @if (accumulatedMatches().length > 0;) {
+    <app-recent-matches [matches]="accumulatedMatches()" [teamKey]="team.team_key" />
+
+    <!-- Load More Button -->
+    @if (hasMoreToLoad()) {
+    <div class="load-more-container">
+      <button
+        class="load-more-btn"
+        #loadMatchesButton
+      >
+        Load More Matches (Next 30 days)
+      </button>
+
+    </div>
+    } @else {
+    <p class="no-more-matches">
+      No more matches available
+    </p>
+    } } @else {
+    <p class="no-matches">No recent matches found</p>
+    } 
+
+    <!-- Squad Section -->
+    @if (team.players && team.players.length > 0) {
+    <app-squad-section [players]="team.players" />
+    }
+  </div>
+  
+  }

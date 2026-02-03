@@ -1,0 +1,17 @@
+.match-timer {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #1f2937;
+  transition: color 0.2s;
+  will-change: contents;
+  contain: layout style;
+}
+
+.match-timer.live {
+  color: #059669;
+}
+
+.match-timer.halftime {
+  color: #d97706;
+}
+

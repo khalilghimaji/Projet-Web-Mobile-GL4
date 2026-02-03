@@ -19,7 +19,7 @@ model/forgotPasswordResponseDto.ts
 model/loginDto.ts
 model/loginResponseDto.ts
 model/logoutResponseDto.ts
-model/match.ts
+model/matchStat.ts
 model/mfaDisableResponseDto.ts
 model/mfaEnableDto.ts
 model/mfaEnableResponseDto.ts
@@ -40,6 +40,7 @@ model/resetPasswordDto.ts
 model/resetPasswordResponseDto.ts
 model/signUpResponseDto.ts
 model/terminateMatchDto.ts
+model/updatePredictionDto.ts
 model/user.ts
 model/userDto.ts
 model/verifyEmailDto.ts

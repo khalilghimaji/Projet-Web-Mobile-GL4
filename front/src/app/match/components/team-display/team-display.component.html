@@ -1,0 +1,13 @@
+<div class="flex flex-col items-center gap-3 w-1/3">
+  <div class="w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-full p-3 shadow-lg flex items-center justify-center">
+    <img
+      [src]="teamSignal().logo"
+      [alt]="teamSignal().name + ' Logo'"
+      class="w-full h-full object-contain"
+    />
+  </div>
+  <h3 class="text-center font-bold text-sm sm:text-base leading-tight">
+    {{ teamSignal().shortName }}
+  </h3>
+</div>
+

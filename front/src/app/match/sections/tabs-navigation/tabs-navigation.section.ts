@@ -1,5 +1,15 @@
-import { Component, ChangeDetectionStrategy, input, output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import {
+  Component,
+  ChangeDetectionStrategy,
+  output,
+  Signal,
+  Input,
+  DestroyRef,
+  inject,
+  ElementRef,
+  AfterViewInit
+} from '@angular/core';
+import { fromEvent } from 'rxjs';
 
 export type TabType = 'OVERVIEW' | 'LINEUPS' | 'STATS' | 'H2H' | 'MEDIA';
 
@@ -11,56 +21,19 @@ export interface TabItem {
 @Component({
   selector: 'app-tabs-navigation',
   standalone: true,
-  imports: [CommonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <div class="sticky top-[68px] z-40 bg-background-light dark:bg-background-dark pt-2 pb-2 px-4 overflow-x-auto no-scrollbar border-b border-gray-200 dark:border-white/5">
-      <div class="flex space-x-6 min-w-max">
-        @for (tab of tabs; track tab.id) {
-          <button
-            class="pb-2 text-sm transition-colors"
-            [class.font-bold]="activeTabSignal() === tab.id"
-            [class.text-slate-900]="activeTabSignal() === tab.id"
-            [class.dark:text-white]="activeTabSignal() === tab.id"
-            [class.border-b-2]="activeTabSignal() === tab.id"
-            [class.border-primary]="activeTabSignal() === tab.id"
-            [class.font-medium]="activeTabSignal() !== tab.id"
-            [class.text-gray-500]="activeTabSignal() !== tab.id"
-            [class.dark:text-gray-400]="activeTabSignal() !== tab.id"
-            [class.hover:text-slate-900]="activeTabSignal() !== tab.id"
-            [class.dark:hover:text-white]="activeTabSignal() !== tab.id"
-            (click)="onTabClick(tab.id)"
-          >
-            {{ tab.label }}
-          </button>
-        }
-      </div>
-    </div>
-  `,
-  styles: [`
-    :host {
-      display: block;
-    }
-
-    .no-scrollbar::-webkit-scrollbar {
-      display: none;
-    }
-
-    .no-scrollbar {
-      -ms-overflow-style: none;
-      scrollbar-width: none;
-    }
-  `]
+  templateUrl: './tabs-navigation.section.html',
+  styleUrls: ['./tabs-navigation.section.css']
 })
-export class TabsNavigationSection {
-  // Signal reference from parent
-  activeTabSignal = input.required<TabType>();
+export class TabsNavigationSection implements AfterViewInit {
+  @Input({required: true}) activeTabSignal!: Signal<TabType>;
 
-  // Output event for tab change
   tabChanged = output<TabType>();
 
-  // Static tabs configuration
-  tabs: TabItem[] = [
+  private readonly elementRef = inject(ElementRef);
+  private readonly destroyRef = inject(DestroyRef);
+
+  readonly tabs: TabItem[] = [
     { id: 'OVERVIEW', label: 'Overview' },
     { id: 'LINEUPS', label: 'Lineups' },
     { id: 'STATS', label: 'Stats' },
@@ -68,7 +41,19 @@ export class TabsNavigationSection {
     { id: 'MEDIA', label: 'Media' }
   ];
 
-  onTabClick(tabId: TabType): void {
-    this.tabChanged.emit(tabId);
+  ngAfterViewInit(): void {
+    const buttons = this.elementRef.nativeElement.querySelectorAll('.tab-button');
+
+    buttons.forEach((button: HTMLElement) => {
+      const subscription = fromEvent(button, 'click').subscribe(() => {
+        const tabId = button.getAttribute('data-tab-id') as TabType;
+        if (tabId) {
+          this.tabChanged.emit(tabId);
+        }
+      });
+
+      this.destroyRef.onDestroy(() => subscription.unsubscribe());
+    });
   }
 }
+

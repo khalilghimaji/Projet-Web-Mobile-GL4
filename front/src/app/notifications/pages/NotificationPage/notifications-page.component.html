@@ -1,0 +1,63 @@
+<div class="notifications-container">
+  <div class="header-container">
+    <h2 class="page-header">Your Notifications</h2>
+    <button
+      #reloadBtn
+      class="reload-btn"
+      [disabled]="notifications.isLoading()"
+      [class.loading]="notifications.isLoading()"
+      aria-label="Reload notifications"
+    >
+      <i
+        class="pi"
+        [class.pi-refresh]="!notifications.isLoading()"
+        [class.pi-spin]="notifications.isLoading()"
+        [class.pi-spinner]="notifications.isLoading()"
+      ></i>
+      {{ notifications.isLoading() ? "Loading..." : "Reload" }}
+    </button>
+  </div>
+
+  @if (notifications.isLoading()) {
+    <div class="loading-state">
+      <div class="loading-spinner">
+        <i class="pi pi-spinner pi-spin"></i>
+      </div>
+      <p>Loading notifications...</p>
+    </div>
+  } @else if (notifications.error()) {
+    <div class="error-state">
+      <i class="pi pi-exclamation-triangle"></i>
+      <h3>Failed to load notifications</h3>
+      <p>
+        {{
+          notifications.error()?.message ||
+            "An error occurred while loading notifications"
+        }}
+      </p>
+      <button
+        class="retry-btn"
+        (click)="notificationsState.reloadNotifications()"
+      >
+        <i class="pi pi-refresh"></i>
+        Try Again
+      </button>
+    </div>
+  } @else {
+    <div class="notifications-list">
+      @for (item of notifications.value(); track item.id) {
+        <app-notification-element
+          [notification]="item"
+          [isRealTime]="item.isRealTime"
+          (markAsRead)="markAsRead($event)"
+          (delete)="deleteNotification($event)"
+        />
+      } @empty {
+        <div class="no-notifications">
+          <i class="pi pi-bell"></i>
+          <p>No notifications yet.</p>
+        </div>
+      }
+    </div>
+  }
+</div>

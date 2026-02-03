@@ -1,0 +1,11 @@
+<button
+  class="w-full h-10 py-2.5 rounded-lg text-sm font-bold
+         bg-primary text-white transition-all
+         hover:bg-primary/90 active:scale-95
+         disabled:opacity-50"
+  [disabled]="!enabled"
+  (click)="clicked.emit()"
+>
+  Predict & Bet 💎
+</button>
+

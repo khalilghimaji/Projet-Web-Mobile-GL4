@@ -1,8 +1,9 @@
-import { Component, ChangeDetectionStrategy, input, computed } from '@angular/core';
+import {Component, ChangeDetectionStrategy, computed, Input, Signal} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { StatusBadgeComponent, MatchStatus } from '../../components/status-badge/status-badge.component';
 import { TeamDisplayComponent, Team } from '../../components/team-display/team-display.component';
 import { ScoreDisplayComponent, Score } from '../../components/score-display/score-display.component';
+import { MatchTimerComponent } from '../../components/match-timer/match-timer.component';
 
 export interface MatchHeader {
   status: MatchStatus;
@@ -18,44 +19,27 @@ export interface MatchHeader {
     CommonModule,
     StatusBadgeComponent,
     TeamDisplayComponent,
-    ScoreDisplayComponent
+    ScoreDisplayComponent,
+    MatchTimerComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <div class="relative px-4 pt-6 pb-2">
-      <div class="flex flex-col items-center">
-        <!-- Status Badge -->
-        <div class="mb-4">
-          <app-status-badge [statusSignal]="statusSignal()" />
-        </div>
-
-        <!-- Teams and Score -->
-        <div class="flex items-center justify-between w-full max-w-sm px-4">
-          <!-- Home Team -->
-          <app-team-display [teamSignal]="homeTeamSignal()" />
-
-          <!-- Score -->
-          <app-score-display [scoreSignal]="scoreSignal()" />
-
-          <!-- Away Team -->
-          <app-team-display [teamSignal]="awayTeamSignal()" />
-        </div>
-      </div>
-    </div>
-  `,
-  styles: [`
-    :host {
-      display: block;
-    }
-  `]
+  templateUrl: './match-header.section.html',
+  styleUrl: './match-header.section.css'
 })
 export class MatchHeaderSection {
-  // Signal reference from parent (page)
-  matchHeaderSignal = input.required<MatchHeader>();
+  @Input({required:true}) matchHeaderSignal!: Signal<MatchHeader>;
 
-  // Derived signals for child components
   statusSignal = computed(() => this.matchHeaderSignal().status);
   homeTeamSignal = computed(() => this.matchHeaderSignal().homeTeam);
   awayTeamSignal = computed(() => this.matchHeaderSignal().awayTeam);
   scoreSignal = computed(() => this.matchHeaderSignal().score);
+
+  timerStatusSignal = computed(() => {
+    const status = this.matchHeaderSignal().status;
+    return {
+      status: status.status,
+      minute: status.minute || 0,
+      isLive: status.isLive
+    };
+  });
 }

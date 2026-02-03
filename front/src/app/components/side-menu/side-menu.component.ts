@@ -1,26 +1,20 @@
-import {
-  Component,
-  signal,
-  OnInit,
-  OnDestroy,
-  ChangeDetectionStrategy,
-} from '@angular/core';
-import { AsyncPipe, CommonModule, NgOptimizedImage } from '@angular/common';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
+import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { DrawerModule } from 'primeng/drawer';
-import { AuthService } from '../../services/auth.service';
-import { NotificationsApiService } from '../../services/notifications-api.service';
-import { filter, Subscription } from 'rxjs';
+import { AuthService } from '../../auth/services/auth.service';
 import { ImageDefaultPipe } from '../../shared/pipes/image-default.pipe';
+import { MenuItem } from 'primeng/api';
+import { UserStatsComponent } from './user-stats/user-stats.component';
 
-interface MenuItem {
+interface CustomMenuItem {
   icon: string;
   label: string;
   route?: string;
   active?: boolean;
   badge?: number;
   hasChildren?: boolean;
-  children?: MenuItem[];
+  children?: CustomMenuItem[];
 }
 
 @Component({
@@ -32,17 +26,27 @@ interface MenuItem {
     RouterLinkActive,
     NgOptimizedImage,
     DrawerModule,
-    AsyncPipe,
     ImageDefaultPipe,
+    UserStatsComponent,
   ],
   templateUrl: './side-menu.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./side-menu.component.css'],
 })
-export class SideMenuComponent implements OnInit, OnDestroy {
+export class SideMenuComponent {
   isMenuOpen = signal(false);
 
-  topMenuItems: MenuItem[] = [
+  // Desktop menubar expanded states
+  isTopMenuExpanded = signal(false);
+  isBottomMenuExpanded = signal(false);
+  isAuthMenuExpanded = signal(false);
+
+  topMenuItems: CustomMenuItem[] = [
+    {
+      icon: 'pi pi-calendar',
+      label: 'Fixtures',
+      route: '/fixtures',
+    },
     {
       icon: 'pi pi-chart-bar',
       label: 'Standings',
@@ -50,7 +54,7 @@ export class SideMenuComponent implements OnInit, OnDestroy {
     },
   ];
 
-  authMenuItems: MenuItem[] = [
+  authMenuItems: CustomMenuItem[] = [
     {
       icon: 'pi pi-user',
       label: 'Login',
@@ -68,7 +72,7 @@ export class SideMenuComponent implements OnInit, OnDestroy {
     },
   ];
 
-  bottomMenuItems: MenuItem[] = [
+  bottomMenuItems: CustomMenuItem[] = [
     {
       icon: 'pi pi-bell',
       label: 'Notifications',
@@ -91,68 +95,52 @@ export class SideMenuComponent implements OnInit, OnDestroy {
     },
   ];
 
-  diamonds = signal(0);
-  gainedDiamonds = signal(0);
-  private sseSubscription: Subscription | null = null;
-
-  constructor(
-    public authService: AuthService,
-    private notificationsApi: NotificationsApiService
-  ) {
-    this.authService.currentUser$.subscribe((user) => {
-      if (user && 'diamonds' in user) {
-        this.diamonds.set(user.diamonds ?? 0);
-      }
-    });
-  }
-
-  ngOnInit(): void {
-    this.connectToSSE();
-  }
-
-  ngOnDestroy(): void {
-    this.disconnectSSE();
-  }
-
-  private connectToSSE(): void {
-    this.sseSubscription = this.notificationsApi
-      .connectToSSE()
-      .pipe(
-        filter(
-          (event) =>
-            event.type === 'CHANGE_OF_POSSESSED_GEMS' ||
-            event.type === 'DIAMOND_UPDATE'
-        )
-      )
-      .subscribe({
-        next: (notification) => {
-          if (
-            notification.type === 'CHANGE_OF_POSSESSED_GEMS' &&
-            notification.data?.newDiamonds
-          ) {
-            this.diamonds.set(notification.data?.newDiamonds);
-          }
-          if (notification.type === 'DIAMOND_UPDATE') {
-            this.gainedDiamonds.set(Number(notification.data?.gain) || 0);
-          }
-        },
-        error: (error) => {
-          console.error('SSE error:', error);
-        },
-      });
-  }
-  get isAuthenticated() {
-    return this.authService.authState$;
-  }
-  private disconnectSSE(): void {
-    if (this.sseSubscription) {
-      this.sseSubscription.unsubscribe();
+  // Combined menu items for desktop menubar
+  get menubarItems(): MenuItem[] {
+    const items = [...this.topMenuItems];
+    if (this.authService.isAuthenticated()) {
+      items.push(...this.bottomMenuItems);
     }
-    this.notificationsApi.disconnectSSE();
+    return items.map((item) => ({
+      label: item.label,
+      icon: item.icon,
+      route: item.route,
+      badge: item.badge?.toString(),
+      items: item.children?.map((child) => ({
+        label: child.label,
+        icon: child.icon,
+        route: child.route,
+        badge: child.badge?.toString(),
+      })),
+    }));
+  }
+
+  constructor(public authService: AuthService) {}
+
+  get isAuthenticated() {
+    return this.authService.isAuthenticated;
   }
 
   toggleMenu() {
     this.isMenuOpen.set(!this.isMenuOpen());
+  }
+
+  toggleTopMenu() {
+    this.isTopMenuExpanded.set(!this.isTopMenuExpanded());
+    this.isBottomMenuExpanded.set(false);
+    this.isAuthMenuExpanded.set(false);
+  }
+
+  toggleBottomMenu() {
+    this.isBottomMenuExpanded.set(!this.isBottomMenuExpanded());
+    this.isTopMenuExpanded.set(false);
+    this.isAuthMenuExpanded.set(false);
+  }
+
+  toggleAuthMenu() {
+    this.isAuthMenuExpanded.set(!this.isAuthMenuExpanded());
+    this.isTopMenuExpanded.set(false);
+    this.isBottomMenuExpanded.set(false);
   }
 
   onLogout() {

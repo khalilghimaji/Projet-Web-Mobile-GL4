@@ -15,7 +15,6 @@ import {
   UploadedFile,
   ParseFilePipe,
   MaxFileSizeValidator,
-  FileTypeValidator,
   FileValidator,
   BadRequestException,
 } from '@nestjs/common';

@@ -68,7 +68,7 @@ config({ path: `${process.cwd()}/Config/.env` });
           },
         },
         defaults: {
-          from: '"No Reply" <noreply@booksproject.com>',
+          from: '"No Reply" <noreply@kickstream.com>',
         },
         template: {
           dir: join(__dirname, 'Emailing', 'templates'),

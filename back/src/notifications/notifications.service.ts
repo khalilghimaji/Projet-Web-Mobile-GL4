@@ -47,8 +47,8 @@ export class NotificationsService {
     return subject.asObservable();
   }
 
-  async notify(payload: NotificationPayload): Promise<void> {
-    const notification = await this.storeNotification(payload);
+  async notify(payload: NotificationPayload, save = true): Promise<void> {
+    const notification = await this.storeNotification(payload, save);
     notification.data = { ...payload.data };
     const client = this.clients.get(payload.userId);
     if (client) {
@@ -62,7 +62,10 @@ export class NotificationsService {
     }
   }
 
-  async storeNotification(payload: NotificationPayload): Promise<Notification> {
+  async storeNotification(
+    payload: NotificationPayload,
+    save,
+  ): Promise<Notification> {
     const notification = this.notificationRepository.create({
       userId: payload.userId,
       type: payload.type,
@@ -70,7 +73,11 @@ export class NotificationsService {
       data: payload.data,
       read: false,
     });
-    return this.notificationRepository.save(notification);
+    if (save) {
+      return this.notificationRepository.save(notification);
+    } else {
+      return notification;
+    }
   }
 
   async getUserNotifications(userId: string): Promise<Notification[]> {

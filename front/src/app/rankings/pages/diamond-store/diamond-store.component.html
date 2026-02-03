@@ -1,0 +1,50 @@
+<div class="diamond-store-container">
+  <div class="store-header">
+    <h1 class="store-title">💎 Diamond Store</h1>
+    <p class="store-subtitle">
+      Purchase diamonds to make predictions and unlock exclusive features!
+    </p>
+  </div>
+
+  <div class="packages-grid">
+    @for (pkg of diamondPackages; track pkg.id) {
+      <p-card [styleClass]="'package-card' + (pkg.popular ? ' popular' : '')">
+        @if (pkg.popular) {
+          <div class="popular-badge">Most Popular</div>
+        }
+
+        <ng-template pTemplate="header">
+          <div class="package-icon">{{ pkg.icon }}</div>
+        </ng-template>
+
+        <div class="package-content">
+          <h2 class="package-amount">{{ pkg.amount }} Diamonds</h2>
+          <p class="package-price">{{ pkg.price }}</p>
+        </div>
+
+        <ng-template pTemplate="footer">
+          <button
+            pButton
+            label="Purchase"
+            icon="pi pi-shopping-cart"
+            [loading]="isLoading(pkg.id)"
+            [disabled]="isLoading(pkg.id)"
+            (click)="purchaseDiamonds(pkg)"
+            [class]="'purchase-button' + (pkg.popular ? ' popular-button' : '')"
+          ></button>
+        </ng-template>
+      </p-card>
+    }
+  </div>
+
+  <div class="store-info">
+    <div class="info-section">
+      <h3>💡 Why Purchase Diamonds?</h3>
+      <ul>
+        <li>Make predictions on upcoming matches</li>
+        <li>Win more diamonds by making accurate predictions</li>
+        <li>Compete with other users on the leaderboard</li>
+      </ul>
+    </div>
+  </div>
+</div>
