@@ -6,8 +6,8 @@ import { FixtureCardComponent } from '../../components/fixture-card/fixture-card
 import { LeagueFilterChipComponent } from '../../components/league-filter-chip/league-filter-chip.component';
 import { LeagueSearchComponent } from '../../components/league-search/league-search.component';
 import { ParsedFixture, DateTab, FixturesByLeague, FixtureStatus, League } from '../../types/fixture.types';
-import { fromEvent, of, Subject } from 'rxjs';
-import { switchMap, filter, map, debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { fromEvent, of } from 'rxjs';
+import { switchMap, filter, map } from 'rxjs/operators';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { FixturesApiService } from '../../services/fixtures-api.service';
 
@@ -39,10 +39,8 @@ export class FixturesPage {
   selectedLeagueId = signal<string>('all');
   dateTabs = signal<DateTab[]>(this.generateDateTabs());
 
-  searchQuery = signal<string>('');
   allLeagues = signal<League[]>([]);
 
-  private searchSubject$ = new Subject<string>();
 
   private fixturesRequest = computed(() => {
     const from = this.formatDate(this.selectedDate());
@@ -118,16 +116,6 @@ export class FixturesPage {
         console.log(`Loaded ${leagues.length} leagues for search`);
       });
 
-    this.searchSubject$
-      .pipe(
-        debounceTime(300),
-        distinctUntilChanged(),
-        takeUntilDestroyed(this.destroyRef)
-      )
-      .subscribe(searchText => {
-        console.log('Search query (debounced):', searchText);
-        this.searchQuery.set(searchText);
-      });
 
 
     // Optimisation fromEvent pour date selection
@@ -170,24 +158,16 @@ export class FixturesPage {
   }
 
 
-  onSearchQueryChange(query: string): void {
-    this.searchSubject$.next(query);
-  }
+
 
   onLeagueSearchSelected(league: League): void {
     console.log('League selected from search:', league.league_name);
-
     this.selectedLeagueId.set(league.league_key);
-
-    this.searchQuery.set('');
   }
 
   onClearFilter(): void {
     console.log('Clearing league filter - showing all leagues');
-
     this.selectedLeagueId.set('all');
-
-    this.searchQuery.set('');
   }
 
   isSelected(tab: DateTab): boolean {
