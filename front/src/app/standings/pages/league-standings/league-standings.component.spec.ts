@@ -1,30 +1,15 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LeagueStandingsComponent } from './league-standings.component';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { StandingsService } from '../../services/standings.service';
-import { StandingsUpdaterService } from '../../services/goal-events.service';
-import { LeaguesService } from '../../services/leagues.service';
-import { of, throwError } from 'rxjs';
-import { League, StandingsResponse, StandingEntry } from '../../models/models';
-import { ChangeDetectorRef } from '@angular/core';
+import { StandingsResponse, StandingEntry } from '../../../teams/models/models';
+import { ComponentFixtureAutoDetect } from '@angular/core/testing';
 
 describe('LeagueStandingsComponent', () => {
   let component: LeagueStandingsComponent;
   let fixture: ComponentFixture<LeagueStandingsComponent>;
-  let mockActivatedRoute: any;
   let mockRouter: jasmine.SpyObj<Router>;
   let mockStandingsService: jasmine.SpyObj<StandingsService>;
-  let mockStandingsUpdater: jasmine.SpyObj<StandingsUpdaterService>;
-  let mockLeaguesService: jasmine.SpyObj<LeaguesService>;
-
-  const mockLeague: League = {
-    league_key: '152',
-    league_name: 'Premier League',
-    country_key: '44',
-    country_name: 'England',
-    league_logo: 'pl.png',
-    country_logo: 'england.png'
-  };
 
   const mockStanding: StandingEntry = {
     standing_place: '1',
@@ -54,188 +39,121 @@ describe('LeagueStandingsComponent', () => {
   };
 
   beforeEach(async () => {
-    mockActivatedRoute = {
-      snapshot: {
-        paramMap: {
-          get: jasmine.createSpy('get').and.returnValue(null)
-        }
-      }
+    mockRouter = jasmine.createSpyObj('Router', ['navigate']);
+    mockStandingsService = jasmine.createSpyObj('StandingsService', ['getStandingsResource']);
+
+    // Mock the resource object returned by getStandingsResource
+    const mockResource = {
+      value: jasmine.createSpy('value').and.returnValue(mockStandingsResponse),
+      isLoading: jasmine.createSpy('isLoading').and.returnValue(false),
+      error: jasmine.createSpy('error').and.returnValue(undefined),
+      reload: jasmine.createSpy('reload'),
+      hasValue: jasmine.createSpy('hasValue').and.returnValue(true)
     };
 
-    mockRouter = jasmine.createSpyObj('Router', ['navigate']);
-    mockStandingsService = jasmine.createSpyObj('StandingsService', ['getCachedStandings']);
-    mockStandingsUpdater = jasmine.createSpyObj('StandingsUpdaterService', [
-      'startListening',
-      'stopListening'
-    ]);
-    mockLeaguesService = jasmine.createSpyObj('LeaguesService', ['getFeaturedLeagues']);
+    mockStandingsService.getStandingsResource.and.returnValue(mockResource as any);
 
     await TestBed.configureTestingModule({
       imports: [LeagueStandingsComponent],
       providers: [
-        { provide: ActivatedRoute, useValue: mockActivatedRoute },
         { provide: Router, useValue: mockRouter },
         { provide: StandingsService, useValue: mockStandingsService },
-        { provide: StandingsUpdaterService, useValue: mockStandingsUpdater },
-        { provide: LeaguesService, useValue: mockLeaguesService }
+        { provide: ComponentFixtureAutoDetect, useValue: true }
       ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(LeagueStandingsComponent);
     component = fixture.componentInstance;
+
+    // Set required input
+    fixture.componentRef.setInput('leagueId', '152');
   });
 
   it('should create', () => {
     expect(component).toBeTruthy();
   });
 
-  describe('ngOnInit with league selection', () => {
-    it('should load leagues when no leagueId is provided', () => {
-      mockLeaguesService.getFeaturedLeagues.and.returnValue(of([mockLeague]));
-
-      fixture.detectChanges(); // Triggers ngOnInit
-
-      expect(component.showLeagueSelection).toBe(true);
-      expect(mockLeaguesService.getFeaturedLeagues).toHaveBeenCalled();
-      expect(component.leagues.length).toBe(1);
-      expect(component.loading).toBe(false);
+  describe('initialization', () => {
+    it('should initialize with required leagueId input', () => {
+      expect(component.leagueId()).toBe('152');
     });
 
-    it('should handle error when loading leagues', () => {
-      mockLeaguesService.getFeaturedLeagues.and.returnValue(
-        throwError(() => new Error('Network error'))
-      );
-
+    it('should call getStandingsResource with leagueId', () => {
       fixture.detectChanges();
+      expect(mockStandingsService.getStandingsResource).toHaveBeenCalled();
+    });
 
-      expect(component.error).toBe('Failed to load leagues. Please try again later.');
-      expect(component.loading).toBe(false);
+    it('should initialize selectedView as total', () => {
+      expect(component.selectedView()).toBe('total');
     });
   });
 
-  describe('ngOnInit with specific league', () => {
-    it('should load standings when leagueId is in route', () => {
-      mockActivatedRoute.snapshot.paramMap.get.and.returnValue('152');
-      mockStandingsService.getCachedStandings.and.returnValue(of(mockStandingsResponse));
-
-      fixture.detectChanges();
-
-      expect(component.showLeagueSelection).toBe(false);
-      expect(mockStandingsUpdater.startListening).toHaveBeenCalled();
-      expect(mockStandingsService.getCachedStandings).toHaveBeenCalledWith('152');
-      expect(component.standings).toEqual(mockStandingsResponse);
+  describe('currentStandings computed', () => {
+    it('should return total standings by default', () => {
+      const standings = component.currentStandings();
+      expect(standings).toEqual(mockStandingsResponse.result.total);
     });
 
-    it('should load standings when leagueId is provided as Input', () => {
-      component.leagueId = '302';
-      mockStandingsService.getCachedStandings.and.returnValue(of(mockStandingsResponse));
-
-      fixture.detectChanges();
-
-      expect(mockStandingsService.getCachedStandings).toHaveBeenCalledWith('302');
-      expect(component.loading).toBe(false);
+    it('should return home standings when selectedView is home', () => {
+      component.selectedView.set('home');
+      const standings = component.currentStandings();
+      expect(standings).toEqual(mockStandingsResponse.result.home);
     });
 
-    it('should handle error when loading standings', () => {
-      mockActivatedRoute.snapshot.paramMap.get.and.returnValue('152');
-      mockStandingsService.getCachedStandings.and.returnValue(
-        throwError(() => new Error('Network error'))
-      );
-
-      fixture.detectChanges();
-
-      expect(component.error).toBe('Failed to load standings. Please try again later.');
-      expect(component.loading).toBe(false);
+    it('should return away standings when selectedView is away', () => {
+      component.selectedView.set('away');
+      const standings = component.currentStandings();
+      expect(standings).toEqual(mockStandingsResponse.result.away);
     });
-  });
 
-  describe('ngOnDestroy', () => {
-    it('should unsubscribe and stop listening on destroy', () => {
-      mockActivatedRoute.snapshot.paramMap.get.and.returnValue('152');
-      mockStandingsService.getCachedStandings.and.returnValue(of(mockStandingsResponse));
+    it('should return empty array when no data', () => {
+      const mockEmptyResource = {
+        value: jasmine.createSpy('value').and.returnValue(null),
+        isLoading: jasmine.createSpy('isLoading').and.returnValue(false),
+        error: jasmine.createSpy('error').and.returnValue(undefined),
+        reload: jasmine.createSpy('reload'),
+        hasValue: jasmine.createSpy('hasValue').and.returnValue(false)
+      };
 
-      fixture.detectChanges();
-      component.ngOnDestroy();
+      mockStandingsService.getStandingsResource.and.returnValue(mockEmptyResource as any);
 
-      expect(mockStandingsUpdater.stopListening).toHaveBeenCalled();
+      // Create new component with empty resource
+      const newFixture = TestBed.createComponent(LeagueStandingsComponent);
+      const newComponent = newFixture.componentInstance;
+      newFixture.componentRef.setInput('leagueId', '152');
+
+      expect(newComponent.currentStandings()).toEqual([]);
     });
   });
 
-  describe('selectLeague', () => {
-    it('should navigate to league standings', () => {
-      component.selectLeague(mockLeague);
+  describe('setView', () => {
+    it('should change selected view to home', () => {
+      component.setView('home');
+      expect(component.selectedView()).toBe('home');
+    });
 
-      expect(component.selectedLeague).toEqual(mockLeague);
-      expect(mockRouter.navigate).toHaveBeenCalledWith(['/standings', '152']);
+    it('should change selected view to away', () => {
+      component.setView('away');
+      expect(component.selectedView()).toBe('away');
+    });
+
+    it('should change selected view to total', () => {
+      component.setView('total');
+      expect(component.selectedView()).toBe('total');
     });
   });
 
   describe('backToLeagues', () => {
     it('should navigate back to standings page', () => {
       component.backToLeagues();
-
       expect(mockRouter.navigate).toHaveBeenCalledWith(['/standings']);
     });
   });
 
-  describe('currentStandings getter', () => {
-    beforeEach(() => {
-      component.standings = mockStandingsResponse;
-    });
-
-    it('should return total standings by default', () => {
-      component.selectedView = 'total';
-      expect(component.currentStandings).toEqual(mockStandingsResponse.result.total);
-    });
-
-    it('should return home standings when selected', () => {
-      component.selectedView = 'home';
-      expect(component.currentStandings).toEqual(mockStandingsResponse.result.home);
-    });
-
-    it('should return away standings when selected', () => {
-      component.selectedView = 'away';
-      expect(component.currentStandings).toEqual(mockStandingsResponse.result.away);
-    });
-
-    it('should return empty array when no standings', () => {
-      component.standings = null;
-      expect(component.currentStandings).toEqual([]);
-    });
-  });
-
-  describe('setView', () => {
-    it('should change selected view', () => {
-      component.setView('home');
-      expect(component.selectedView).toBe('home');
-
-      component.setView('away');
-      expect(component.selectedView).toBe('away');
-
-      component.setView('total');
-      expect(component.selectedView).toBe('total');
-    });
-  });
-
-  describe('getPlaceTypeClass', () => {
-    it('should return champions-league class', () => {
-      expect(component.getPlaceTypeClass('Champions League')).toBe('champions-league');
-    });
-
-    it('should return europa-league class', () => {
-      expect(component.getPlaceTypeClass('Europa League')).toBe('europa-league');
-    });
-
-    it('should return relegation class', () => {
-      expect(component.getPlaceTypeClass('Relegation')).toBe('relegation');
-    });
-
-    it('should return empty string for null', () => {
-      expect(component.getPlaceTypeClass(null)).toBe('');
-    });
-
-    it('should return empty string for unknown type', () => {
-      expect(component.getPlaceTypeClass('Unknown')).toBe('');
+  describe('goToTeam', () => {
+    it('should navigate to team detail page', () => {
+      component.goToTeam('123');
+      expect(mockRouter.navigate).toHaveBeenCalledWith(['/team', '123']);
     });
   });
 
